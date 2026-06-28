@@ -68,6 +68,7 @@ def build_rows() -> tuple[list[dict], str | None]:
             "lat": round(lat, 5) if lat else None, "lng": round(lng, 5) if lng else None,
             "bench": bench.compare(canon, p["price_amount"], p["price_period"], p["bedrooms"]),
             "contact": p.get("contact") or {},
+            "text": (rep.get("raw_text") or "").strip(),
         })
     # свежие — выше: по умолчанию сортируем по возрасту (None-возраст в конец)
     rows.sort(key=lambda r: (r["fresh"]["age_days"] is None, r["fresh"]["age_days"] or 0))
@@ -229,7 +230,29 @@ HTML = r"""<!DOCTYPE html>
     .filters .chk{flex:0 0 auto}
     .reset{flex:0 0 auto}
   }
-  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  /* ── мобильный переключатель карта/список ── */
+.view-toggle{display:none;gap:0;background:var(--surface);border-bottom:1px solid var(--hair);padding:8px 14px}
+.vt-btn{flex:1;font-family:var(--mono);font-size:12px;padding:8px 0;background:#fff;border:1px solid var(--hair);color:var(--sea);cursor:pointer;letter-spacing:.3px}
+.vt-btn:first-child{border-radius:8px 0 0 8px}
+.vt-btn:last-child{border-radius:0 8px 8px 0;border-left:none}
+.vt-btn.active{background:var(--sea);color:#fff;border-color:var(--sea)}
+@media(max-width:760px){.view-toggle{display:flex}}
+@media(max-width:760px){.wrap.mobile-list #map{display:none}.wrap.mobile-map .list{display:none}.wrap.mobile-map #map{height:80vh!important}}
+
+/* ── строка поиска (широкая) ── */
+.f-search-wrap{flex:0 0 100%!important;max-width:100%}
+.f-search-wrap input{width:100%;min-width:0;box-sizing:border-box}
+
+/* ── expand карточки ── */
+.card-raw{margin-top:8px;border-top:1px solid var(--hair);padding-top:2px}
+.card-raw-toggle{font-family:var(--mono);font-size:11px;color:var(--sea);cursor:pointer;padding:6px 0 0;list-style:none;display:block}
+.card-raw-toggle::-webkit-details-marker{display:none}
+.card-raw-toggle::before{content:'▸ '}
+details[open] .card-raw-toggle::before{content:'▾ '}
+.card-raw-toggle:hover{color:var(--coral)}
+.card-raw-text{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:pre-wrap;word-break:break-word;padding:6px 0 0;margin:0;max-height:260px;overflow-y:auto;line-height:1.5}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
@@ -242,10 +265,16 @@ HTML = r"""<!DOCTYPE html>
   </div>
 </header>
 
+<div class="view-toggle" role="group" aria-label="Режим отображения">
+  <button class="vt-btn active" id="vt-list">📋 Список</button>
+  <button class="vt-btn" id="vt-map">🗺 Карта</button>
+</div>
 <button class="filter-toggle" id="filter-toggle" aria-controls="filter-panel" aria-expanded="false">
   <span>⚙ Фильтры</span><span id="ftbadge" class="ftbadge"></span><span class="ftarrow">▾</span>
 </button>
 <section class="filters" aria-label="Фильтр" id="filter-panel">
+  <div class="f f-search-wrap"><label for="f-search">Поиск</label>
+    <input id="f-search" type="text" placeholder="pool, sea view, 2br, studio…" autocomplete="off"></div>
   <div class="f"><label for="f-district">Район</label>
     <select id="f-district"><option value="">весь остров</option></select></div>
   <div class="f"><label for="f-price">Цена до, ฿/мес</label>
@@ -310,7 +339,9 @@ function readF(){return{
   bed:+document.getElementById('f-bed').value||0,
   type:document.getElementById('f-type').value,
   amenities:Array.from(document.querySelectorAll('.f-am:checked')).map(e=>e.value),
-  hideStale:document.getElementById('f-stale').checked};}
+  hideStale:document.getElementById('f-stale').checked,
+  search:(document.getElementById('f-search').value||'').trim().toLowerCase()};
+}
 function passes(d,f){
   if(f.district&&d.district!==f.district)return false;
   if(f.price&&(d.price==null||d.price>f.price))return false;
@@ -318,8 +349,10 @@ function passes(d,f){
   if(f.type&&d.type!==f.type)return false;
   for(const a of f.amenities){if(!d.amenities[a])return false;}
   if(f.hideStale&&d.fresh.stale)return false;
+  if(f.search){const hay=(d.title+' '+d.text+' '+(d.district||'')).toLowerCase();if(!hay.includes(f.search))return false;}
   return true;}
 const amen=a=>Object.keys(AM).filter(k=>a[k]).map(k=>AM[k]).join(" ");
+const escHtml=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 function makeCard(d,i,key,target){
   const card=document.createElement('article'); card.className="card"+(d.fresh.stale?" stale":""); card.style.setProperty('--i',i);
@@ -334,12 +367,16 @@ function makeCard(d,i,key,target){
   const benchBadge=b?'<span class="bench bench-'+b.kind+'" title="медиана района: '+priceFull(b.monthly_median)+' ฿/мес">'+b.label+'</span>':'';
   const ref=b&&b.airbnb_adr?'<div class="ref">🏨 Airbnb здесь ~'+priceFull(b.airbnb_adr)+'฿/ночь'+(b.seed?' <span class="seed">оценка</span>':'')+'</div>':'';
   const amenStr=amen(d.amenities);
+  const expandHtml=d.text?'<details class="card-raw"><summary class="card-raw-toggle">читать целиком</summary><pre class="card-raw-text">'+escHtml(d.text)+'</pre></details>':'';
   card.setAttribute('data-type',d.type);
   card.innerHTML='<div class="card-top">'+dtag+fb+'</div>'+
     '<div class="title">'+d.title+draft+'</div>'+
     '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span>'+(amenStr?'<span class="spec-amen">'+amenStr+'</span>':'')+'</div>'+
     ref+
-    '<div class="foot"><span class="priceblock">'+price+benchBadge+'</span><span class="srcs">'+contactBtn(d.contact)+sourcesHtml(d.sources)+'</span></div>';
+    '<div class="foot"><span class="priceblock">'+price+benchBadge+'</span><span class="srcs">'+contactBtn(d.contact)+sourcesHtml(d.sources)+'</span></div>'+
+    expandHtml;
+  // клик по expand не должен открывать карту / ссылку
+  card.querySelector('details')?.addEventListener('click',e=>e.stopPropagation());
   if(d.lat!=null){
     const icon=L.divIcon({className:'',html:'<div class="sounding'+(d.fresh.stale?' dim':'')+'">'+(d.price!=null?compact(d.price):'·')+'</div>',iconSize:null});
     const m=L.marker([d.lat,d.lng],{icon}).addTo(map)
@@ -392,7 +429,7 @@ function render(first){
   document.getElementById('count2').textContent=shown+'/'+DATA.length;
   writeHash(f);
   // обновляем бейдж активных фильтров
-  const n=(f.district?1:0)+(f.price?1:0)+(f.bed?1:0)+(f.type?1:0)+f.amenities.length+(f.hideStale?1:0);
+  const n=(f.district?1:0)+(f.price?1:0)+(f.bed?1:0)+(f.type?1:0)+f.amenities.length+(f.hideStale?1:0)+(f.search?1:0);
   const fb=document.getElementById('ftbadge');if(fb)fb.textContent=n?' · '+n:'';
 }
 function chipClear(k){
@@ -409,6 +446,7 @@ function writeHash(f){
   if(f.type)p.set('type',f.type);
   if(f.amenities.length)p.set('am',f.amenities.join(','));
   if(f.hideStale)p.set('stale','1');
+  if(f.search)p.set('q',f.search);
   const sort=document.getElementById('f-sort').value; if(sort)p.set('sort',sort);
   const s=p.toString();
   history.replaceState(null,'',s?('#'+s):location.pathname+location.search);
@@ -417,12 +455,12 @@ function applyHash(){
   if(!location.hash)return;
   const p=new URLSearchParams(location.hash.slice(1));
   const set=(id,key)=>{const v=p.get(key);if(v!=null)document.getElementById(id).value=v;};
-  set('f-district','district');set('f-price','price');set('f-bed','bed');set('f-type','type');set('f-sort','sort');
+  set('f-district','district');set('f-price','price');set('f-bed','bed');set('f-type','type');set('f-sort','sort');set('f-search','q');
   const am=p.get('am'); if(am)am.split(',').forEach(v=>{const el=document.querySelector('.f-am[value="'+v+'"]');if(el)el.checked=true;});
   document.getElementById('f-stale').checked=p.get('stale')==='1';
 }
-function resetFilters(){['f-district','f-price','f-bed','f-type','f-sort'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=false;render(false);}
-['f-district','f-price','f-bed','f-type','f-sort'].forEach(id=>document.getElementById(id).addEventListener('input',()=>render(false)));
+function resetFilters(){['f-district','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=false;render(false);}
+['f-district','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).addEventListener('input',()=>render(false)));
 document.querySelectorAll('.f-am, #f-stale').forEach(e=>e.addEventListener('change',()=>render(false)));
 document.getElementById('reset').onclick=resetFilters;
 // мобильный toggle фильтра
@@ -433,6 +471,18 @@ document.getElementById('reset').onclick=resetFilters;
 })();
 applyHash();
 render(true);
+// мобильный переключатель карта/список
+(function(){
+  const wrap=document.querySelector('.wrap');
+  const btnList=document.getElementById('vt-list');
+  const btnMap=document.getElementById('vt-map');
+  if(!btnList||!btnMap||!wrap)return;
+  function showList(){wrap.classList.add('mobile-list');wrap.classList.remove('mobile-map');btnList.classList.add('active');btnMap.classList.remove('active');btnList.setAttribute('aria-pressed','true');btnMap.setAttribute('aria-pressed','false');}
+  function showMap(){wrap.classList.add('mobile-map');wrap.classList.remove('mobile-list');btnMap.classList.add('active');btnList.classList.remove('active');btnMap.setAttribute('aria-pressed','true');btnList.setAttribute('aria-pressed','false');window.dispatchEvent(new Event('resize'));}
+  btnList.addEventListener('click',showList);
+  btnMap.addEventListener('click',showMap);
+  showList();
+})();
 </script>
 </body>
 </html>"""

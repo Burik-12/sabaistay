@@ -31,3 +31,4 @@ build/
 
 # скриншоты-превью
 web/_preview.png
+.vercel

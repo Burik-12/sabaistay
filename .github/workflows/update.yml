@@ -11,7 +11,7 @@ permissions:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
@@ -24,10 +24,37 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Scrape Telegram (15 pages)
+      # ── Режим A: Telethon (TG_API_ID + TG_SESSION_B64 заданы в Secrets) ──────
+      # Берёт rent_phangan (~8к рус), adsphangan, phangan_rent, arenda_phangan
+      # + koh_phangan_rent для полноты. Даёт на порядок больше объявлений.
+      #
+      # Как подключить один раз:
+      #   1. Создай API: https://my.telegram.org → My Applications
+      #   2. Залогинься на Mac: TG_API_ID=... TG_API_HASH=... python3 ingest/telegram_bulk_fetch.py
+      #   3. Закодируй сессию: base64 -i sabaistay_bulk.session | tr -d '\n'
+      #   4. GitHub → Settings → Secrets:
+      #        TG_API_ID      = 1234567
+      #        TG_API_HASH    = abcdef...
+      #        TG_SESSION_B64 = <base64 из шага 3>
+      # ─────────────────────────────────────────────────────────────────────────
+      - name: Scrape Telegram
+        env:
+          TG_API_ID: ${{ secrets.TG_API_ID }}
+          TG_API_HASH: ${{ secrets.TG_API_HASH }}
+          TG_SESSION_B64: ${{ secrets.TG_SESSION_B64 }}
         run: |
-          python3 ingest/telegram_preview.py koh_phangan_rent --pages 15 -o /tmp/tg_raw.json
-          echo "Scraped: $(python3 -c 'import json; d=json.load(open("/tmp/tg_raw.json")); print(len(d), "posts")')"
+          if [ -n "$TG_API_ID" ] && [ -n "$TG_SESSION_B64" ]; then
+            echo "📡 Режим A: Telethon (расширенный сбор — rent_phangan и др.)"
+            pip install telethon -q
+            echo "$TG_SESSION_B64" | base64 -d > sabaistay_bulk.session
+            TG_SESSION=sabaistay_bulk \
+              python3 ingest/telegram_bulk_fetch.py --limit 200 -o /tmp/tg_raw.json
+            rm -f sabaistay_bulk.session
+          else
+            echo "📡 Режим B: web-preview (только koh_phangan_rent, без аккаунта)"
+            python3 ingest/telegram_preview.py koh_phangan_rent --pages 15 -o /tmp/tg_raw.json
+          fi
+          echo "Scraped: $(python3 -c 'import json; print(len(json.load(open("/tmp/tg_raw.json"))), "posts")')"
 
       - name: Parse listings
         run: |

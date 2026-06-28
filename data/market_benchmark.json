@@ -1,0 +1,29 @@
+{
+  "version": "2026-06-25",
+  "currency": "THB",
+  "note": "Рыночный бенчмарк по районам Пхангана. monthly_median_thb — медиана ДОЛГОСРОЧНОЙ аренды (฿/мес) по числу спален (1/2/3) + overall, для сравнения с нашими объявлениями. airbnb_adr_thb / booking_adr_thb — медиана ПОСУТОЧНОЙ ставки (฿/ночь), справочно. ВНИМАНИЕ: сейчас это сид-оценки (source=seed) на основе диапазонов рынка; заменяются реальными данными, когда подключим сбор (ingest/market_airbnb_booking.py, Фаза 5).",
+  "source": "seed",
+  "districts": {
+    "Thong Sala":        { "monthly_median_thb": { "1": 17000, "2": 35000, "3": 60000, "overall": 30000 }, "airbnb_adr_thb": 1300, "booking_adr_thb": 1500, "sample_n": 0 },
+    "Sri Thanu":         { "monthly_median_thb": { "1": 25000, "2": 50000, "3": 95000, "overall": 42000 }, "airbnb_adr_thb": 2200, "booking_adr_thb": 2500, "sample_n": 0 },
+    "Hin Kong":          { "monthly_median_thb": { "1": 20000, "2": 40000, "3": 80000, "overall": 36000 }, "airbnb_adr_thb": 1800, "booking_adr_thb": 2000, "sample_n": 0 },
+    "Wok Tum":           { "monthly_median_thb": { "1": 18000, "2": 36000, "3": 68000, "overall": 32000 }, "airbnb_adr_thb": 1600, "booking_adr_thb": 1800, "sample_n": 0 },
+    "Nai Wok":           { "monthly_median_thb": { "1": 17000, "2": 34000, "3": 62000, "overall": 30000 }, "airbnb_adr_thb": 1500, "booking_adr_thb": 1700, "sample_n": 0 },
+    "Madeua Wan":        { "monthly_median_thb": { "1": 18000, "2": 38000, "3": 72000, "overall": 33000 }, "airbnb_adr_thb": 1700, "booking_adr_thb": 1900, "sample_n": 0 },
+    "Ban Tai":           { "monthly_median_thb": { "1": 20000, "2": 42000, "3": 80000, "overall": 37000 }, "airbnb_adr_thb": 1900, "booking_adr_thb": 2100, "sample_n": 0 },
+    "Ban Khai":          { "monthly_median_thb": { "1": 18000, "2": 38000, "3": 72000, "overall": 33000 }, "airbnb_adr_thb": 1700, "booking_adr_thb": 1900, "sample_n": 0 },
+    "Haad Rin":          { "monthly_median_thb": { "1": 18000, "2": 38000, "3": 70000, "overall": 33000 }, "airbnb_adr_thb": 1500, "booking_adr_thb": 1700, "sample_n": 0 },
+    "Ban Nai Suan":      { "monthly_median_thb": { "1": 16000, "2": 33000, "3": 60000, "overall": 29000 }, "airbnb_adr_thb": 1300, "booking_adr_thb": 1500, "sample_n": 0 },
+    "Khao Khao Haeng":   { "monthly_median_thb": { "1": 16000, "2": 32000, "3": 58000, "overall": 28000 }, "airbnb_adr_thb": 1300, "booking_adr_thb": 1400, "sample_n": 0 },
+    "Ban Nok":           { "monthly_median_thb": { "1": 17000, "2": 35000, "3": 65000, "overall": 31000 }, "airbnb_adr_thb": 1500, "booking_adr_thb": 1700, "sample_n": 0 },
+    "Coconut Lane":      { "monthly_median_thb": { "1": 24000, "2": 48000, "3": 90000, "overall": 40000 }, "airbnb_adr_thb": 2100, "booking_adr_thb": 2400, "sample_n": 0 },
+    "Haad Yao":          { "monthly_median_thb": { "1": 22000, "2": 45000, "3": 90000, "overall": 38000 }, "airbnb_adr_thb": 2400, "booking_adr_thb": 2700, "sample_n": 0 },
+    "Haad Salad":        { "monthly_median_thb": { "1": 22000, "2": 46000, "3": 92000, "overall": 39000 }, "airbnb_adr_thb": 2400, "booking_adr_thb": 2700, "sample_n": 0 },
+    "Mae Haad":          { "monthly_median_thb": { "1": 21000, "2": 44000, "3": 88000, "overall": 37000 }, "airbnb_adr_thb": 2300, "booking_adr_thb": 2600, "sample_n": 0 },
+    "Chaloklum":         { "monthly_median_thb": { "1": 16000, "2": 35000, "3": 65000, "overall": 30000 }, "airbnb_adr_thb": 1400, "booking_adr_thb": 1600, "sample_n": 0 },
+    "Bottle Beach":      { "monthly_median_thb": { "1": 18000, "2": 38000, "3": 75000, "overall": 34000 }, "airbnb_adr_thb": 2000, "booking_adr_thb": 2300, "sample_n": 0 },
+    "Thong Nai Pan Yai": { "monthly_median_thb": { "1": 30000, "2": 65000, "3": 130000, "overall": 55000 }, "airbnb_adr_thb": 3500, "booking_adr_thb": 4000, "sample_n": 0 },
+    "Thong Nai Pan Noi": { "monthly_median_thb": { "1": 32000, "2": 68000, "3": 135000, "overall": 58000 }, "airbnb_adr_thb": 3700, "booking_adr_thb": 4200, "sample_n": 0 },
+    "Than Sadet":        { "monthly_median_thb": { "1": 20000, "2": 42000, "3": 80000, "overall": 36000 }, "airbnb_adr_thb": 1800, "booking_adr_thb": 2000, "sample_n": 0 }
+  }
+}

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SabaiStay — приватность и удаление объявлений</title>
+<meta name="robots" content="index">
+<meta name="theme-color" content="#0d3b3a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2226%22%20r%3D%2212%22%20fill%3D%22%23ef6c45%22/%3E%3Cg%20stroke%3D%22%230d5563%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%3E%3Cline%20x1%3D%228%22%20y1%3D%2240%22%20x2%3D%2256%22%20y2%3D%2240%22%20stroke-width%3D%223.4%22/%3E%3Cline%20x1%3D%2214%22%20y1%3D%2247%22%20x2%3D%2250%22%20y2%3D%2247%22%20stroke-width%3D%222.8%22%20opacity%3D%22.55%22/%3E%3Cline%20x1%3D%2221%22%20y1%3D%2253%22%20x2%3D%2243%22%20y2%3D%2253%22%20stroke-width%3D%222.8%22%20opacity%3D%22.3%22/%3E%3C/g%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--sea-deep:#0d3b3a;--ink:#163a38;--paper:#f7f4ec;--coral:#e2654f;--muted:#6b7d7a;--line:#e3ddcd;
+        --disp:"Baloo 2",system-ui,sans-serif;--mono:"Space Mono",ui-monospace,monospace;--body:system-ui,-apple-system,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);line-height:1.6}
+  .top{background:var(--sea-deep);color:#eef4f2;padding:15px 22px;border-bottom:3px solid var(--coral)}
+  .brand{display:flex;align-items:center;gap:11px;max-width:760px;margin:0 auto}
+  .brandmark{width:30px;height:30px;flex:0 0 auto}
+  .mark{font-family:var(--disp);font-weight:800;font-size:24px;color:#fff;text-decoration:none}
+  .mark .m2{color:var(--coral)}
+  .back{margin-left:auto;font-family:var(--mono);font-size:12px;color:#bfe0db;text-decoration:none}
+  .back:hover{color:#fff}
+  main{max-width:760px;margin:0 auto;padding:34px 22px 60px}
+  h1{font-family:var(--disp);font-weight:800;font-size:30px;margin:0 0 6px}
+  .lede{color:var(--muted);font-size:15px;margin:0 0 28px}
+  h2{font-family:var(--disp);font-weight:600;font-size:20px;margin:30px 0 8px}
+  p,li{font-size:15px}
+  ul{padding-left:20px}
+  .ok{color:#2f7d46;font-weight:700}
+  .no{color:var(--coral);font-weight:700}
+  .remove{background:#fff;border:1px solid var(--line);border-left:4px solid var(--coral);border-radius:10px;padding:18px 20px;margin:24px 0}
+  .remove h2{margin-top:0}
+  .contact{font-family:var(--mono);font-size:14px;background:#eef2ea;border-radius:7px;padding:10px 13px;display:inline-block;margin-top:6px}
+  .todo{font-family:var(--mono);font-size:12px;color:var(--coral)}
+  footer{font-family:var(--mono);font-size:12px;color:var(--muted);border-top:1px solid var(--line);padding:18px 22px;text-align:center}
+  a{color:var(--coral)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg class="brandmark" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="26" r="12" fill="#ef6c45"/><g stroke="#bfe0db" stroke-linecap="round" fill="none"><line x1="8" y1="40" x2="56" y2="40" stroke-width="3.4"/><line x1="14" y1="47" x2="50" y2="47" stroke-width="2.8" opacity=".55"/><line x1="21" y1="53" x2="43" y2="53" stroke-width="2.8" opacity=".3"/></g></svg>
+    <a class="mark" href="index.html">Sabai<span class="m2">Stay</span></a>
+    <a class="back" href="index.html">← к поиску</a>
+  </div>
+</header>
+<main>
+  <h1>Приватность и удаление объявлений</h1>
+  <p class="lede">SabaiStay — агрегатор: мы собираем уже опубликованные объявления об аренде с Пхангана,
+  чтобы их можно было нормально искать. Делаем это бережно и в рамках тайского закона о персональных данных (PDPA).</p>
+
+  <h2>Что мы храним</h2>
+  <ul>
+    <li><span class="ok">Да:</span> факты об объекте — район, цена, число спален, тип, удобства, дата публикации
+        и <b>ссылку на первоисточник</b> (Telegram / Facebook).</li>
+    <li><span class="no">Нет:</span> мы не храним структурно телефоны, имена и контакты владельцев,
+        не создаём базу персональных данных и <b>не перезаливаем фотографии</b> — даём ссылку на оригинал.</li>
+  </ul>
+
+  <h2>Зачем (правовая основа)</h2>
+  <p>Законный интерес (legitimate interest): помочь людям найти жильё среди уже публичных объявлений.
+  Мы показываем то, что владелец сам опубликовал в открытом канале/группе, и всегда ведём ссылкой к источнику.</p>
+
+  <div class="remove" id="remove">
+    <h2>Убрать объявление</h2>
+    <p>Это ваш объект и вы не хотите видеть его здесь? Напишите нам — уберём в течение <b>30 дней</b>
+    (обычно — за пару дней). Укажите ссылку на карточку или на оригинал.</p>
+    <div class="contact">✉️ remove@sabaistay &nbsp;·&nbsp; Telegram: @sabaistay_support</div>
+    <p class="todo">↑ Владимиру: подставить реальные контакты перед запуском.</p>
+  </div>
+
+  <h2>Куки и аналитика</h2>
+  <p>Витрина — статическая страница без аккаунтов. Фильтр хранится только в адресной строке (чтобы можно было
+  поделиться ссылкой на поиск). Сторонних трекеров нет; карта подгружает тайлы OpenStreetMap/CartoDB.</p>
+
+  <h2>Контакт</h2>
+  <p>Вопросы по данным — на тот же адрес: <a href="mailto:remove@sabaistay">remove@sabaistay</a>.</p>
+</main>
+<footer>SabaiStay · Ко Пханган · агрегатор аренды · <a href="index.html">поиск</a></footer>
+</body>
+</html>

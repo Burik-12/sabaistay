@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="SabaiStay">
+  <title>SabaiStay — закат над водой</title>
+  <!-- солнце на закате = «сабай», коралловый акцент бренда -->
+  <circle cx="32" cy="26" r="12" fill="#ef6c45"/>
+  <!-- линии воды = язык морской карты (широты), бирюза бренда -->
+  <g stroke="#0d5563" stroke-linecap="round" fill="none">
+    <line x1="8"  y1="40" x2="56" y2="40" stroke-width="3.4"/>
+    <line x1="14" y1="47" x2="50" y2="47" stroke-width="2.8" opacity="0.55"/>
+    <line x1="21" y1="53" x2="43" y2="53" stroke-width="2.8" opacity="0.3"/>
+  </g>
+</svg>

@@ -1,0 +1,12 @@
+parser/
+ingest/
+bot/
+db/
+docs/
+data/
+.env
+.env.*
+*.session
+*.pyc
+__pycache__/
+.venv/

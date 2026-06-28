@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" font-family="'Baloo 2','Trebuchet MS',sans-serif">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0e403d"/>
+      <stop offset="1" stop-color="#0a2c2b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#sky)"/>
+
+  <!-- закатное солнце справа -->
+  <circle cx="930" cy="232" r="120" fill="#ef6c45"/>
+  <circle cx="930" cy="232" r="120" fill="none" stroke="#ffb59e" stroke-width="2" opacity=".5"/>
+
+  <!-- вода = широты морской карты -->
+  <g stroke="#2a6f69" stroke-linecap="round" fill="none">
+    <line x1="60"  y1="372" x2="1140" y2="372" stroke-width="3"/>
+    <line x1="120" y1="410" x2="1080" y2="410" stroke-width="3" opacity=".75"/>
+    <line x1="80"  y1="450" x2="1120" y2="450" stroke-width="3" opacity=".55"/>
+    <line x1="160" y1="492" x2="1040" y2="492" stroke-width="3" opacity=".4"/>
+    <line x1="100" y1="536" x2="1100" y2="536" stroke-width="3" opacity=".28"/>
+  </g>
+
+  <!-- коралловые засечки-«промеры» (как пины витрины) -->
+  <g fill="#ef6c45" font-family="'Space Mono',monospace" font-size="15" font-weight="700">
+    <circle cx="300" cy="410" r="5"/><text x="312" y="415" fill="#cfe0dd">35k</text>
+    <circle cx="640" cy="450" r="5"/><text x="652" y="455" fill="#cfe0dd">18k</text>
+    <circle cx="470" cy="492" r="5"/><text x="482" y="497" fill="#cfe0dd">25k</text>
+  </g>
+
+  <!-- логотип -->
+  <text x="90" y="232" font-size="108" font-weight="800" fill="#ffffff">Sabai<tspan fill="#ef6c45">Stay</tspan></text>
+  <text x="96" y="296" font-family="'Space Mono',monospace" font-size="30" fill="#bfe0db">аренда на Ко Пхангане — с фильтром, картой и ценой к рынку</text>
+
+  <!-- подвал -->
+  <text x="96" y="588" font-family="'Space Mono',monospace" font-size="22" fill="#7fa6a4" letter-spacing="2">✦ 9.74°N · 100.01°E · KOH PHANGAN · TELEGRAM + FACEBOOK</text>
+</svg>

@@ -1,0 +1,27 @@
+{
+  "version": "2026-06-24",
+  "note": "Канонические районы Ко Пхангана для нормализации свободных названий из объявлений. Координаты (centroid) перенесены из RW bot/district_centroids.json. aliases — частые написания RU/EN/TH и опечатки; matching делать lowercase + fuzzy.",
+  "districts": [
+    { "canonical": "Thong Sala",        "lat": 9.7117,  "lng": 100.0036, "vibe": "главный город, пирс, сервисы", "aliases": ["thong sala","thongsala","tong sala","тонгсала","тонг сала","тонгсэла","тхонгсала"] },
+    { "canonical": "Sri Thanu",         "lat": 9.74815, "lng": 99.98834, "vibe": "запад, веллнес/йога, цифровые номады", "aliases": ["sri thanu","srithanu","sri tanu","шритану","ситану","сри тану","сритану"] },
+    { "canonical": "Hin Kong",          "lat": 9.748,   "lng": 99.9785,  "vibe": "запад, закаты, спокойно", "aliases": ["hin kong","hinkong","хинконг","хин конг"] },
+    { "canonical": "Wok Tum",           "lat": 9.7384,  "lng": 99.99801, "vibe": "запад, тихо", "aliases": ["wok tum","woktum","вок тум","воктум"] },
+    { "canonical": "Nai Wok",           "lat": 9.71969, "lng": 99.98279, "vibe": "у Тонгсалы, запад", "aliases": ["nai wok","naiwok","най вок"] },
+    { "canonical": "Madeua Wan",        "lat": 9.7399,  "lng": 100.00239,"vibe": "центр-запад", "aliases": ["madeua wan","madeau wan","madua wan","madurwan","madurwan road","мадеуа ван","мадуа ван","мадурван"] },
+    { "canonical": "Ban Tai",           "lat": 9.70751, "lng": 100.01629,"vibe": "юг, баланс тусовки и тишины", "aliases": ["ban tai","baan tai","bantai","бан тай","баан тай","бантай"] },
+    { "canonical": "Ban Khai",          "lat": 9.69669, "lng": 100.04153,"vibe": "юг, побережье", "aliases": ["ban khai","baan kai","ban kai","bankai","бан кай","баан кай","банкай"] },
+    { "canonical": "Haad Rin",          "lat": 9.67207, "lng": 100.06994,"vibe": "юго-восток, Full Moon Party", "aliases": ["haad rin","hat rin","had rin","haadrin","хаад рин","хатрин","хад рин","хаадрин"] },
+    { "canonical": "Ban Nai Suan",      "lat": 9.72119, "lng": 100.00967,"vibe": "центр-юг", "aliases": ["ban nai suan","baan nai suan","бан най суан"] },
+    { "canonical": "Khao Khao Haeng",   "lat": 9.71424, "lng": 100.01578,"vibe": "центр", "aliases": ["khao khao haeng","khao haeng","кхао кхао хэнг"] },
+    { "canonical": "Ban Nok",           "lat": 9.74,    "lng": 100.015,  "vibe": "центр-север", "aliases": ["ban nok","baan nok","бан нок"] },
+    { "canonical": "Coconut Lane",      "lat": 9.753,   "lng": 99.9885,  "vibe": "у Шритану", "aliases": ["coconut lane","coconut","кокос лейн","коконат лейн","кокосовая аллея"] },
+    { "canonical": "Haad Yao",          "lat": 9.77653, "lng": 99.9701,  "vibe": "северо-запад, закаты, пляж", "aliases": ["haad yao","hat yao","haadyao","хаад яо","хад яо","хаадяо"] },
+    { "canonical": "Haad Salad",        "lat": 9.78478, "lng": 99.98158, "vibe": "северо-запад, тихий пляж", "aliases": ["haad salad","hat salad","хаад салад","хад салад"] },
+    { "canonical": "Mae Haad",          "lat": 9.79613, "lng": 99.98464, "vibe": "северо-запад, остров Ко Ма", "aliases": ["mae haad","mae hat","maehaad","мае хаад","мэ хаад","мае хад"] },
+    { "canonical": "Chaloklum",         "lat": 9.78274, "lng": 100.01099,"vibe": "север, рыбацкая деревня", "aliases": ["chaloklum","chalok lam","chalok lum","chaloklam","чалоклум","чалок лам","чалоклам"] },
+    { "canonical": "Bottle Beach",      "lat": 9.8124,  "lng": 100.0454, "vibe": "север, труднодоступный пляж (Haad Khuat)", "aliases": ["bottle beach","haad khuat","hat khuat","ботл бич","боттл бич"] },
+    { "canonical": "Thong Nai Pan Yai", "lat": 9.7615,  "lng": 100.0788, "vibe": "северо-восток, премиум", "aliases": ["thong nai pan","thong nai pan yai","тонг най пан","тхонг най пан","тонгнайпан"] },
+    { "canonical": "Thong Nai Pan Noi", "lat": 9.7717,  "lng": 100.0813, "vibe": "северо-восток, премиум, бухта поменьше", "aliases": ["thong nai pan noi","тонг най пан ной"] },
+    { "canonical": "Than Sadet",        "lat": 9.7257,  "lng": 100.0764, "vibe": "восток, водопады, дикий", "aliases": ["than sadet","then sadet","thansadet","тан садет","тен садет"] }
+  ]
+}

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SabaiStay — аренда жилья на Ко Пхангане с фильтром и картой</title>
+<meta name="description" content="Все объявления об аренде на острове Ко Пханган из Telegram и Facebook в одном месте — с нормальным фильтром по району, цене, спальням и удобствам, картой и сравнением с рынком.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="SabaiStay — аренда жилья на Ко Пхангане с фильтром">
+<meta property="og:description" content="Объявления Пхангана из Telegram и Facebook — с фильтром, картой и ценой к рынку. Поделись ссылкой на свой поиск.">
+<meta property="og:image" content="/og.png">
+<meta property="og:url" content="/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0d3b3a">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2226%22%20r%3D%2212%22%20fill%3D%22%23ef6c45%22/%3E%3Cg%20stroke%3D%22%230d5563%22%20stroke-linecap%3D%22round%22%20fill%3D%22none%22%3E%3Cline%20x1%3D%228%22%20y1%3D%2240%22%20x2%3D%2256%22%20y2%3D%2240%22%20stroke-width%3D%223.4%22/%3E%3Cline%20x1%3D%2214%22%20y1%3D%2247%22%20x2%3D%2250%22%20y2%3D%2247%22%20stroke-width%3D%222.8%22%20opacity%3D%22.55%22/%3E%3Cline%20x1%3D%2221%22%20y1%3D%2253%22%20x2%3D%2243%22%20y2%3D%2253%22%20stroke-width%3D%222.8%22%20opacity%3D%22.3%22/%3E%3C/g%3E%3C/svg%3E">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sea-deep:#0a3742; --sea:#0d5563; --paper:#eaeee6; --surface:#f7f9f3;
+    --land:#e4dcc4; --coral:#ef6c45; --coral-d:#d8552f; --ink:#0e2329;
+    --muted:#5d7077; --hair:#cbd4cc;
+    --sand:#e8d9b8;
+    --disp:"Baloo 2",system-ui,sans-serif;
+    --mono:"Space Mono",ui-monospace,monospace;
+    --body:system-ui,-apple-system,"Segoe UI",sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:var(--body);color:var(--ink);background:var(--paper)}
+
+  /* ── шапка: панель глубокого залива ── */
+  .top{background:var(--sea-deep);color:#eef4f2;padding:13px 22px 12px;border-bottom:3px solid var(--coral)}
+  .top .brand{display:flex;align-items:center;gap:7px 13px;flex-wrap:wrap}
+  .brandmark{width:30px;height:30px;flex:0 0 auto;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
+  .mark{font-family:var(--disp);font-weight:800;font-size:25px;letter-spacing:-.2px;color:#fff;line-height:1}
+  .mark .m2{color:var(--coral)}
+  .tagline{font-size:13px;color:#9fc0bd;max-width:none}
+  .coordbar{margin-left:auto;font-family:var(--mono);font-size:11px;color:#7fa6a4;letter-spacing:.5px;display:flex;gap:14px;align-items:center}
+  .compass{font-size:13px;color:var(--coral)}
+  .snap{color:#cfe0dd}
+
+  /* ── фильтр: приборная панель карты ── */
+  .filters{display:flex;flex-wrap:wrap;gap:16px 18px;padding:12px 22px;background:var(--surface);border-bottom:1px solid var(--hair);align-items:flex-end}
+  .filters .f{display:flex;flex-direction:column;gap:4px}
+  .filters label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+  .filters select,.filters input{font-family:var(--body);font-size:14px;padding:7px 9px;border:1px solid var(--hair);border-radius:9px;background:#fff;color:var(--ink);min-width:130px}
+  .filters select:focus,.filters input:focus{outline:2px solid var(--sea);outline-offset:1px;border-color:var(--sea)}
+  .chk{flex-direction:row!important;align-items:center;gap:7px;font-family:var(--body);font-size:14px;color:var(--ink);padding-bottom:7px}
+  .chk input{width:17px;height:17px;accent-color:var(--coral)}
+  .reset{font-family:var(--mono);font-size:11px;color:var(--sea);background:none;border:none;cursor:pointer;padding-bottom:9px;text-transform:uppercase;letter-spacing:.6px}
+  .reset:hover{color:var(--coral)}
+
+  /* ── полотно ── */
+  .wrap{display:flex;height:calc(100vh - 132px)}
+  .list{width:44%;min-width:330px;overflow-y:auto;padding:14px 14px 40px;background:var(--paper)}
+  #map{flex:1;height:100%;background:var(--land)}
+  .count{font-family:var(--mono);font-size:11px;color:var(--muted);padding:2px 4px 11px;letter-spacing:.4px;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  .rcount{font-weight:700;color:var(--sea)}
+  .chip{font-family:var(--mono);font-size:11px;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:20px;padding:3px 9px;cursor:pointer;letter-spacing:.2px}
+  .chip:hover{border-color:var(--coral);color:var(--coral)}
+  .chip .x{color:var(--muted);margin-left:3px}
+  .listfoot{font-family:var(--mono);font-size:11px;color:var(--muted);padding:16px 6px 24px;border-top:1px solid var(--line);margin-top:12px;line-height:1.9}
+  .listfoot a{color:var(--sea);text-decoration:none}
+  .listfoot a:hover{color:var(--coral);text-decoration:underline}
+  a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
+
+  /* ── карточка-«отметка на карте» ── */
+  .card{background:var(--surface);border:1px solid var(--hair);border-radius:13px;padding:13px 15px;margin-bottom:11px;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .15s}
+  .card:hover,.card.active{border-color:var(--coral);box-shadow:0 4px 16px rgba(14,35,41,.09)}
+  .card.active{transform:translateX(2px)}
+  .coord{font-family:var(--mono);font-size:11px;color:var(--sea);letter-spacing:.3px;display:flex;gap:7px;align-items:center}
+  .coord .nogeo{color:var(--muted)}
+  .title{font-family:var(--disp);font-weight:600;font-size:16.5px;line-height:1.22;margin:5px 0 7px}
+  .specs{font-size:13px;color:var(--muted);display:flex;gap:13px;flex-wrap:wrap}
+  .amen{margin-top:8px;font-size:15px;letter-spacing:3px;line-height:1}
+  .foot{display:flex;justify-content:space-between;align-items:baseline;margin-top:11px;gap:10px}
+  .price{font-family:var(--mono);font-weight:700;font-size:16px;color:var(--coral-d)}
+  .price small{font-weight:400;font-size:11px;color:var(--muted)}
+  .price.none{color:var(--muted);font-weight:400;font-size:13px}
+  .priceblock{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+  .bench{font-family:var(--mono);font-size:11px;font-weight:700;border-radius:5px;padding:1px 6px;white-space:nowrap}
+  .bench-cheap{background:#e0efe4;color:#2f7d46}
+  .bench-pricey{background:#fbe4dc;color:var(--coral-d)}
+  .bench-market{background:#eceee7;color:var(--muted)}
+  .ref{margin-top:7px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .ref .seed{opacity:.65;font-style:italic}
+  .srcs{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+  .src{font-family:var(--mono);font-size:11px;color:var(--sea);text-decoration:none;white-space:nowrap}
+  .src:hover{color:var(--coral);text-decoration:underline}
+  .multi{font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;background:var(--sea);border-radius:5px;padding:1px 6px;letter-spacing:.3px;white-space:nowrap}
+  .draft{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#fff;background:var(--muted);border-radius:4px;padding:1px 5px;vertical-align:middle}
+  .fresh-badge{font-family:var(--mono);font-size:10px;font-weight:700;border-radius:5px;padding:1px 6px;letter-spacing:.2px;white-space:nowrap;margin-left:auto}
+  .fb-fresh{background:#dcefe1;color:#2f7d46}
+  .fb-recent{background:#e9f0e2;color:#5d7a48}
+  .fb-old{background:#f1ecdd;color:#8a763a}
+  .fb-stale{background:#efe3df;color:#9a6450}
+  .fb-unknown{background:#eceee7;color:var(--muted)}
+  .card.stale{opacity:.58}
+  .card.stale:hover,.card.stale.active{opacity:1}
+  .sounding.dim{background:var(--muted);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  .empty{padding:42px 22px;text-align:center;color:var(--muted)}
+  .empty .big{font-size:30px;display:block;margin-bottom:8px}
+  .empty b{display:block;font-family:var(--disp);font-size:16px;color:var(--ink);margin-bottom:4px}
+  .empty .clear{margin-top:14px;font-family:var(--mono);font-size:12px;color:#fff;background:var(--coral);border:none;border-radius:8px;padding:8px 16px;cursor:pointer}
+
+  /* ── пины-«глубины» на карте ── */
+  .sounding{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:11px;color:#fff;background:var(--coral);border:2px solid #fff;border-radius:11px;height:22px;padding:0 7px;box-shadow:0 1px 4px rgba(0,0,0,.3);white-space:nowrap;transition:transform .12s}
+  .sounding.hot{transform:scale(1.22);background:var(--coral-d);z-index:1000}
+
+  /* анимация появления только при первой отрисовке */
+  .anim .card{animation:rise .4s ease both;animation-delay:calc(var(--i)*35ms)}
+  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+  @media (max-width:760px){
+    .wrap{flex-direction:column;height:auto}
+    .list{width:100%;min-width:0;order:2;max-height:none}
+    #map{order:1;height:44vh;width:100%}
+    .brand{flex-wrap:wrap;gap:6px 12px}
+    .tagline{font-size:12px;flex-basis:100%;order:3}
+    .coordbar{margin-left:auto}
+    .geo,.compass{display:none}
+    .filters{flex-wrap:nowrap;overflow-x:auto;gap:12px;-webkit-overflow-scrolling:touch;padding-bottom:14px}
+    .filters .f,.filters .chk,.reset{flex:0 0 auto}
+    .filters select,.filters input{min-width:124px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <svg class="brandmark" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="26" r="12" fill="#ef6c45"/><g stroke="#bfe0db" stroke-linecap="round" fill="none"><line x1="8" y1="40" x2="56" y2="40" stroke-width="3.4"/><line x1="14" y1="47" x2="50" y2="47" stroke-width="2.8" opacity=".55"/><line x1="21" y1="53" x2="43" y2="53" stroke-width="2.8" opacity=".3"/></g></svg>
+    <span class="mark">Sabai<span class="m2">Stay</span></span>
+    <span class="tagline">все объявления Пхангана из Telegram и Facebook — с фильтром, картой и ценой к рынку</span>
+    <span class="coordbar"><span class="compass">✦&nbsp;N</span><span class="geo">9.74°N · 100.01°E</span><span class="snap">снимок 25 июл 2025</span><span id="count2"></span></span>
+  </div>
+</header>
+
+<section class="filters" aria-label="Фильтр">
+  <div class="f"><label for="f-district">Район</label>
+    <select id="f-district"><option value="">весь остров</option></select></div>
+  <div class="f"><label for="f-price">Цена до, ฿/мес</label>
+    <input id="f-price" type="number" step="5000" placeholder="без лимита"></div>
+  <div class="f"><label for="f-bed">Спален от</label>
+    <select id="f-bed"><option value="">любое</option><option>1</option><option>2</option><option>3</option></select></div>
+  <div class="f"><label for="f-type">Тип жилья</label>
+    <select id="f-type"><option value="">любой</option><option value="villa">вилла</option><option value="house">дом</option><option value="room">комната</option><option value="other">другое</option></select></div>
+  <label class="chk"><input type="checkbox" class="f-am" value="pool"> 🏊 бассейн</label>
+  <label class="chk"><input type="checkbox" class="f-am" value="seaview"> 🌊 море</label>
+  <label class="chk"><input type="checkbox" class="f-am" value="wifi"> 📶 wi-fi</label>
+  <label class="chk"><input type="checkbox" class="f-am" value="kitchen"> 🍳 кухня</label>
+  <label class="chk"><input type="checkbox" class="f-am" value="aircon"> ❄️ кондей</label>
+  <label class="chk"><input type="checkbox" id="f-stale"> скрыть неактуальные</label>
+  <div class="f"><label for="f-sort">Сортировка</label>
+    <select id="f-sort"><option value="">сначала свежие</option><option value="cheap">сначала дешёвые</option><option value="pricey">сначала дорогие</option></select></div>
+  <button class="reset" id="reset">сбросить</button>
+</section>
+
+<div class="wrap">
+  <div class="list"><div class="count" id="count"></div><div id="cards"></div>
+    <footer class="listfoot">Источники: Telegram + Facebook · каждое объявление ведёт в оригинал · снимок 25 июл 2025<br><a href="privacy.html">Приватность</a> · <a href="privacy.html#remove">Убрать объявление</a></footer>
+  </div>
+  <div id="map"></div>
+</div>
+
+<script>
+const DATA = [{"sources": [{"source": "telegram", "source_url": "https://t.me/koh_phangan_rent/792"}], "dup": 1, "title": "Дом 2 спальни, Hin Kong", "district": "Hin Kong", "price": 35000, "period": "month", "bedrooms": 2, "type": "house", "amenities": {"pool": false, "wifi": false, "kitchen": true, "aircon": false, "motorbike": false, "seaview": false, "washing_machine": false, "pets_allowed": false}, "confidence": 0.95, "posted_at": "2025-07-25", "fresh": {"status": "active", "age_days": 0, "label": "сегодня", "cls": "fresh", "stale": false}, "lat": 9.739, "lng": 99.9695, "bench": {"monthly_median": 40000, "pct": -12, "kind": "cheap", "label": "−12% к рынку", "airbnb_adr": 1800, "booking_adr": 2000, "seed": true}}, {"sources": [{"source": "telegram", "source_url": "https://t.me/koh_phangan_rent/791"}], "dup": 1, "title": "Дом 2 спальни", "district": null, "price": 40000, "period": "month", "bedrooms": 2, "type": "house", "amenities": {"pool": false, "wifi": false, "kitchen": false, "aircon": false, "motorbike": false, "seaview": false, "washing_machine": false, "pets_allowed": false}, "confidence": 0.7, "posted_at": "2025-04-18", "fresh": {"status": "expired", "age_days": 98, "label": "🔴 неактуально", "cls": "stale", "stale": true}, "lat": null, "lng": null, "bench": null}, {"sources": [{"source": "telegram", "source_url": "https://t.me/koh_phangan_rent/784"}], "dup": 1, "title": "Вилла 1 спальня, Hin Kong", "district": "Hin Kong", "price": 37000, "period": "month", "bedrooms": 1, "type": "villa", "amenities": {"pool": false, "wifi": true, "kitchen": true, "aircon": true, "motorbike": false, "seaview": false, "washing_machine": false, "pets_allowed": false}, "confidence": 0.96, "posted_at": "2025-04-01", "fresh": {"status": "expired", "age_days": 115, "label": "🔴 неактуально", "cls": "stale", "stale": true}, "lat": 9.7435, "lng": 99.9695, "bench": {"monthly_median": 20000, "pct": 85, "kind": "pricey", "label": "+85% к рынку", "airbnb_adr": 1800, "booking_adr": 2000, "seed": true}}, {"sources": [{"source": "telegram", "source_url": "https://t.me/koh_phangan_rent/777"}], "dup": 1, "title": "1 спальня, Sri Thanu", "district": "Sri Thanu", "price": 34000, "period": "month", "bedrooms": 1, "type": "other", "amenities": {"pool": false, "wifi": false, "kitchen": false, "aircon": false, "motorbike": false, "seaview": false, "washing_machine": false, "pets_allowed": false}, "confidence": 0.9, "posted_at": "2025-03-31", "fresh": {"status": "expired", "age_days": 116, "label": "🔴 неактуально", "cls": "stale", "stale": true}, "lat": 9.73915, "lng": 99.97934, "bench": {"monthly_median": 25000, "pct": 36, "kind": "pricey", "label": "+36% к рынку", "airbnb_adr": 2200, "booking_adr": 2500, "seed": true}}, {"sources": [{"source": "telegram", "source_url": "https://t.me/koh_phangan_rent/771"}], "dup": 1, "title": "Wok Tum", "district": "Wok Tum", "price": 30000, "period": "month", "bedrooms": null, "type": "other", "amenities": {"pool": false, "wifi": false, "kitchen": false, "aircon": false, "motorbike": false, "seaview": false, "washing_machine": false, "pets_allowed": false}, "confidence": 0.8, "posted_at": "2025-03-28", "fresh": {"status": "expired", "age_days": 119, "label": "🔴 неактуально", "cls": "stale", "stale": true}, "lat": 9.7294, "lng": 99.98901, "bench": {"monthly_median": 32000, "pct": -6, "kind": "market", "label": "≈ рынок", "airbnb_adr": 1600, "booking_adr": 1800, "seed": true}}, {"sources": [{"source": "telegram", "source_url": "https://t.me/koh_phangan_rent/764"}], "dup": 1, "title": "Комнаты, Thong Sala", "district": "Thong Sala", "price": 25000, "period": "month", "bedrooms": null, "type": "room", "amenities": {"pool": false, "wifi": false, "kitchen": false, "aircon": false, "motorbike": false, "seaview": false, "washing_machine": false, "pets_allowed": false}, "confidence": 0.75, "posted_at": "2025-03-11", "fresh": {"status": "expired", "age_days": 136, "label": "🔴 неактуально", "cls": "stale", "stale": true}, "lat": 9.7027, "lng": 99.9946, "bench": {"monthly_median": 30000, "pct": -17, "kind": "cheap", "label": "−17% к рынку", "airbnb_adr": 1300, "booking_adr": 1500, "seed": true}}, {"sources": [{"source": "telegram", "source_url": "https://t.me/koh_phangan_rent/763"}], "dup": 1, "title": "Объявление", "district": null, "price": 45000, "period": "month", "bedrooms": null, "type": "other", "amenities": {"pool": false, "wifi": false, "kitchen": false, "aircon": false, "motorbike": false, "seaview": false, "washing_machine": false, "pets_allowed": false}, "confidence": 0.6, "posted_at": "2025-03-09", "fresh": {"status": "expired", "age_days": 138, "label": "🔴 неактуально", "cls": "stale", "stale": true}, "lat": null, "lng": null, "bench": null}, {"sources": [{"source": "telegram", "source_url": "https://t.me/koh_phangan_rent/728"}], "dup": 1, "title": "Madeua Wan", "district": "Madeua Wan", "price": 15000, "period": "month", "bedrooms": null, "type": "other", "amenities": {"pool": false, "wifi": false, "kitchen": false, "aircon": false, "motorbike": false, "seaview": false, "washing_machine": false, "pets_allowed": false}, "confidence": 0.8, "posted_at": "2025-03-08", "fresh": {"status": "expired", "age_days": 139, "label": "🔴 неактуально", "cls": "stale", "stale": true}, "lat": 9.7309, "lng": 99.99339, "bench": {"monthly_median": 33000, "pct": -55, "kind": "cheap", "label": "−55% к рынку", "airbnb_adr": 1700, "booking_adr": 1900, "seed": true}}, {"sources": [{"source": "telegram", "source_url": "https://t.me/koh_phangan_rent/723"}], "dup": 1, "title": "Haad Yao", "district": "Haad Yao", "price": 25000, "period": "month", "bedrooms": null, "type": "other", "amenities": {"pool": false, "wifi": false, "kitchen": false, "aircon": false, "motorbike": false, "seaview": false, "washing_machine": false, "pets_allowed": false}, "confidence": 0.85, "posted_at": "2025-03-07", "fresh": {"status": "expired", "age_days": 140, "label": "🔴 неактуально", "cls": "stale", "stale": true}, "lat": 9.76753, "lng": 99.9611, "bench": {"monthly_median": 38000, "pct": -34, "kind": "cheap", "label": "−34% к рынку", "airbnb_adr": 2400, "booking_adr": 2700, "seed": true}}, {"sources": [{"source": "telegram", "source_url": "https://t.me/koh_phangan_rent/714"}], "dup": 1, "title": "Thong Sala", "district": "Thong Sala", "price": null, "period": "month", "bedrooms": null, "type": "other", "amenities": {"pool": false, "wifi": false, "kitchen": false, "aircon": false, "motorbike": false, "seaview": false, "washing_machine": false, "pets_allowed": false}, "confidence": 0.4, "posted_at": "2025-03-07", "fresh": {"status": "expired", "age_days": 140, "label": "🔴 неактуально", "cls": "stale", "stale": true}, "lat": 9.7072, "lng": 99.9946, "bench": null}, {"sources": [{"source": "telegram", "source_url": "https://t.me/koh_phangan_rent/712"}], "dup": 1, "title": "Дом 2 спальни, Chaloklum", "district": "Chaloklum", "price": 40000, "period": "month", "bedrooms": 2, "type": "house", "amenities": {"pool": false, "wifi": false, "kitchen": false, "aircon": false, "motorbike": false, "seaview": false, "washing_machine": false, "pets_allowed": false}, "confidence": 0.92, "posted_at": "2025-03-06", "fresh": {"status": "expired", "age_days": 141, "label": "🔴 неактуально", "cls": "stale", "stale": true}, "lat": 9.77374, "lng": 100.00199, "bench": {"monthly_median": 35000, "pct": 14, "kind": "pricey", "label": "+14% к рынку", "airbnb_adr": 1400, "booking_adr": 1600, "seed": true}}, {"sources": [{"source": "telegram", "source_url": "https://t.me/koh_phangan_rent/702"}], "dup": 1, "title": "Вилла 2 спальни с видом, Sri Thanu", "district": "Sri Thanu", "price": 65000, "period": "month", "bedrooms": 2, "type": "villa", "amenities": {"pool": false, "wifi": false, "kitchen": false, "aircon": false, "motorbike": false, "seaview": true, "washing_machine": false, "pets_allowed": false}, "confidence": 0.88, "posted_at": "2025-03-06", "fresh": {"status": "expired", "age_days": 141, "label": "🔴 неактуально", "cls": "stale", "stale": true}, "lat": 9.74365, "lng": 99.97934, "bench": {"monthly_median": 50000, "pct": 30, "kind": "pricey", "label": "+30% к рынку", "airbnb_adr": 2200, "booking_adr": 2500, "seed": true}}, {"sources": [{"source": "telegram", "source_url": "https://t.me/koh_phangan_rent/701"}], "dup": 1, "title": "1 спальня, Chaloklum", "district": "Chaloklum", "price": 18000, "period": "month", "bedrooms": 1, "type": "other", "amenities": {"pool": false, "wifi": false, "kitchen": false, "aircon": false, "motorbike": false, "seaview": false, "washing_machine": false, "pets_allowed": false}, "confidence": 0.85, "posted_at": "2025-03-03", "fresh": {"status": "expired", "age_days": 144, "label": "🔴 неактуально", "cls": "stale", "stale": true}, "lat": 9.77824, "lng": 100.00199, "bench": {"monthly_median": 16000, "pct": 12, "kind": "pricey", "label": "+12% к рынку", "airbnb_adr": 1400, "booking_adr": 1600, "seed": true}}, {"sources": [{"source": "telegram", "source_url": "https://t.me/koh_phangan_rent/700"}], "dup": 1, "title": "Объявление", "district": null, "price": 45000, "period": "month", "bedrooms": null, "type": "other", "amenities": {"pool": false, "wifi": false, "kitchen": false, "aircon": false, "motorbike": false, "seaview": false, "washing_machine": false, "pets_allowed": false}, "confidence": 0.3, "posted_at": "2025-03-02", "fresh": {"status": "expired", "age_days": 145, "label": "🔴 неактуально", "cls": "stale", "stale": true}, "lat": null, "lng": null, "bench": null}, {"sources": [{"source": "telegram", "source_url": "https://t.me/koh_phangan_rent/699"}], "dup": 1, "title": "Вилла 3 спальни с бассейном, север острова", "district": null, "price": 260000, "period": "month", "bedrooms": 3, "type": "villa", "amenities": {"pool": true, "wifi": true, "kitchen": false, "aircon": false, "motorbike": false, "seaview": true, "washing_machine": false, "pets_allowed": false}, "confidence": 0.7, "posted_at": "2025-03-02", "fresh": {"status": "expired", "age_days": 145, "label": "🔴 неактуально", "cls": "stale", "stale": true}, "lat": null, "lng": null, "bench": null}, {"sources": [{"source": "telegram", "source_url": "https://t.me/koh_phangan_rent/698"}], "dup": 1, "title": "Большой дом 2 спальни, Ban Tai", "district": "Ban Tai", "price": 70000, "period": "month", "bedrooms": 2, "type": "house", "amenities": {"pool": false, "wifi": false, "kitchen": false, "aircon": false, "motorbike": false, "seaview": false, "washing_machine": false, "pets_allowed": false}, "confidence": 0.9, "posted_at": "2025-03-01", "fresh": {"status": "expired", "age_days": 146, "label": "🔴 неактуально", "cls": "stale", "stale": true}, "lat": 9.69851, "lng": 100.00729, "bench": {"monthly_median": 42000, "pct": 67, "kind": "pricey", "label": "+67% к рынку", "airbnb_adr": 1900, "booking_adr": 2100, "seed": true}}, {"sources": [{"source": "telegram", "source_url": "https://t.me/koh_phangan_rent/688"}], "dup": 1, "title": "2 спальни, Thong Nai Pan Noi", "district": "Thong Nai Pan Noi", "price": 20000, "period": "month", "bedrooms": 2, "type": "other", "amenities": {"pool": false, "wifi": false, "kitchen": false, "aircon": false, "motorbike": false, "seaview": false, "washing_machine": false, "pets_allowed": false}, "confidence": 0.9, "posted_at": "2025-03-01", "fresh": {"status": "expired", "age_days": 146, "label": "🔴 неактуально", "cls": "stale", "stale": true}, "lat": 9.7627, "lng": 100.0723, "bench": {"monthly_median": 68000, "pct": -71, "kind": "cheap", "label": "−71% к рынку", "airbnb_adr": 3700, "booking_adr": 4200, "seed": true}}];
+const TYPE={villa:"вилла",house:"дом",room:"комната",studio:"студия",bungalow:"бунгало",apartment:"апартаменты",land:"участок",other:"жильё"};
+const AM={pool:"🏊",wifi:"📶",kitchen:"🍳",aircon:"❄️",seaview:"🌊"};
+const PERIOD={month:"/мес",night:"/ночь",sale:""};
+const SRC={telegram:"Telegram",fb_group:"Facebook",fb_marketplace:"Facebook",booking:"Booking",airbnb:"Airbnb",manual:"вручную"};
+const SRCICON={telegram:"📨",fb_group:"📘",fb_marketplace:"📘",booking:"🏨",airbnb:"🛏"};
+const compact=n=>n>=1000?(n/1000)+"k":(""+n);
+const priceFull=n=>n==null?null:n.toLocaleString("ru-RU");
+const firstUrl=d=>d.sources[0].source_url;
+function sourcesHtml(arr){
+  if(arr.length===1){const s=arr[0];return '<a class="src" href="'+s.source_url+'" target="_blank" rel="noopener">↗ '+(SRC[s.source]||"оригинал")+'</a>';}
+  return '<span class="multi">🔗 '+arr.length+' источника</span>'+arr.map(s=>'<a class="src" title="'+(SRC[s.source]||"источник")+'" href="'+s.source_url+'" target="_blank" rel="noopener">'+(SRCICON[s.source]||"↗")+'</a>').join("");
+}
+
+// карта — тихие тайлы CartoDB Positron под «бумагу карты»
+const map=L.map('map',{zoomControl:true}).setView([9.745,100.01],12);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+  {attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19}).addTo(map);
+let markers={};
+
+// район-дропдаун из реальных данных
+[...new Set(DATA.filter(d=>d.district).map(d=>d.district))].sort().forEach(d=>{
+  const o=document.createElement('option');o.value=d;o.textContent=d;document.getElementById('f-district').appendChild(o);
+});
+
+const AMLABEL={pool:'🏊 бассейн',seaview:'🌊 море',wifi:'📶 wi-fi',kitchen:'🍳 кухня',aircon:'❄️ кондей'};
+function readF(){return{
+  district:document.getElementById('f-district').value,
+  price:+document.getElementById('f-price').value||0,
+  bed:+document.getElementById('f-bed').value||0,
+  type:document.getElementById('f-type').value,
+  amenities:Array.from(document.querySelectorAll('.f-am:checked')).map(e=>e.value),
+  hideStale:document.getElementById('f-stale').checked};}
+function passes(d,f){
+  if(f.district&&d.district!==f.district)return false;
+  if(f.price&&(d.price==null||d.price>f.price))return false;
+  if(f.bed&&(d.bedrooms==null||d.bedrooms<f.bed))return false;
+  if(f.type&&d.type!==f.type)return false;
+  for(const a of f.amenities){if(!d.amenities[a])return false;}
+  if(f.hideStale&&d.fresh.stale)return false;
+  return true;}
+const amen=a=>Object.keys(AM).filter(k=>a[k]).map(k=>AM[k]).join(" ");
+
+function render(first){
+  const f=readF(), cards=document.getElementById('cards');
+  cards.innerHTML=""; cards.classList.toggle('anim',!!first);
+  Object.values(markers).forEach(m=>map.removeLayer(m)); markers={};
+  let shown=0,noGeo=0,i=0;
+  let view=DATA.map(d=>d);
+  const sortV=document.getElementById('f-sort').value;
+  if(sortV==='cheap')view.sort((a,b)=>(a.price==null?Infinity:a.price)-(b.price==null?Infinity:b.price));
+  else if(sortV==='pricey')view.sort((a,b)=>(b.price==null?-1:b.price)-(a.price==null?-1:a.price));
+  else if(sortV==='fresh')view.sort((a,b)=>String(b.posted_at||'').localeCompare(String(a.posted_at||'')));
+  view.forEach((d)=>{
+    if(!passes(d,f))return; shown++;
+    const key=shown;
+    const card=document.createElement('article'); card.className="card"+(d.fresh.stale?" stale":""); card.style.setProperty('--i',i++);
+    const fb='<span class="fresh-badge fb-'+d.fresh.cls+'">'+d.fresh.label+'</span>';
+    const coord=(d.lat!=null
+      ? '<span>'+d.district+'</span><span>'+d.lat.toFixed(3)+', '+d.lng.toFixed(3)+'</span>'
+      : '<span class="nogeo">📍 позиция не указана</span>')+fb;
+    const draft=d.confidence<0.6?' <span class="draft">черновик</span>':'';
+    const unit=PERIOD[d.period]!=null?PERIOD[d.period]:'';
+    const price=d.price!=null
+      ? '<span class="price">'+priceFull(d.price)+' ฿<small>'+unit+'</small></span>'
+      : '<span class="price none">цена не указана</span>';
+    const b=d.bench;
+    const benchBadge=b?'<span class="bench bench-'+b.kind+'" title="медиана района: '+priceFull(b.monthly_median)+' ฿/мес">'+b.label+'</span>':'';
+    const ref=b&&b.airbnb_adr?'<div class="ref">🏨 Airbnb здесь ~'+priceFull(b.airbnb_adr)+'฿/ночь'+(b.seed?' <span class="seed">оценка</span>':'')+'</div>':'';
+    card.innerHTML='<div class="coord">'+coord+'</div>'+
+      '<div class="title">'+d.title+draft+'</div>'+
+      '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span></div>'+
+      (amen(d.amenities)?'<div class="amen">'+amen(d.amenities)+'</div>':'')+ref+
+      '<div class="foot"><span class="priceblock">'+price+benchBadge+'</span><span class="srcs">'+sourcesHtml(d.sources)+'</span></div>';
+    if(d.lat!=null){
+      const icon=L.divIcon({className:'',html:'<div class="sounding'+(d.fresh.stale?' dim':'')+'">'+(d.price!=null?compact(d.price):'·')+'</div>',iconSize:null});
+      const m=L.marker([d.lat,d.lng],{icon}).addTo(map)
+        .bindPopup('<b>'+d.title+'</b><br>'+(d.price!=null?priceFull(d.price)+' ฿'+unit:'цена не указана')+(d.sources.length>1?'<br>'+d.sources.length+' источника':'')+'<br><a href="'+firstUrl(d)+'" target="_blank">оригинал ↗</a>');
+      markers[key]=m;
+      const hot=on=>{const el=m.getElement&&m.getElement();if(el){const s=el.querySelector('.sounding');if(s)s.classList.toggle('hot',on);}};
+      card.onmouseenter=()=>{hot(true);m.openPopup()};
+      card.onmouseleave=()=>hot(false);
+      const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+      card.onclick=()=>{document.querySelectorAll('.card.active').forEach(c=>c.classList.remove('active'));card.classList.add('active');map.flyTo([d.lat,d.lng],14,{duration:rm?0:.5,animate:!rm});m.openPopup()};
+    } else {noGeo++; card.onclick=()=>window.open(firstUrl(d),'_blank');}
+    cards.appendChild(card);
+  });
+  if(!shown)cards.innerHTML='<div class="empty"><span class="big">🧭</span><b>В этих координатах пусто</b>под такой фильтр объявлений нет — ослабь условия<button class="clear" onclick="resetFilters()">сбросить фильтр</button></div>';
+  const word='объявлени'+(shown%10===1&&shown%100!==11?'е':(shown%10>=2&&shown%10<=4&&(shown%100<10||shown%100>=20)?'я':'й'));
+  const tail=noGeo?' · '+noGeo+' без точки':'';
+  const chips=[];
+  if(f.district)chips.push(['district',f.district]);
+  if(f.price)chips.push(['price','до '+priceFull(f.price)+'฿']);
+  if(f.bed)chips.push(['bed','от '+f.bed+' спален']);
+  if(f.type)chips.push(['type',TYPE[f.type]||f.type]);
+  f.amenities.forEach(a=>chips.push(['am:'+a,AMLABEL[a]||a]));
+  if(f.hideStale)chips.push(['stale','без неактуальных']);
+  document.getElementById('count').innerHTML='<span class="rcount">'+shown+' '+word+'</span>'+tail+
+    chips.map(c=>'<button class="chip" onclick="chipClear(\''+c[0]+'\')">'+c[1]+'<span class="x">✕</span></button>').join('');
+  document.getElementById('count2').textContent=shown+'/'+DATA.length;
+  writeHash(f);
+}
+function chipClear(k){
+  if(k.startsWith('am:')){const el=document.querySelector('.f-am[value="'+k.slice(3)+'"]');if(el)el.checked=false;}
+  else if(k==='stale')document.getElementById('f-stale').checked=false;
+  else document.getElementById('f-'+k).value='';
+  render(false);
+}
+function writeHash(f){
+  const p=new URLSearchParams();
+  if(f.district)p.set('district',f.district);
+  if(f.price)p.set('price',f.price);
+  if(f.bed)p.set('bed',f.bed);
+  if(f.type)p.set('type',f.type);
+  if(f.amenities.length)p.set('am',f.amenities.join(','));
+  if(f.hideStale)p.set('stale','1');
+  const sort=document.getElementById('f-sort').value; if(sort)p.set('sort',sort);
+  const s=p.toString();
+  history.replaceState(null,'',s?('#'+s):location.pathname+location.search);
+}
+function applyHash(){
+  if(!location.hash)return;
+  const p=new URLSearchParams(location.hash.slice(1));
+  const set=(id,key)=>{const v=p.get(key);if(v!=null)document.getElementById(id).value=v;};
+  set('f-district','district');set('f-price','price');set('f-bed','bed');set('f-type','type');set('f-sort','sort');
+  const am=p.get('am'); if(am)am.split(',').forEach(v=>{const el=document.querySelector('.f-am[value="'+v+'"]');if(el)el.checked=true;});
+  document.getElementById('f-stale').checked=p.get('stale')==='1';
+}
+function resetFilters(){['f-district','f-price','f-bed','f-type','f-sort'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=false;render(false);}
+['f-district','f-price','f-bed','f-type','f-sort'].forEach(id=>document.getElementById(id).addEventListener('input',()=>render(false)));
+document.querySelectorAll('.f-am, #f-stale').forEach(e=>e.addEventListener('change',()=>render(false)));
+document.getElementById('reset').onclick=resetFilters;
+applyHash();
+render(true);
+</script>
+</body>
+</html>

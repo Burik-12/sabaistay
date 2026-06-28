@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SabaiStayListing",
+  "description": "Структура объявления аренды/продажи жилья на Пхангане, извлечённая из свободного текста объявления. Передаётся Claude как output schema (structured outputs / strict tool use). PDPA-safe: контакт продавца НЕ извлекаем как поле — пользователь идёт в первоисточник.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "is_listing": {
+      "type": "boolean",
+      "description": "true — это реальное объявление о сдаче/продаже конкретного объекта. false — мусор: реклама приложений/услуг, обсуждение, обрывок без цены и объекта, поиск жилья (reverse-пост). Не-объявления в витрину не попадают."
+    },
+    "title": {
+      "type": ["string", "null"],
+      "description": "Короткий заголовок объекта (вилла/дом + район), если можно собрать из текста. Не выдумывать."
+    },
+    "district_raw": {
+      "type": ["string", "null"],
+      "description": "Название района/локации ДОСЛОВНО как в тексте (на любом языке)."
+    },
+    "district_canonical": {
+      "type": ["string", "null"],
+      "description": "Канонический район из списка в системном промпте (газеттир). null если не уверен — не угадывать."
+    },
+    "price_amount": {
+      "type": ["number", "null"],
+      "description": "Числовая цена. Если диапазон — нижняя граница. null если не указана."
+    },
+    "price_currency": {
+      "type": "string",
+      "enum": ["THB", "USD", "EUR", "RUB", "unknown"],
+      "description": "Валюта цены. По умолчанию THB (฿/бат), если из контекста Пхангана не следует иное."
+    },
+    "price_period": {
+      "type": "string",
+      "enum": ["month", "night", "sale", "unknown"],
+      "description": "month — помесячная аренда (฿/мес), night — посуточно, sale — продажа, unknown — неясно."
+    },
+    "bedrooms": { "type": ["integer", "null"], "description": "Число спален. Студия = 0. null если не указано." },
+    "bathrooms": { "type": ["integer", "null"], "description": "Число ванных. null если не указано." },
+    "property_type": {
+      "type": "string",
+      "enum": ["house", "villa", "studio", "bungalow", "apartment", "room", "land", "other"]
+    },
+    "area_sqm": { "type": ["number", "null"], "description": "Площадь дома в кв.м, если указана." },
+    "amenities": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Только то, что явно есть в тексте. Отсутствие упоминания = false, не выдумывать.",
+      "properties": {
+        "pool":      { "type": "boolean" },
+        "wifi":      { "type": "boolean" },
+        "kitchen":   { "type": "boolean" },
+        "aircon":    { "type": "boolean" },
+        "motorbike": { "type": "boolean", "description": "Байк включён в аренду" },
+        "seaview":   { "type": "boolean" },
+        "washing_machine": { "type": "boolean" },
+        "pets_allowed":    { "type": "boolean" }
+      },
+      "required": ["pool", "wifi", "kitchen", "aircon", "motorbike", "seaview", "washing_machine", "pets_allowed"]
+    },
+    "available_from": { "type": ["string", "null"], "format": "date", "description": "Дата доступности (YYYY-MM-DD) если указана." },
+    "available_to":   { "type": ["string", "null"], "format": "date" },
+    "min_stay_months": { "type": ["integer", "null"], "description": "Минимальный срок аренды в месяцах, если указан." },
+    "language": { "type": "string", "enum": ["ru", "en", "th", "mixed", "other"] },
+    "status_hint": {
+      "type": "string",
+      "enum": ["active", "rented", "unknown"],
+      "description": "rented — если в тексте есть 'сдано/rented/taken/больше не актуально'. Иначе active."
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Самооценка уверенности извлечения 0..1. Низкая → строка уйдёт на ручной просмотр."
+    }
+  },
+  "required": [
+    "is_listing", "district_canonical", "price_amount", "price_currency", "price_period",
+    "bedrooms", "property_type", "amenities", "language", "status_hint", "confidence"
+  ]
+}

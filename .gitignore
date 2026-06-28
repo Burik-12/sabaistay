@@ -1,0 +1,32 @@
+# секреты и ключи — НИКОГДА в репозиторий
+.env
+.env.*
+*.session            # Telethon-сессии
+*.session-journal
+secrets/
+cookies/             # cookie-сессии FB-аккаунтов
+*credentials*.json
+
+# данные/выгрузки
+data/sample_*.json
+data/dumps/
+data/subscriptions.ndjson    # подписки пользователей бота (tg_user_id — не коммитим)
+*.sqlite
+*.db
+
+# зависимости / сборка
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.next/
+dist/
+build/
+
+# система
+.DS_Store
+*.log
+
+# скриншоты-превью
+web/_preview.png

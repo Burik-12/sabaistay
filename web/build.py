@@ -187,6 +187,12 @@ HTML = r"""<!DOCTYPE html>
   .sounding.dim{background:var(--muted);box-shadow:0 1px 3px rgba(0,0,0,.25)}
   .contact-btn{font-family:var(--mono);font-size:11px;color:#fff!important;background:var(--sea);border-radius:6px;padding:3px 9px;text-decoration:none!important;white-space:nowrap;letter-spacing:.2px}
   .contact-btn:hover{background:var(--coral)!important}
+  .nogeo-divider{font-family:var(--mono);font-size:11px;color:var(--muted);padding:10px 6px 6px;border-top:2px dashed var(--hair);margin-top:10px;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+  .nogeo-divider:hover{color:var(--sea)}
+  .nogeo-divider .nd-arrow{font-size:10px;transition:transform .2s;margin-left:auto}
+  .nogeo-open .nd-arrow{transform:rotate(180deg)}
+  .nogeo-cards{display:none}
+  .nogeo-cards.open{display:block}
   .empty{padding:42px 22px;text-align:center;color:var(--muted)}
   .empty .big{font-size:30px;display:block;margin-bottom:8px}
   .empty b{display:block;font-family:var(--disp);font-size:16px;color:var(--ink);margin-bottom:4px}
@@ -315,53 +321,65 @@ function passes(d,f){
   return true;}
 const amen=a=>Object.keys(AM).filter(k=>a[k]).map(k=>AM[k]).join(" ");
 
+function makeCard(d,i,key,target){
+  const card=document.createElement('article'); card.className="card"+(d.fresh.stale?" stale":""); card.style.setProperty('--i',i);
+  const fb='<span class="fresh-badge fb-'+d.fresh.cls+'">'+d.fresh.label+'</span>';
+  const dtag=d.district?'<span class="dtag">📍 '+d.district+'</span>':'<span class="dtag nogeo">📍 район не указан</span>';
+  const draft=d.confidence<0.6?' <span class="draft">черновик</span>':'';
+  const unit=PERIOD[d.period]!=null?PERIOD[d.period]:'';
+  const price=d.price!=null
+    ? '<span class="price">'+priceFull(d.price)+' ฿<small>'+unit+'</small></span>'
+    : '<span class="price none">цена не указана</span>';
+  const b=d.bench;
+  const benchBadge=b?'<span class="bench bench-'+b.kind+'" title="медиана района: '+priceFull(b.monthly_median)+' ฿/мес">'+b.label+'</span>':'';
+  const ref=b&&b.airbnb_adr?'<div class="ref">🏨 Airbnb здесь ~'+priceFull(b.airbnb_adr)+'฿/ночь'+(b.seed?' <span class="seed">оценка</span>':'')+'</div>':'';
+  const amenStr=amen(d.amenities);
+  card.setAttribute('data-type',d.type);
+  card.innerHTML='<div class="card-top">'+dtag+fb+'</div>'+
+    '<div class="title">'+d.title+draft+'</div>'+
+    '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span>'+(amenStr?'<span class="spec-amen">'+amenStr+'</span>':'')+'</div>'+
+    ref+
+    '<div class="foot"><span class="priceblock">'+price+benchBadge+'</span><span class="srcs">'+contactBtn(d.contact)+sourcesHtml(d.sources)+'</span></div>';
+  if(d.lat!=null){
+    const icon=L.divIcon({className:'',html:'<div class="sounding'+(d.fresh.stale?' dim':'')+'">'+(d.price!=null?compact(d.price):'·')+'</div>',iconSize:null});
+    const m=L.marker([d.lat,d.lng],{icon}).addTo(map)
+      .bindPopup('<b>'+d.title+'</b><br>'+(TYPE[d.type]||d.type)+(d.bedrooms!=null?' · '+d.bedrooms+' сп.':'')+(amenStr?' '+amenStr:'')+'<br>'+(d.price!=null?priceFull(d.price)+' ฿'+unit:'цена не указана')+(d.sources.length>1?'<br>'+d.sources.length+' источника':'')+'<br><a href="'+firstUrl(d)+'" target="_blank">оригинал ↗</a>');
+    markers[key]=m;
+    const hot=on=>{const el=m.getElement&&m.getElement();if(el){const s=el.querySelector('.sounding');if(s)s.classList.toggle('hot',on);}};
+    card.onmouseenter=()=>{hot(true);m.openPopup()};
+    card.onmouseleave=()=>hot(false);
+    const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    card.onclick=()=>{document.querySelectorAll('.card.active').forEach(c=>c.classList.remove('active'));card.classList.add('active');map.flyTo([d.lat,d.lng],14,{duration:rm?0:.5,animate:!rm});m.openPopup()};
+  } else {card.onclick=()=>window.open(firstUrl(d),'_blank');}
+  target.appendChild(card);
+}
 function render(first){
   const f=readF(), cards=document.getElementById('cards');
   cards.innerHTML=""; cards.classList.toggle('anim',!!first);
   Object.values(markers).forEach(m=>map.removeLayer(m)); markers={};
-  let shown=0,noGeo=0,i=0;
+  let i=0;
   let view=DATA.map(d=>d);
   const sortV=document.getElementById('f-sort').value;
   if(sortV==='cheap')view.sort((a,b)=>(a.price==null?Infinity:a.price)-(b.price==null?Infinity:b.price));
   else if(sortV==='pricey')view.sort((a,b)=>(b.price==null?-1:b.price)-(a.price==null?-1:a.price));
   else if(sortV==='fresh')view.sort((a,b)=>String(b.posted_at||'').localeCompare(String(a.posted_at||'')));
-  view.forEach((d)=>{
-    if(!passes(d,f))return; shown++;
-    const key=shown;
-    const card=document.createElement('article'); card.className="card"+(d.fresh.stale?" stale":""); card.style.setProperty('--i',i++);
-    const fb='<span class="fresh-badge fb-'+d.fresh.cls+'">'+d.fresh.label+'</span>';
-    const dtag=d.district?'<span class="dtag">📍 '+d.district+'</span>':'<span class="dtag nogeo">📍 район неизвестен</span>';
-    const draft=d.confidence<0.6?' <span class="draft">черновик</span>':'';
-    const unit=PERIOD[d.period]!=null?PERIOD[d.period]:'';
-    const price=d.price!=null
-      ? '<span class="price">'+priceFull(d.price)+' ฿<small>'+unit+'</small></span>'
-      : '<span class="price none">цена не указана</span>';
-    const b=d.bench;
-    const benchBadge=b?'<span class="bench bench-'+b.kind+'" title="медиана района: '+priceFull(b.monthly_median)+' ฿/мес">'+b.label+'</span>':'';
-    const ref=b&&b.airbnb_adr?'<div class="ref">🏨 Airbnb здесь ~'+priceFull(b.airbnb_adr)+'฿/ночь'+(b.seed?' <span class="seed">оценка</span>':'')+'</div>':'';
-    const amenStr=amen(d.amenities);
-    card.setAttribute('data-type',d.type);
-    card.innerHTML='<div class="card-top">'+dtag+fb+'</div>'+
-      '<div class="title">'+d.title+draft+'</div>'+
-      '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span>'+(amenStr?'<span class="spec-amen">'+amenStr+'</span>':'')+'</div>'+
-      ref+
-      '<div class="foot"><span class="priceblock">'+price+benchBadge+'</span><span class="srcs">'+contactBtn(d.contact)+sourcesHtml(d.sources)+'</span></div>';
-    if(d.lat!=null){
-      const icon=L.divIcon({className:'',html:'<div class="sounding'+(d.fresh.stale?' dim':'')+'">'+(d.price!=null?compact(d.price):'·')+'</div>',iconSize:null});
-      const m=L.marker([d.lat,d.lng],{icon}).addTo(map)
-        .bindPopup('<b>'+d.title+'</b><br>'+(TYPE[d.type]||d.type)+(d.bedrooms!=null?' · '+d.bedrooms+' сп.':'')+(amenStr?' '+amenStr:'')+'<br>'+(d.price!=null?priceFull(d.price)+' ฿'+unit:'цена не указана')+(d.sources.length>1?'<br>'+d.sources.length+' источника':'')+'<br><a href="'+firstUrl(d)+'" target="_blank">оригинал ↗</a>');
-      markers[key]=m;
-      const hot=on=>{const el=m.getElement&&m.getElement();if(el){const s=el.querySelector('.sounding');if(s)s.classList.toggle('hot',on);}};
-      card.onmouseenter=()=>{hot(true);m.openPopup()};
-      card.onmouseleave=()=>hot(false);
-      const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
-      card.onclick=()=>{document.querySelectorAll('.card.active').forEach(c=>c.classList.remove('active'));card.classList.add('active');map.flyTo([d.lat,d.lng],14,{duration:rm?0:.5,animate:!rm});m.openPopup()};
-    } else {noGeo++; card.onclick=()=>window.open(firstUrl(d),'_blank');}
-    cards.appendChild(card);
-  });
+  const withGeo=[], noGeoArr=[];
+  view.forEach(d=>{if(!passes(d,f))return; (d.lat!=null?withGeo:noGeoArr).push(d);});
+  const shown=withGeo.length+noGeoArr.length;
+  withGeo.forEach((d,idx)=>makeCard(d,i++,idx+1,cards));
+  if(noGeoArr.length>0){
+    const wrap=document.createElement('div'); wrap.id='nogeo-wrap';
+    const btn=document.createElement('div'); btn.className='nogeo-divider'; btn.setAttribute('role','button');
+    btn.innerHTML='📍 Без района — '+noGeoArr.length+' объявлени'+(noGeoArr.length%10===1&&noGeoArr.length%100!==11?'е':(noGeoArr.length%10>=2&&noGeoArr.length%10<=4&&(noGeoArr.length%100<10||noGeoArr.length%100>=20)?'я':'й'))+' (район не указан в тексте) <span class="nd-arrow">▾</span>';
+    const inner=document.createElement('div'); inner.className='nogeo-cards';
+    btn.onclick=()=>{btn.classList.toggle('nogeo-open');inner.classList.toggle('open');};
+    noGeoArr.forEach(d=>makeCard(d,i++,null,inner));
+    wrap.appendChild(btn); wrap.appendChild(inner); cards.appendChild(wrap);
+  }
   if(!shown)cards.innerHTML='<div class="empty"><span class="big">🧭</span><b>В этих координатах пусто</b>под такой фильтр объявлений нет — ослабь условия<button class="clear" onclick="resetFilters()">сбросить фильтр</button></div>';
   const word='объявлени'+(shown%10===1&&shown%100!==11?'е':(shown%10>=2&&shown%10<=4&&(shown%100<10||shown%100>=20)?'я':'й'));
-  const tail=noGeo?' · '+noGeo+' без точки':'';
+  const noGeo=noGeoArr.length;
+  const tail=noGeo?' · '+noGeo+' без района':'';
   const chips=[];
   if(f.district)chips.push(['district',f.district]);
   if(f.price)chips.push(['price','до '+priceFull(f.price)+'฿']);

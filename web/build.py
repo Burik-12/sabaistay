@@ -17,7 +17,7 @@ from urllib.parse import quote
 # Боевой домен для абсолютных ссылок в OG-мете (превью в Telegram/Facebook). Пусто до деплоя —
 # тогда превью-картинка не подтянется при шеринге (мета валидна, но нужен абсолютный URL + PNG).
 # На деплое: задай домен и экспортируй og.svg → og.png (FB/TG не рендерят SVG в og:image).
-SITE_URL = ""
+SITE_URL = "https://sabaistay.co"
 
 # Лого-знак «закат над водой» для фавикона (тёмная бирюза — под светлую вкладку браузера). Канон — web/brand.svg.
 FAVICON_SVG = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'

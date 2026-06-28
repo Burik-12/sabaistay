@@ -336,6 +336,15 @@ details[open] .card-raw-toggle::before{content:'▾ '}
 
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
+/* ── цена за м² ── */
+.price-sqm{font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:5px;white-space:nowrap}
+
+/* ── кнопка наверх ── */
+.scroll-top-btn{position:fixed;bottom:24px;right:20px;width:40px;height:40px;background:var(--sea);color:#fff;border:none;border-radius:50%;font-size:20px;line-height:1;cursor:pointer;opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .2s,transform .2s;z-index:998;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.scroll-top-btn.vis{opacity:.88;pointer-events:auto;transform:translateY(0)}
+.scroll-top-btn:hover{opacity:1;background:var(--sea-deep)}
+html[data-theme="dark"] .scroll-top-btn{box-shadow:0 2px 10px rgba(0,0,0,.5)}
+
 /* ── тёмная тема ── */
 html[data-theme="dark"] {
   --paper:#0e1c20; --surface:#152027; --ink:#d4e8e4; --hair:#263c44;
@@ -412,6 +421,7 @@ html[data-theme="dark"] .vt-btn.active{background:var(--sea);color:#fff;border-c
   <label class="chk"><input type="checkbox" class="f-am" value="aircon"> ❄️ кондей</label>
   <label class="chk"><input type="checkbox" id="f-stale"> скрыть неактуальные</label>
   <label class="chk"><input type="checkbox" id="f-avail"> только с датой заезда</label>
+  <label class="chk"><input type="checkbox" id="f-hide-seen"> скрыть просмотренные</label>
   <div class="f"><label for="f-sort">Сортировка</label>
     <select id="f-sort"><option value="">сначала свежие</option><option value="cheap">сначала дешёвые</option><option value="pricey">сначала дорогие</option><option value="sqm_desc">площадь: больше</option><option value="sqm_asc">площадь: меньше</option></select></div>
   <button class="reset" id="reset">сбросить</button>
@@ -509,6 +519,7 @@ function readF(){return{
   amenities:Array.from(document.querySelectorAll('.f-am:checked')).map(e=>e.value),
   hideStale:document.getElementById('f-stale').checked,
   onlyAvail:document.getElementById('f-avail').checked,
+  hideSeen:document.getElementById('f-hide-seen')?.checked||false,
   search:(document.getElementById('f-search').value||'').trim().toLowerCase()};
 }
 function passes(d,f){
@@ -522,6 +533,7 @@ function passes(d,f){
   for(const a of f.amenities){if(!d.amenities[a])return false;}
   if(f.hideStale&&d.fresh.stale)return false;
   if(f.onlyAvail&&!d.available_from)return false;
+  if(f.hideSeen&&getSeen().has(d.id))return false;
   if(f.search){const hay=(d.title+' '+d.text+' '+(d.district||'')).toLowerCase();if(!hay.includes(f.search))return false;}
   return true;}
 const amen=a=>Object.keys(AM).filter(k=>a[k]).map(k=>AM[k]).join(" ");
@@ -533,8 +545,9 @@ function makeCard(d,i,key,target){
   const dtag=d.district?'<span class="dtag">📍 '+d.district+'</span>':'<span class="dtag nogeo">📍 район не указан</span>';
   const draft=d.confidence<0.6?' <span class="draft">черновик</span>':'';
   const unit=PERIOD[d.period]!=null?PERIOD[d.period]:'';
+  const priceSqmHtml=(d.price&&d.area_sqm)?'<span class="price-sqm">≈'+Math.round(d.price/d.area_sqm).toLocaleString('ru-RU')+'฿/м²</span>':'';
   const price=d.price!=null
-    ? '<span class="price">'+priceFull(d.price)+' ฿<small>'+unit+'</small></span>'
+    ? '<span class="price">'+priceFull(d.price)+' ฿<small>'+unit+'</small></span>'+priceSqmHtml
     : '<span class="price none">цена не указана</span>';
   const b=d.bench;
   const benchBadge=b?'<span class="bench bench-'+b.kind+'" title="медиана района: '+priceFull(b.monthly_median)+' ฿/мес">'+b.label+'</span>':'';
@@ -666,18 +679,28 @@ function render(first){
   if(f.type)chips.push(['type',TYPE[f.type]||f.type]);
   f.amenities.forEach(a=>chips.push(['am:'+a,AMLABEL[a]||a]));
   if(f.hideStale)chips.push(['stale','без неактуальных']);
+  if(f.onlyAvail)chips.push(['avail','с датой заезда']);
+  if(f.hideSeen)chips.push(['hide-seen','скрыть просмотренные']);
+  if(f.sqmMin)chips.push(['sqm-min','от '+f.sqmMin+' м²']);
+  if(f.sqmMax)chips.push(['sqm-max','до '+f.sqmMax+' м²']);
+  if(f.priceMin)chips.push(['price-min','цена от '+priceFull(f.priceMin)+'฿']);
+  if(f.search)chips.push(['search','«'+f.search+'»']);
+  const SORT_LABELS={'cheap':'сначала дешёвые','pricey':'сначала дорогие','fresh':'сначала свежие','sqm_desc':'площадь: больше','sqm_asc':'площадь: меньше'};
+  if(sortV&&SORT_LABELS[sortV])chips.push(['sort',SORT_LABELS[sortV]]);
   document.getElementById('count').innerHTML='<span class="rcount">'+shown+' '+word+'</span>'+tail+
     chips.map(c=>'<button class="chip" onclick="chipClear(\''+c[0]+'\')">'+c[1]+'<span class="x">✕</span></button>').join('');
   document.getElementById('count2').textContent=shown+'/'+DATA.length;
   writeHash(f);
-  const n=(f.district?1:0)+(f.sqmMin?1:0)+(f.sqmMax?1:0)+(f.priceMin?1:0)+(f.price?1:0)+(f.bed?1:0)+(f.type?1:0)+f.amenities.length+(f.hideStale?1:0)+(f.onlyAvail?1:0)+(f.search?1:0);
+  const n=(f.district?1:0)+(f.sqmMin?1:0)+(f.sqmMax?1:0)+(f.priceMin?1:0)+(f.price?1:0)+(f.bed?1:0)+(f.type?1:0)+f.amenities.length+(f.hideStale?1:0)+(f.onlyAvail?1:0)+(f.search?1:0)+(f.hideSeen?1:0)+(sortV?1:0);
   const fb=document.getElementById('ftbadge');if(fb)fb.textContent=n?' · '+n:'';
   renderHotOffers();
 }
 function chipClear(k){
   if(k.startsWith('am:')){const el=document.querySelector('.f-am[value="'+k.slice(3)+'"]');if(el)el.checked=false;}
   else if(k==='stale')document.getElementById('f-stale').checked=false;
-  else document.getElementById('f-'+k).value='';
+  else if(k==='avail')document.getElementById('f-avail').checked=false;
+  else if(k==='hide-seen')document.getElementById('f-hide-seen').checked=false;
+  else document.getElementById('f-'+k)&&(document.getElementById('f-'+k).value='');
   render(false);
 }
 function writeHash(f){
@@ -706,9 +729,9 @@ function applyHash(){
   document.getElementById('f-stale').checked=p.get('stale')==='1';
   document.getElementById('f-avail').checked=p.get('avail')==='1';
 }
-function resetFilters(){['f-district','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=false;document.getElementById('f-avail').checked=false;render(false);}
+function resetFilters(){['f-district','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=false;document.getElementById('f-avail').checked=false;const hs=document.getElementById('f-hide-seen');if(hs)hs.checked=false;render(false);}
 ['f-district','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).addEventListener('input',()=>render(false)));
-document.querySelectorAll('.f-am, #f-stale, #f-avail').forEach(e=>e.addEventListener('change',()=>render(false)));
+document.querySelectorAll('.f-am, #f-stale, #f-avail, #f-hide-seen').forEach(e=>e.addEventListener('change',()=>render(false)));
 document.getElementById('reset').onclick=resetFilters;
 // мобильный toggle фильтра
 (function(){
@@ -917,11 +940,10 @@ renderFavSection();
 
 // ── клавиатурный шорткат: / → поиск ──
 document.addEventListener('keydown',function(e){
-  if(e.key==='/'&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'&&document.activeElement.tagName!=='SELECT'){
-    e.preventDefault();
-    const s=document.getElementById('f-search');
-    if(s){s.focus();s.select();}
-  }
+  const tag=document.activeElement.tagName;
+  const noInput=tag!=='INPUT'&&tag!=='TEXTAREA'&&tag!=='SELECT';
+  if(e.key==='/'&&noInput){e.preventDefault();const s=document.getElementById('f-search');if(s){s.focus();s.select();}}
+  if(e.key==='r'&&noInput){e.preventDefault();resetFilters();}
 });
 document.getElementById('f-search')?.addEventListener('keydown',function(e){
   if(e.key==='Escape'){this.value='';this.blur();render(false);}
@@ -931,7 +953,22 @@ document.getElementById('f-search')?.addEventListener('keydown',function(e){
 document.getElementById('fav-count-btn')?.addEventListener('click',function(){
   document.getElementById('fav-section')?.scrollIntoView({behavior:'smooth',block:'start'});
 });
+
+// ── кнопка ↑ (scroll-to-top) ──
+(function(){
+  const btn=document.getElementById('scroll-top-btn');
+  if(!btn)return;
+  const listEl=document.querySelector('.list');
+  function onScroll(){btn.classList.toggle('vis',(listEl?listEl.scrollTop:window.scrollY)>300);}
+  if(listEl)listEl.addEventListener('scroll',onScroll,{passive:true});
+  window.addEventListener('scroll',onScroll,{passive:true});
+  btn.addEventListener('click',function(){
+    if(listEl)listEl.scrollTo({top:0,behavior:'smooth'});
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+})();
 </script>
+<button class="scroll-top-btn" id="scroll-top-btn" title="Наверх" aria-label="Наверх">↑</button>
 </body>
 </html>"""
 

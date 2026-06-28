@@ -21,8 +21,8 @@ from __future__ import annotations
 from datetime import date
 
 FRESH_DAYS = 7        # ≤ — «свежее»
-RECENT_DAYS = 30      # ≤ — «N дней назад»
-EXPIRE_DAYS = 45      # > — считаем неактуальным (auto-expire)
+RECENT_DAYS = 60      # ≤ — «N дней назад»
+EXPIRE_DAYS = 90      # > — считаем неактуальным (auto-expire)
 
 
 def _parse(value) -> date | None:
@@ -66,7 +66,7 @@ def _selftest() -> None:
         ("2025-08-01", None, "active", "fresh"),
         ("2025-07-31", None, "active", "fresh"),      # вчера
         ("2025-07-20", None, "active", "recent"),     # 12 дней
-        ("2025-07-01", None, "active", "old"),        # 31 день
+        ("2025-07-01", None, "active", "recent"),     # 31 дн. (RECENT_DAYS=60)
         ("2025-05-01", None, "expired", "stale"),     # 92 дня → expired
         ("2025-07-30", "rented", "rented", "stale"),  # status_hint перебивает возраст
         (None, None, "active", "unknown"),

@@ -72,6 +72,10 @@ CHANNELS_DEFAULT = [
     "adsphangan",        # общие объявления Пхангана
     "phangan_rent",      # аренда
     "arenda_phangan",    # аренда (рус)
+    "phangan_homes",     # дома Пхангана
+    "phangan_longterm",  # долгосрочная аренда
+    "phangan_house",     # аренда домов
+    "ru_phangan",        # русскоязычный канал о Пхангане (общий, есть аренда)
 ]
 
 WARMUP_SEC = 10       # пауза после логина перед первым запросом (снижает риск FloodWait)

@@ -67,6 +67,7 @@ def build_rows() -> tuple[list[dict], str | None]:
             "posted_at": rep.get("posted_at"), "fresh": fresh,
             "lat": round(lat, 5) if lat else None, "lng": round(lng, 5) if lng else None,
             "bench": bench.compare(canon, p["price_amount"], p["price_period"], p["bedrooms"]),
+            "contact": p.get("contact") or {},
         })
     # свежие — выше: по умолчанию сортируем по возрасту (None-возраст в конец)
     rows.sort(key=lambda r: (r["fresh"]["age_days"] is None, r["fresh"]["age_days"] or 0))
@@ -79,10 +80,10 @@ HTML = r"""<!DOCTYPE html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SabaiStay — аренда жилья на Ко Пхангане с фильтром и картой</title>
-<meta name="description" content="Все объявления об аренде на острове Ко Пханган из Telegram и Facebook в одном месте — с нормальным фильтром по району, цене, спальням и удобствам, картой и сравнением с рынком.">
+<meta name="description" content="Все объявления об аренде на острове Ко Пханган из Telegram-каналов в одном месте — с нормальным фильтром по району, цене, спальням и удобствам, картой и сравнением с рынком.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="SabaiStay — аренда жилья на Ко Пхангане с фильтром">
-<meta property="og:description" content="Объявления Пхангана из Telegram и Facebook — с фильтром, картой и ценой к рынку. Поделись ссылкой на свой поиск.">
+<meta property="og:description" content="Объявления Пхангана из Telegram-каналов — с фильтром, картой и ценой к рынку. Поделись ссылкой на свой поиск.">
 <meta property="og:image" content="__SITE__/og.png">
 <meta property="og:url" content="__SITE__/">
 <meta name="twitter:card" content="summary_large_image">
@@ -184,6 +185,8 @@ HTML = r"""<!DOCTYPE html>
   .card.stale{opacity:.58}
   .card.stale:hover,.card.stale.active{opacity:1}
   .sounding.dim{background:var(--muted);box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  .contact-btn{font-family:var(--mono);font-size:11px;color:#fff!important;background:var(--sea);border-radius:6px;padding:3px 9px;text-decoration:none!important;white-space:nowrap;letter-spacing:.2px}
+  .contact-btn:hover{background:var(--coral)!important}
   .empty{padding:42px 22px;text-align:center;color:var(--muted)}
   .empty .big{font-size:30px;display:block;margin-bottom:8px}
   .empty b{display:block;font-family:var(--disp);font-size:16px;color:var(--ink);margin-bottom:4px}
@@ -228,7 +231,7 @@ HTML = r"""<!DOCTYPE html>
   <div class="brand">
     <svg class="brandmark" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="26" r="12" fill="#ef6c45"/><g stroke="#bfe0db" stroke-linecap="round" fill="none"><line x1="8" y1="40" x2="56" y2="40" stroke-width="3.4"/><line x1="14" y1="47" x2="50" y2="47" stroke-width="2.8" opacity=".55"/><line x1="21" y1="53" x2="43" y2="53" stroke-width="2.8" opacity=".3"/></g></svg>
     <span class="mark">Sabai<span class="m2">Stay</span></span>
-    <span class="tagline">все объявления Пхангана из Telegram и Facebook — с фильтром, картой и ценой к рынку</span>
+    <span class="tagline">все объявления Пхангана из Telegram-каналов аренды — с фильтром, картой и ценой к рынку</span>
     <span class="coordbar"><span class="compass">✦&nbsp;N</span><span class="geo">9.74°N · 100.01°E</span><span class="snap">снимок __SNAPSHOT__</span><span id="count2"></span></span>
   </div>
 </header>
@@ -258,7 +261,7 @@ HTML = r"""<!DOCTYPE html>
 
 <div class="wrap">
   <div class="list"><div class="count" id="count"></div><div id="cards"></div>
-    <footer class="listfoot">Источники: Telegram + Facebook · каждое объявление ведёт в оригинал · снимок __SNAPSHOT__<br><a href="privacy.html">Приватность</a> · <a href="privacy.html#remove">Убрать объявление</a></footer>
+    <footer class="listfoot">Источник: Telegram-каналы аренды Пхангана · каждое объявление ведёт в оригинал · снимок __SNAPSHOT__<br><a href="privacy.html">Приватность</a> · <a href="privacy.html#remove">Убрать объявление</a></footer>
   </div>
   <div id="map"></div>
 </div>
@@ -276,6 +279,11 @@ const firstUrl=d=>d.sources[0].source_url;
 function sourcesHtml(arr){
   if(arr.length===1){const s=arr[0];return '<a class="src" href="'+s.source_url+'" target="_blank" rel="noopener">↗ '+(SRC[s.source]||"оригинал")+'</a>';}
   return '<span class="multi">🔗 '+arr.length+' источника</span>'+arr.map(s=>'<a class="src" title="'+(SRC[s.source]||"источник")+'" href="'+s.source_url+'" target="_blank" rel="noopener">'+(SRCICON[s.source]||"↗")+'</a>').join("");
+}
+function contactBtn(contact){
+  if(!contact||!contact.telegram)return '';
+  const u=contact.telegram.replace(/^@/,'');
+  return '<a class="contact-btn" href="https://t.me/'+u+'" target="_blank" rel="noopener">✉ написать</a>';
 }
 
 // карта — тихие тайлы CartoDB Positron под «бумагу карты»
@@ -337,7 +345,7 @@ function render(first){
       '<div class="title">'+d.title+draft+'</div>'+
       '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span>'+(amenStr?'<span class="spec-amen">'+amenStr+'</span>':'')+'</div>'+
       ref+
-      '<div class="foot"><span class="priceblock">'+price+benchBadge+'</span><span class="srcs">'+sourcesHtml(d.sources)+'</span></div>';
+      '<div class="foot"><span class="priceblock">'+price+benchBadge+'</span><span class="srcs">'+contactBtn(d.contact)+sourcesHtml(d.sources)+'</span></div>';
     if(d.lat!=null){
       const icon=L.divIcon({className:'',html:'<div class="sounding'+(d.fresh.stale?' dim':'')+'">'+(d.price!=null?compact(d.price):'·')+'</div>',iconSize:null});
       const m=L.marker([d.lat,d.lng],{icon}).addTo(map)

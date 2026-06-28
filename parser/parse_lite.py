@@ -215,6 +215,29 @@ def _parse_status(text: str) -> str:
     return "rented" if _RENTED.search(text) else "active"
 
 
+# ── контакт ─────────────────────────────────────────────────────────────────
+_CONTACT_TG = re.compile(
+    r"(?<![A-Za-z0-9_])@([A-Za-z][A-Za-z0-9_]{3,31})(?![A-Za-z0-9_])",
+    re.IGNORECASE,
+)
+# Имена каналов-источников — не контакты продавца
+_NOT_CONTACT_TG = {
+    "rent_phangan", "koh_phangan_rent", "adsphangan", "phangan_rent",
+    "arenda_phangan", "ru_phangan", "phangan_villas", "phangan_homes",
+    "phangan_longterm", "sabaistay", "phanganthai", "phangan_real_estate",
+    "kohphangan_rent", "channel",
+}
+
+
+def _parse_contact(text: str) -> dict:
+    """Извлекает Telegram-контакт продавца (первый @username, не являющийся каналом)."""
+    for m in _CONTACT_TG.finditer(text):
+        uname = m.group(1).lower()
+        if uname not in _NOT_CONTACT_TG and len(uname) >= 4:
+            return {"telegram": "@" + m.group(1)}
+    return {}
+
+
 # ── is_listing ────────────────────────────────────────────────────────────────
 _RENT_SIGNAL = re.compile(
     r"\bfor\s+rent\b|\barendu\b|\barendat\b|\bper\s+month\b|\b/month\b|\bснять\b|\bсдаётся\b|"
@@ -271,6 +294,7 @@ def parse_post(post: dict) -> dict:
     amenities = _parse_amenities(text)
     status = _parse_status(text)
     lang = _parse_language(text)
+    contact = _parse_contact(text)
     listing = _is_listing(text, price, district_canon)
 
     # уверенность: считаем сколько ключевых полей найдено
@@ -300,6 +324,7 @@ def parse_post(post: dict) -> dict:
             "language": lang,
             "status_hint": status,
             "confidence": confidence,
+            "contact": contact,
         },
     }
 

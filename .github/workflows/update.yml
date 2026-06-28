@@ -1,0 +1,57 @@
+name: Update listings
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'   # каждые 6 часов
+  workflow_dispatch:          # ручной запуск кнопкой в GitHub UI
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Scrape Telegram (15 pages)
+        run: |
+          python3 ingest/telegram_preview.py koh_phangan_rent --pages 15 -o /tmp/tg_raw.json
+          echo "Scraped: $(python3 -c 'import json; d=json.load(open("/tmp/tg_raw.json")); print(len(d), "posts")')"
+
+      - name: Parse listings
+        run: |
+          python3 parser/parse_lite.py /tmp/tg_raw.json \
+            --merge data/sample_listings.json \
+            -o data/sample_listings.json
+
+      - name: Build site
+        run: python3 web/build.py
+
+      - name: Commit & push if changed
+        run: |
+          git config user.name "sabaistay-bot"
+          git config user.email "bot@sabaistay.co"
+          git add data/sample_listings.json web/index.html
+          if git diff --staged --quiet; then
+            echo "Нет новых объявлений — пропускаем коммит"
+          else
+            COUNT=$(python3 -c "
+          import json, sys
+          data = json.load(open('data/sample_listings.json'))
+          listings = [p for p in data.get('listings', []) if p.get('parsed', {}).get('is_listing')]
+          print(len(listings))
+          ")
+            git commit -m "chore: update listings — ${COUNT} объявлений ($(date -u '+%Y-%m-%d %H:%M UTC'))"
+            git push origin main
+          fi

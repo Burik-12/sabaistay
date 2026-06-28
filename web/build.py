@@ -190,6 +190,13 @@ HTML = r"""<!DOCTYPE html>
   .anim .card{animation:rise .4s ease both;animation-delay:calc(var(--i)*35ms)}
   @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
+  /* ── toggle для мобильного фильтра ── */
+  .filter-toggle{display:none;align-items:center;gap:6px;width:100%;padding:10px 18px;background:var(--surface);border:none;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:12px;color:var(--sea);cursor:pointer;letter-spacing:.4px;text-align:left}
+  .filter-toggle:hover{color:var(--coral)}
+  .ftbadge{font-weight:700;color:var(--coral)}
+  .ftarrow{margin-left:auto;display:inline-block;transition:transform .2s;font-size:10px}
+  .filter-toggle[aria-expanded="true"] .ftarrow{transform:rotate(180deg)}
+
   @media (max-width:760px){
     .wrap{flex-direction:column;height:auto}
     .list{width:100%;min-width:0;order:2;max-height:none}
@@ -198,9 +205,13 @@ HTML = r"""<!DOCTYPE html>
     .tagline{font-size:12px;flex-basis:100%;order:3}
     .coordbar{margin-left:auto}
     .geo,.compass{display:none}
-    .filters{flex-wrap:nowrap;overflow-x:auto;gap:12px;-webkit-overflow-scrolling:touch;padding-bottom:14px}
-    .filters .f,.filters .chk,.reset{flex:0 0 auto}
-    .filters select,.filters input{min-width:124px}
+    .filter-toggle{display:flex}
+    .filters{display:none;flex-wrap:wrap;gap:10px 12px;padding:12px 16px 14px;overflow-x:unset}
+    .filters.open{display:flex}
+    .filters .f{flex:0 0 calc(50% - 6px)}
+    .filters select,.filters input{width:100%;min-width:unset;box-sizing:border-box}
+    .filters .chk{flex:0 0 auto}
+    .reset{flex:0 0 auto}
   }
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -215,7 +226,10 @@ HTML = r"""<!DOCTYPE html>
   </div>
 </header>
 
-<section class="filters" aria-label="Фильтр">
+<button class="filter-toggle" id="filter-toggle" aria-controls="filter-panel" aria-expanded="false">
+  <span>⚙ Фильтры</span><span id="ftbadge" class="ftbadge"></span><span class="ftarrow">▾</span>
+</button>
+<section class="filters" aria-label="Фильтр" id="filter-panel">
   <div class="f"><label for="f-district">Район</label>
     <select id="f-district"><option value="">весь остров</option></select></div>
   <div class="f"><label for="f-price">Цена до, ฿/мес</label>
@@ -223,7 +237,7 @@ HTML = r"""<!DOCTYPE html>
   <div class="f"><label for="f-bed">Спален от</label>
     <select id="f-bed"><option value="">любое</option><option>1</option><option>2</option><option>3</option></select></div>
   <div class="f"><label for="f-type">Тип жилья</label>
-    <select id="f-type"><option value="">любой</option><option value="villa">вилла</option><option value="house">дом</option><option value="room">комната</option><option value="other">другое</option></select></div>
+    <select id="f-type"><option value="">любой</option><option value="villa">вилла</option><option value="house">дом</option><option value="bungalow">бунгало</option><option value="apartment">апартаменты</option><option value="studio">студия</option><option value="room">комната</option><option value="other">другое</option></select></div>
   <label class="chk"><input type="checkbox" class="f-am" value="pool"> 🏊 бассейн</label>
   <label class="chk"><input type="checkbox" class="f-am" value="seaview"> 🌊 море</label>
   <label class="chk"><input type="checkbox" class="f-am" value="wifi"> 📶 wi-fi</label>
@@ -344,6 +358,9 @@ function render(first){
     chips.map(c=>'<button class="chip" onclick="chipClear(\''+c[0]+'\')">'+c[1]+'<span class="x">✕</span></button>').join('');
   document.getElementById('count2').textContent=shown+'/'+DATA.length;
   writeHash(f);
+  // обновляем бейдж активных фильтров
+  const n=(f.district?1:0)+(f.price?1:0)+(f.bed?1:0)+(f.type?1:0)+f.amenities.length+(f.hideStale?1:0);
+  const fb=document.getElementById('ftbadge');if(fb)fb.textContent=n?' · '+n:'';
 }
 function chipClear(k){
   if(k.startsWith('am:')){const el=document.querySelector('.f-am[value="'+k.slice(3)+'"]');if(el)el.checked=false;}
@@ -375,6 +392,12 @@ function resetFilters(){['f-district','f-price','f-bed','f-type','f-sort'].forEa
 ['f-district','f-price','f-bed','f-type','f-sort'].forEach(id=>document.getElementById(id).addEventListener('input',()=>render(false)));
 document.querySelectorAll('.f-am, #f-stale').forEach(e=>e.addEventListener('change',()=>render(false)));
 document.getElementById('reset').onclick=resetFilters;
+// мобильный toggle фильтра
+(function(){
+  const btn=document.getElementById('filter-toggle'),panel=document.getElementById('filter-panel');
+  if(!btn)return;
+  btn.onclick=function(){const open=panel.classList.toggle('open');btn.setAttribute('aria-expanded',String(open));};
+})();
 applyHash();
 render(true);
 </script>

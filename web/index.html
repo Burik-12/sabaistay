@@ -33,7 +33,7 @@
   body{font-family:var(--body);color:var(--ink);background:var(--paper)}
 
   /* ── шапка: панель глубокого залива ── */
-  .top{background:var(--sea-deep);color:#eef4f2;padding:13px 22px 12px;border-bottom:3px solid var(--coral)}
+  .top{background:linear-gradient(150deg,#062b34 0%,var(--sea-deep) 55%,#0d4754 100%);color:#eef4f2;padding:13px 22px 12px;border-bottom:3px solid var(--coral)}
   .top .brand{display:flex;align-items:center;gap:7px 13px;flex-wrap:wrap}
   .brandmark{width:30px;height:30px;flex:0 0 auto;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
   .mark{font-family:var(--disp);font-weight:800;font-size:25px;letter-spacing:-.2px;color:#fff;line-height:1}
@@ -72,13 +72,20 @@
   .card{background:var(--surface);border:1px solid var(--hair);border-radius:13px;padding:13px 15px;margin-bottom:11px;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .15s}
   .card:hover,.card.active{border-color:var(--coral);box-shadow:0 4px 16px rgba(14,35,41,.09)}
   .card.active{transform:translateX(2px)}
-  .coord{font-family:var(--mono);font-size:11px;color:var(--sea);letter-spacing:.3px;display:flex;gap:7px;align-items:center}
-  .coord .nogeo{color:var(--muted)}
-  .title{font-family:var(--disp);font-weight:600;font-size:16.5px;line-height:1.22;margin:5px 0 7px}
-  .specs{font-size:13px;color:var(--muted);display:flex;gap:13px;flex-wrap:wrap}
-  .amen{margin-top:8px;font-size:15px;letter-spacing:3px;line-height:1}
+  .card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;gap:6px;min-width:0}
+  .dtag{font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--sea);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dtag.nogeo{color:var(--muted)}
+  .title{font-family:var(--disp);font-weight:700;font-size:18px;line-height:1.2;margin:4px 0 7px}
+  .specs{font-size:13px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .spec-amen{font-size:14px;letter-spacing:2px}
+  .card[data-type="villa"]{border-left:4px solid #ef6c45}
+  .card[data-type="house"]{border-left:4px solid #3d8b7a}
+  .card[data-type="bungalow"]{border-left:4px solid #c4a35a}
+  .card[data-type="apartment"]{border-left:4px solid #5b8cb8}
+  .card[data-type="studio"]{border-left:4px solid #9b72b0}
+  .card[data-type="room"]{border-left:4px solid #78a87c}
   .foot{display:flex;justify-content:space-between;align-items:baseline;margin-top:11px;gap:10px}
-  .price{font-family:var(--mono);font-weight:700;font-size:16px;color:var(--coral-d)}
+  .price{font-family:var(--mono);font-weight:700;font-size:18px;color:var(--coral-d)}
   .price small{font-weight:400;font-size:11px;color:var(--muted)}
   .price.none{color:var(--muted);font-weight:400;font-size:13px}
   .priceblock{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
@@ -240,9 +247,7 @@ function render(first){
     const key=shown;
     const card=document.createElement('article'); card.className="card"+(d.fresh.stale?" stale":""); card.style.setProperty('--i',i++);
     const fb='<span class="fresh-badge fb-'+d.fresh.cls+'">'+d.fresh.label+'</span>';
-    const coord=(d.lat!=null
-      ? '<span>'+d.district+'</span><span>'+d.lat.toFixed(3)+', '+d.lng.toFixed(3)+'</span>'
-      : '<span class="nogeo">📍 позиция не указана</span>')+fb;
+    const dtag=d.district?'<span class="dtag">📍 '+d.district+'</span>':'<span class="dtag nogeo">📍 район неизвестен</span>';
     const draft=d.confidence<0.6?' <span class="draft">черновик</span>':'';
     const unit=PERIOD[d.period]!=null?PERIOD[d.period]:'';
     const price=d.price!=null
@@ -251,15 +256,17 @@ function render(first){
     const b=d.bench;
     const benchBadge=b?'<span class="bench bench-'+b.kind+'" title="медиана района: '+priceFull(b.monthly_median)+' ฿/мес">'+b.label+'</span>':'';
     const ref=b&&b.airbnb_adr?'<div class="ref">🏨 Airbnb здесь ~'+priceFull(b.airbnb_adr)+'฿/ночь'+(b.seed?' <span class="seed">оценка</span>':'')+'</div>':'';
-    card.innerHTML='<div class="coord">'+coord+'</div>'+
+    const amenStr=amen(d.amenities);
+    card.setAttribute('data-type',d.type);
+    card.innerHTML='<div class="card-top">'+dtag+fb+'</div>'+
       '<div class="title">'+d.title+draft+'</div>'+
-      '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span></div>'+
-      (amen(d.amenities)?'<div class="amen">'+amen(d.amenities)+'</div>':'')+ref+
+      '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span>'+(amenStr?'<span class="spec-amen">'+amenStr+'</span>':'')+'</div>'+
+      ref+
       '<div class="foot"><span class="priceblock">'+price+benchBadge+'</span><span class="srcs">'+sourcesHtml(d.sources)+'</span></div>';
     if(d.lat!=null){
       const icon=L.divIcon({className:'',html:'<div class="sounding'+(d.fresh.stale?' dim':'')+'">'+(d.price!=null?compact(d.price):'·')+'</div>',iconSize:null});
       const m=L.marker([d.lat,d.lng],{icon}).addTo(map)
-        .bindPopup('<b>'+d.title+'</b><br>'+(d.price!=null?priceFull(d.price)+' ฿'+unit:'цена не указана')+(d.sources.length>1?'<br>'+d.sources.length+' источника':'')+'<br><a href="'+firstUrl(d)+'" target="_blank">оригинал ↗</a>');
+        .bindPopup('<b>'+d.title+'</b><br>'+(TYPE[d.type]||d.type)+(d.bedrooms!=null?' · '+d.bedrooms+' сп.':'')+(amenStr?' '+amenStr:'')+'<br>'+(d.price!=null?priceFull(d.price)+' ฿'+unit:'цена не указана')+(d.sources.length>1?'<br>'+d.sources.length+' источника':'')+'<br><a href="'+firstUrl(d)+'" target="_blank">оригинал ↗</a>');
       markers[key]=m;
       const hot=on=>{const el=m.getElement&&m.getElement();if(el){const s=el.querySelector('.sounding');if(s)s.classList.toggle('hot',on);}};
       card.onmouseenter=()=>{hot(true);m.openPopup()};

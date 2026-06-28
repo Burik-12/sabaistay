@@ -106,12 +106,12 @@ def _parse_beds(text: str) -> int | None:
 
 # ── тип жилья ─────────────────────────────────────────────────────────────────
 _TYPES: list[tuple[re.Pattern, str]] = [
-    (re.compile(r"\bvilla\b|\bвилла\b", re.IGNORECASE), "villa"),
-    (re.compile(r"\bbungalow\b|\bбунгало\b", re.IGNORECASE), "bungalow"),
-    (re.compile(r"\bapartment\b|\bapt\b|\bапартамент", re.IGNORECASE), "apartment"),
-    (re.compile(r"\bstudio\b|\bстудия\b", re.IGNORECASE), "studio"),
-    (re.compile(r"\b(?:single|double|private)\s+room\b|\broom\s+for\s+rent\b|\bкомнат[ау]\s+сдам", re.IGNORECASE), "room"),
-    (re.compile(r"\bhouse\b|\bдом\b", re.IGNORECASE), "house"),
+    (re.compile(r"\bvillas?\b|\bвилла\b", re.IGNORECASE), "villa"),
+    (re.compile(r"\bbungalows?\b|\bбунгало\b", re.IGNORECASE), "bungalow"),
+    (re.compile(r"\bapartments?\b|\bapts?\b|\bcondo(?:minium)?s?\b|\bапартамент", re.IGNORECASE), "apartment"),
+    (re.compile(r"\bstudios?\b|\bстудия\b", re.IGNORECASE), "studio"),
+    (re.compile(r"\b(?:single|double|private)\s+rooms?\b|\brooms?\s+for\s+rent\b|\bavailable\s+rooms?\b|\brooms?\s+available\b|\bкомнат[ау]\s+сдам", re.IGNORECASE), "room"),
+    (re.compile(r"\btownhouse\b|\bhouse\b|\bдом\b", re.IGNORECASE), "house"),
 ]
 
 def _parse_type(text: str) -> str:

@@ -8,9 +8,10 @@ cookies/             # cookie-сессии FB-аккаунтов
 *credentials*.json
 
 # данные/выгрузки
-data/sample_*.json
+data/raw_*.json              # сырой скрейп (промежуточный), не коммитим
 data/dumps/
 data/subscriptions.ndjson    # подписки пользователей бота (tg_user_id — не коммитим)
+# data/sample_listings.json — НЕ в ignore: GitHub Actions его коммитит при обновлении
 *.sqlite
 *.db
 

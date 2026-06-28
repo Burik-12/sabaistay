@@ -220,6 +220,31 @@
 .export-btn{font-family:var(--mono);font-size:11px;color:var(--muted);background:none;border:1px solid var(--hair);border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap}
 .export-btn:hover{border-color:var(--sea);color:var(--sea)}
 
+/* ── дней до заезда ── */
+.avail-soon{color:#e07b00;font-weight:700}
+.avail-ready{color:#2d9e5f;font-weight:700}
+
+/* ── пагинация ── */
+.load-more-wrap{text-align:center;padding:18px 0 10px}
+.load-more-btn{font-family:var(--mono);font-size:12px;color:var(--sea);background:none;border:2px solid var(--sea);border-radius:8px;padding:8px 28px;cursor:pointer;letter-spacing:.3px}
+.load-more-btn:hover{background:var(--sea);color:#fff}
+
+/* ── подсветка поиска ── */
+.hl{background:#fff3b0;border-radius:2px;padding:0 1px}
+
+/* ── горячие предложения ── */
+.hot-section{background:linear-gradient(135deg,#fff8f0 0%,#fff2e8 100%);border-bottom:2px solid var(--coral);padding:12px 22px 16px}
+.hot-section h3{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--coral-d);margin:0 0 10px}
+.hot-cards{display:flex;gap:10px;flex-wrap:wrap}
+.hot-card{background:#fff;border:1px solid var(--hair);border-radius:10px;padding:10px 14px;flex:1 1 180px;cursor:pointer;transition:box-shadow .15s;min-width:140px}
+.hot-card:hover{box-shadow:0 3px 12px rgba(0,0,0,.1)}
+.hot-card .hc-title{font-size:12px;font-weight:700;color:var(--sea-d);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hot-card .hc-price{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--coral-d)}
+.hot-card .hc-meta{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px}
+
+/* ── качество объявления ── */
+.quality{font-size:11px;letter-spacing:-.5px;margin-left:4px;opacity:.8}
+
 /* ── expand карточки ── */
 .card-raw{margin-top:8px;border-top:1px solid var(--hair);padding-top:2px}
 .card-raw-toggle{font-family:var(--mono);font-size:11px;color:var(--sea);cursor:pointer;padding:6px 0 0;list-style:none;display:block}
@@ -292,6 +317,11 @@ details[open] .card-raw-toggle::before{content:'▾ '}
   </div>
 </div>
 
+<div id="hot-section" class="hot-section" style="display:none">
+  <h3>🔥 Горячие предложения</h3>
+  <div class="hot-cards" id="hot-cards"></div>
+</div>
+
 <div id="fav-section" class="fav-section" style="display:none">
   <h3>🔖 Избранное</h3>
   <div class="fav-cards" id="fav-cards"></div>
@@ -300,6 +330,9 @@ details[open] .card-raw-toggle::before{content:'▾ '}
 
 <div class="wrap">
   <div class="list"><div class="count" id="count"></div><div id="cards"></div>
+    <div class="load-more-wrap" id="load-more-wrap" style="display:none">
+      <button class="load-more-btn" id="load-more-btn">показать ещё</button>
+    </div>
     <footer class="listfoot">Источник: Telegram-каналы аренды Пхангана · каждое объявление ведёт в оригинал · снимок 27 июн 2026<br><a href="privacy.html">Приватность</a> · <a href="privacy.html#remove">Убрать объявление</a></footer>
   </div>
   <div id="map"></div>
@@ -312,6 +345,8 @@ const AM={pool:"🏊",wifi:"📶",kitchen:"🍳",aircon:"❄️",seaview:"🌊"}
 const PERIOD={month:"/мес",night:"/ночь",sale:""};
 const SRC={telegram:"Telegram",fb_group:"Facebook",fb_marketplace:"Facebook",booking:"Booking",airbnb:"Airbnb",manual:"вручную"};
 const SRCICON={telegram:"📨",fb_group:"📘",fb_marketplace:"📘",booking:"🏨",airbnb:"🛏"};
+const SNAP_ISO='2026-06-27';
+const SNAP_DATE=SNAP_ISO?new Date(SNAP_ISO):null;
 let CUR='thb';
 const RATE_USD=35;
 const compact=n=>{if(CUR==='usd'){const u=Math.round(n/RATE_USD);return u>=1000?(u/1000).toFixed(1)+'k$':'$'+u;}return n>=1000?(n/1000)+'k':(''+n);};
@@ -389,7 +424,14 @@ function makeCard(d,i,key,target){
     const parts=d.available_from.split('-');
     const mon=['','янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
     const label=parts.length===2?mon[+parts[1]]+' '+parts[0]:(parts[2]+' '+mon[+parts[1]]+' '+parts[0]);
-    return '<span class="avail-date">📅 с '+label+'</span>';
+    let daysHtml='';
+    if(SNAP_DATE&&parts.length===3){
+      const avDate=new Date(d.available_from);
+      const diff=Math.round((avDate-SNAP_DATE)/(1000*60*60*24));
+      if(diff<=0)daysHtml=' <span class="avail-ready">✓ уже можно</span>';
+      else if(diff<=14)daysHtml=' <span class="avail-soon">через '+diff+' дн.</span>';
+    }
+    return '<span class="avail-date">📅 с '+label+'</span>'+daysHtml;
   })();
   const expandHtml=d.text?'<details class="card-raw"><summary class="card-raw-toggle">читать целиком</summary><pre class="card-raw-text">'+escHtml(d.text)+'</pre></details>':'';
   const isSaved=getFavs().includes(d.id);
@@ -397,9 +439,15 @@ function makeCard(d,i,key,target){
   const bmBtn='<button class="bm-btn'+(isSaved?' saved':'')+'" data-id="'+escHtml(d.id)+'" title="'+(isSaved?'Убрать из избранного':'В избранное')+'" aria-label="Закладка">🔖</button>';
   const sqmHtml=d.area_sqm?'<span>📐 '+d.area_sqm+' м²</span>':'';
   const seenHtml=seen?'<span class="seen-badge">уже смотрел</span>':'';
+  // качество объявления
+  const qScore=(d.price!=null?1:0)+(d.district?1:0)+(d.bedrooms!=null?1:0)+(d.type&&d.type!=='other'?1:0);
+  const qHtml='<span class="quality" title="Полнота данных">'+('★'.repeat(qScore)+'☆'.repeat(4-qScore))+'</span>';
+  // подсветка поиска
+  const _srch=readF().search;
+  function hlTitle(t){if(!_srch)return t;const re=new RegExp('('+_srch.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return t.replace(re,'<mark class="hl">$1</mark>');}
   card.setAttribute('data-type',d.type);
   card.innerHTML=bmBtn+'<div class="card-top">'+dtag+fb+'</div>'+
-    '<div class="title">'+d.title+draft+seenHtml+'</div>'+
+    '<div class="title">'+hlTitle(escHtml(d.title))+draft+qHtml+seenHtml+'</div>'+
     '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span>'+sqmHtml+(amenStr?'<span class="spec-amen">'+amenStr+'</span>':'')+(availHtml?availHtml:'')+'</div>'+
     ref+
     '<div class="foot"><span class="priceblock">'+price+benchBadge+'</span><span class="srcs">'+contactBtn(d.contact)+sourcesHtml(d.sources)+'</span></div>'+
@@ -410,47 +458,75 @@ function makeCard(d,i,key,target){
   card.querySelector('.bm-btn')?.addEventListener('click',e=>{e.stopPropagation();toggleFav(d.id);});
   // история просмотра
   card.addEventListener('click',()=>{markSeen(d.id);card.querySelector('.seen-badge')||card.querySelector('.title')?.insertAdjacentHTML('beforeend','<span class="seen-badge">уже смотрел</span>');},{once:true,capture:false});
-  if(d.lat!=null){
-    const icon=L.divIcon({className:'',html:'<div class="sounding'+(d.fresh.stale?' dim':'')+'">'+(d.price!=null?compact(d.price):'·')+'</div>',iconSize:null});
-    const m=L.marker([d.lat,d.lng],{icon});
-    clusterGroup.addLayer(m);
-    m.bindPopup('<b>'+d.title+'</b><br>'+(TYPE[d.type]||d.type)+(d.bedrooms!=null?' · '+d.bedrooms+' сп.':'')+(amenStr?' '+amenStr:'')+'<br>'+(d.price!=null?priceFull(d.price)+' ฿'+unit:'цена не указана')+(d.sources.length>1?'<br>'+d.sources.length+' источника':'')+'<br><a href="'+firstUrl(d)+'" target="_blank">оригинал ↗</a>');
-    markers[key]=m;
-    const hot=on=>{const el=m.getElement&&m.getElement();if(el){const s=el.querySelector('.sounding');if(s)s.classList.toggle('hot',on);}};
-    card.onmouseenter=()=>{hot(true);m.openPopup()};
-    card.onmouseleave=()=>hot(false);
-    const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
-    card.onclick=()=>{document.querySelectorAll('.card.active').forEach(c=>c.classList.remove('active'));card.classList.add('active');map.flyTo([d.lat,d.lng],14,{duration:rm?0:.5,animate:!rm});m.openPopup()};
-  } else {card.onclick=()=>window.open(firstUrl(d),'_blank');}
+  if(d.lat!=null&&key!=null){
+    const m=markers[key]; // уже добавлен в render()
+    if(m){
+      const hot=on=>{const el=m.getElement&&m.getElement();if(el){const s=el.querySelector('.sounding');if(s)s.classList.toggle('hot',on);}};
+      card.onmouseenter=()=>{hot(true);m.openPopup()};
+      card.onmouseleave=()=>hot(false);
+      const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+      card.onclick=()=>{document.querySelectorAll('.card.active').forEach(c=>c.classList.remove('active'));card.classList.add('active');map.flyTo([d.lat,d.lng],14,{duration:rm?0:.5,animate:!rm});m.openPopup()};
+    }
+  } else if(d.lat==null){card.onclick=()=>window.open(firstUrl(d),'_blank');}
   target.appendChild(card);
 }
+const PAGE_SIZE=30;
+let _geoView=[], _noGeoView=[], _geoRendered=0;
+
+function _pluralObj(n){return n%10===1&&n%100!==11?'е':n%10>=2&&n%10<=4&&(n%100<10||n%100>=20)?'я':'й';}
+
+function renderPage(cards){
+  const end=Math.min(_geoRendered+PAGE_SIZE,_geoView.length);
+  for(let i=_geoRendered;i<end;i++) makeCard(_geoView[i],i,i+1,cards);
+  _geoRendered=end;
+  const lmw=document.getElementById('load-more-wrap');
+  const lmb=document.getElementById('load-more-btn');
+  if(lmw&&lmb){
+    const rem=_geoView.length-_geoRendered;
+    if(rem>0){lmw.style.display='';lmb.textContent='показать ещё '+Math.min(rem,PAGE_SIZE)+' из '+rem;}
+    else{lmw.style.display='none';}
+  }
+}
+
 function render(first){
   const f=readF(), cards=document.getElementById('cards');
   cards.innerHTML=""; cards.classList.toggle('anim',!!first);
   clusterGroup.clearLayers(); markers={};
-  let i=0;
   let view=DATA.map(d=>d);
   const sortV=document.getElementById('f-sort').value;
   if(sortV==='cheap')view.sort((a,b)=>(a.price==null?Infinity:a.price)-(b.price==null?Infinity:b.price));
   else if(sortV==='pricey')view.sort((a,b)=>(b.price==null?-1:b.price)-(a.price==null?-1:a.price));
   else if(sortV==='fresh')view.sort((a,b)=>String(b.posted_at||'').localeCompare(String(a.posted_at||'')));
-  const withGeo=[], noGeoArr=[];
-  view.forEach(d=>{if(!passes(d,f))return; (d.lat!=null?withGeo:noGeoArr).push(d);});
-  const shown=withGeo.length+noGeoArr.length;
-  withGeo.forEach((d,idx)=>makeCard(d,i++,idx+1,cards));
-  if(noGeoArr.length>0){
+  _geoView=[]; _noGeoView=[];
+  view.forEach(d=>{if(!passes(d,f))return; (d.lat!=null?_geoView:_noGeoView).push(d);});
+  const shown=_geoView.length+_noGeoView.length;
+  // добавляем все маркеры на карту сразу
+  _geoView.forEach((d,idx)=>{
+    if(d.lat==null)return;
+    const unit=d.period==='daily'?' /д':(d.period==='weekly'?' /нед':'');
+    const icon=L.divIcon({className:'',html:'<div class="sounding'+(d.fresh.stale?' dim':'')+'">'+(d.price!=null?compact(d.price):'·')+'</div>',iconSize:null});
+    const m=L.marker([d.lat,d.lng],{icon});
+    const amenStr=(d.amenities||[]).map(a=>AMLABEL[a]||a).join(' ');
+    clusterGroup.addLayer(m);
+    m.bindPopup('<b>'+d.title+'</b><br>'+(TYPE[d.type]||d.type)+(d.bedrooms!=null?' · '+d.bedrooms+' сп.':'')+(amenStr?' '+amenStr:'')+'<br>'+(d.price!=null?priceFull(d.price)+' ฿'+unit:'цена не указана')+(d.sources.length>1?'<br>'+d.sources.length+' источника':'')+'<br><a href="'+(d.sources[0]?.source_url||'#')+'" target="_blank">оригинал ↗</a>');
+    markers[idx+1]=m;
+  });
+  // рендерим первую страницу карточек
+  _geoRendered=0;
+  renderPage(cards);
+  // секция "без района"
+  if(_noGeoView.length>0){
     const wrap=document.createElement('div'); wrap.id='nogeo-wrap';
     const btn=document.createElement('div'); btn.className='nogeo-divider'; btn.setAttribute('role','button');
-    btn.innerHTML='📍 Без района — '+noGeoArr.length+' объявлени'+(noGeoArr.length%10===1&&noGeoArr.length%100!==11?'е':(noGeoArr.length%10>=2&&noGeoArr.length%10<=4&&(noGeoArr.length%100<10||noGeoArr.length%100>=20)?'я':'й'))+' (район не указан в тексте) <span class="nd-arrow">▾</span>';
+    btn.innerHTML='📍 Без района — '+_noGeoView.length+' объявлени'+_pluralObj(_noGeoView.length)+' (район не указан в тексте) <span class="nd-arrow">▾</span>';
     const inner=document.createElement('div'); inner.className='nogeo-cards';
     btn.onclick=()=>{btn.classList.toggle('nogeo-open');inner.classList.toggle('open');};
-    noGeoArr.forEach(d=>makeCard(d,i++,null,inner));
+    _noGeoView.forEach((d,i)=>makeCard(d,_geoView.length+i,null,inner));
     wrap.appendChild(btn); wrap.appendChild(inner); cards.appendChild(wrap);
   }
   if(!shown)cards.innerHTML='<div class="empty"><span class="big">🧭</span><b>В этих координатах пусто</b>под такой фильтр объявлений нет — ослабь условия<button class="clear" onclick="resetFilters()">сбросить фильтр</button></div>';
-  const word='объявлени'+(shown%10===1&&shown%100!==11?'е':(shown%10>=2&&shown%10<=4&&(shown%100<10||shown%100>=20)?'я':'й'));
-  const noGeo=noGeoArr.length;
-  const tail=noGeo?' · '+noGeo+' без района':'';
+  const word='объявлени'+_pluralObj(shown);
+  const tail=_noGeoView.length?' · '+_noGeoView.length+' без района':'';
   const chips=[];
   if(f.district)chips.push(['district',f.district]);
   if(f.price)chips.push(['price','до '+priceFull(f.price)+'฿']);
@@ -462,9 +538,9 @@ function render(first){
     chips.map(c=>'<button class="chip" onclick="chipClear(\''+c[0]+'\')">'+c[1]+'<span class="x">✕</span></button>').join('');
   document.getElementById('count2').textContent=shown+'/'+DATA.length;
   writeHash(f);
-  // обновляем бейдж активных фильтров
   const n=(f.district?1:0)+(f.sqmMin?1:0)+(f.sqmMax?1:0)+(f.priceMin?1:0)+(f.price?1:0)+(f.bed?1:0)+(f.type?1:0)+f.amenities.length+(f.hideStale?1:0)+(f.onlyAvail?1:0)+(f.search?1:0);
   const fb=document.getElementById('ftbadge');if(fb)fb.textContent=n?' · '+n:'';
+  renderHotOffers();
 }
 function chipClear(k){
   if(k.startsWith('am:')){const el=document.querySelector('.f-am[value="'+k.slice(3)+'"]');if(el)el.checked=false;}
@@ -522,6 +598,38 @@ render(true);
   btnMap.addEventListener('click',showMap);
   showList();
 })();
+
+// ── кнопка «показать ещё» ────────────────────────────
+(function(){
+  const btn=document.getElementById('load-more-btn');
+  if(btn)btn.addEventListener('click',()=>renderPage(document.getElementById('cards')));
+})();
+
+// ── горячие предложения ───────────────────────────────
+function renderHotOffers(){
+  const sec=document.getElementById('hot-section');
+  const cont=document.getElementById('hot-cards');
+  if(!sec||!cont)return;
+  const active=DATA.filter(d=>!d.fresh.stale&&d.price!=null&&d.period==='monthly'&&d.district&&d.lat!=null);
+  // медиана по районам
+  const medByDistrict={};
+  const byD={};
+  active.forEach(d=>{(byD[d.district]=byD[d.district]||[]).push(d.price);});
+  Object.entries(byD).forEach(([d,prices])=>{const s=[...prices].sort((a,b)=>a-b);const m=Math.floor(s.length/2);medByDistrict[d]=s.length%2?s[m]:Math.round((s[m-1]+s[m])/2);});
+  const hot=active.filter(d=>medByDistrict[d.district]&&d.price<medByDistrict[d.district]*0.85)
+    .sort((a,b)=>String(b.posted_at||'').localeCompare(String(a.posted_at||''))).slice(0,4);
+  if(hot.length<2){sec.style.display='none';return;}
+  sec.style.display='';
+  cont.innerHTML=hot.map(d=>{
+    const url=d.sources[0]?.source_url||'#';
+    const disc=Math.round((1-d.price/medByDistrict[d.district])*100);
+    return'<div class="hot-card" onclick="window.open(\''+url+'\',\'_blank\')">'+
+      '<div class="hc-title">'+escHtml(d.title)+'</div>'+
+      '<div class="hc-price">'+priceFull(d.price)+(CUR==='thb'?' ฿':'')+'<small>/мес</small></div>'+
+      '<div class="hc-meta">'+d.district+' · -'+disc+'% от медианы · '+d.fresh.label+'</div>'+
+      '</div>';
+  }).join('');
+}
 
 // ── валюта THB / USD ─────────────────────────────────
 (function(){

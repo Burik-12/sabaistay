@@ -335,6 +335,32 @@ details[open] .card-raw-toggle::before{content:'▾ '}
 .card-raw-text{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:pre-wrap;word-break:break-word;padding:6px 0 0;margin:0;max-height:260px;overflow-y:auto;line-height:1.5}
 
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── тёмная тема ── */
+html[data-theme="dark"] {
+  --paper:#0e1c20; --surface:#152027; --ink:#d4e8e4; --hair:#263c44;
+  --muted:#7aa0a8; --land:#1e3038; --sand:#1c2015;
+  --sea:#2a9bb0; --sea-deep:#061418; --coral:#f07c55; --coral-d:#e05e38;
+}
+html[data-theme="dark"] .top{background:linear-gradient(150deg,#020c0f 0%,#061418 55%,#0a1f28 100%)}
+html[data-theme="dark"] .filters,.filters.open{background:var(--surface)}
+html[data-theme="dark"] .filters select,html[data-theme="dark"] .filters input{background:#1a2c34;border-color:var(--hair);color:var(--ink)}
+html[data-theme="dark"] .card{background:var(--surface)}
+html[data-theme="dark"] .modal-box{background:#152027;color:var(--ink)}
+html[data-theme="dark"] .modal-box h2{color:var(--ink)}
+html[data-theme="dark"] .hot-section{background:linear-gradient(135deg,#1a140a 0%,#1c1208 100%)}
+html[data-theme="dark"] .hot-card{background:#1e2e36;border-color:var(--hair)}
+html[data-theme="dark"] .fav-section{background:#1a0f0c}
+html[data-theme="dark"] .vt-btn{background:var(--surface);color:var(--ink);border-color:var(--hair)}
+html[data-theme="dark"] .vt-btn.active{background:var(--sea);color:#fff;border-color:var(--sea)}
+
+/* ── кнопка темы ── */
+.theme-btn{font-family:var(--mono);font-size:13px;background:none;border:1px solid var(--hair);border-radius:6px;padding:4px 8px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.theme-btn:hover{border-color:var(--sea);color:var(--sea)}
+
+/* ── счётчик избранного ── */
+.fav-count-btn{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--coral-d);background:none;border:1px solid var(--coral);border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap;display:none}
+.fav-count-btn:hover{background:var(--coral);color:#fff}
 </style>
 </head>
 <body>
@@ -349,6 +375,8 @@ details[open] .card-raw-toggle::before{content:'▾ '}
       <button class="cur-btn" id="cur-btn" title="Переключить валюту THB / USD">฿ THB</button>
       <button class="export-btn" id="export-btn" title="Скачать список в CSV">⬇ CSV</button>
       <button class="share-btn" id="stats-btn" title="Статистика по районам">📊 районы</button>
+      <button class="fav-count-btn" id="fav-count-btn" title="Перейти к избранному">🔖 <span id="fav-count-num">0</span></button>
+      <button class="theme-btn" id="theme-btn" title="Переключить тёмную тему">🌙</button>
     </span>
   </div>
 </header>
@@ -385,7 +413,7 @@ details[open] .card-raw-toggle::before{content:'▾ '}
   <label class="chk"><input type="checkbox" id="f-stale"> скрыть неактуальные</label>
   <label class="chk"><input type="checkbox" id="f-avail"> только с датой заезда</label>
   <div class="f"><label for="f-sort">Сортировка</label>
-    <select id="f-sort"><option value="">сначала свежие</option><option value="cheap">сначала дешёвые</option><option value="pricey">сначала дорогие</option></select></div>
+    <select id="f-sort"><option value="">сначала свежие</option><option value="cheap">сначала дешёвые</option><option value="pricey">сначала дорогие</option><option value="sqm_desc">площадь: больше</option><option value="sqm_asc">площадь: меньше</option></select></div>
   <button class="reset" id="reset">сбросить</button>
 </section>
 
@@ -442,9 +470,23 @@ function contactBtn(contact){
   return '<a class="contact-btn" href="https://t.me/'+u+'" target="_blank" rel="noopener">✉ написать</a>';
 }
 
-// карта — тихие тайлы CartoDB Positron под «бумагу карты»
+// ── тёмная тема: ранняя инициализация (до map) ──
+(function(){
+  const TKEY='sabaistay_theme';
+  const saved=localStorage.getItem(TKEY);
+  const prefersDark=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const dark=saved?saved==='dark':prefersDark;
+  document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+  const btn=document.getElementById('theme-btn');
+  if(btn)btn.textContent=dark?'☀️':'🌙';
+})();
+
+// карта — тихие тайлы CartoDB под «бумагу карты»
 const map=L.map('map',{zoomControl:true}).setView([9.745,100.01],12);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+const _dark=document.documentElement.getAttribute('data-theme')==='dark';
+const tileL=L.tileLayer(
+  _dark?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+       :'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
   {attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19}).addTo(map);
 let markers={};
 const clusterGroup=L.markerClusterGroup({maxClusterRadius:55,showCoverageOnHover:false,iconCreateFunction:function(c){return L.divIcon({className:'',html:'<div class="cluster-icon">'+c.getChildCount()+'</div>',iconSize:[34,34]});}});
@@ -526,6 +568,7 @@ function makeCard(d,i,key,target){
   const _srch=readF().search;
   function hlTitle(t){if(!_srch)return t;const re=new RegExp('('+_srch.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return t.replace(re,'<mark class="hl">$1</mark>');}
   card.setAttribute('data-type',d.type);
+  if(key!=null)card.setAttribute('data-key',String(key));
   card.innerHTML=bmBtn+'<div class="card-top">'+dtag+fb+'</div>'+
     '<div class="title">'+hlTitle(escHtml(d.title))+draft+qHtml+seenHtml+'</div>'+
     '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span>'+sqmHtml+(amenStr?'<span class="spec-amen">'+amenStr+'</span>':'')+(availHtml?availHtml:'')+'</div>'+
@@ -548,7 +591,8 @@ function makeCard(d,i,key,target){
       card.onclick=()=>{document.querySelectorAll('.card.active').forEach(c=>c.classList.remove('active'));card.classList.add('active');map.flyTo([d.lat,d.lng],14,{duration:rm?0:.5,animate:!rm});m.openPopup()};
     }
   } else if(d.lat==null){card.onclick=()=>window.open(firstUrl(d),'_blank');}
-  target.appendChild(card);
+  if(target)target.appendChild(card);
+  return card;
 }
 const PAGE_SIZE=30;
 let _geoView=[], _noGeoView=[], _geoRendered=0;
@@ -577,6 +621,8 @@ function render(first){
   if(sortV==='cheap')view.sort((a,b)=>(a.price==null?Infinity:a.price)-(b.price==null?Infinity:b.price));
   else if(sortV==='pricey')view.sort((a,b)=>(b.price==null?-1:b.price)-(a.price==null?-1:a.price));
   else if(sortV==='fresh')view.sort((a,b)=>String(b.posted_at||'').localeCompare(String(a.posted_at||'')));
+  else if(sortV==='sqm_desc')view.sort((a,b)=>(b.area_sqm??-1)-(a.area_sqm??-1));
+  else if(sortV==='sqm_asc')view.sort((a,b)=>(a.area_sqm??Infinity)-(b.area_sqm??Infinity));
   _geoView=[]; _noGeoView=[];
   view.forEach(d=>{if(!passes(d,f))return; (d.lat!=null?_geoView:_noGeoView).push(d);});
   const shown=_geoView.length+_noGeoView.length;
@@ -590,6 +636,12 @@ function render(first){
     clusterGroup.addLayer(m);
     m.bindPopup('<b>'+d.title+'</b><br>'+(TYPE[d.type]||d.type)+(d.bedrooms!=null?' · '+d.bedrooms+' сп.':'')+(amenStr?' '+amenStr:'')+'<br>'+(d.price!=null?priceFull(d.price)+' ฿'+unit:'цена не указана')+(d.sources.length>1?'<br>'+d.sources.length+' источника':'')+'<br><a href="'+(d.sources[0]?.source_url||'#')+'" target="_blank">оригинал ↗</a>');
     markers[idx+1]=m;
+    (function(key){m.on('click',function(){
+      let card=document.querySelector('.card[data-key="'+key+'"]');
+      const cardsEl=document.getElementById('cards');
+      while(!card&&_geoRendered<_geoView.length){renderPage(cardsEl);card=document.querySelector('.card[data-key="'+key+'"]');}
+      if(card){document.querySelectorAll('.card.active').forEach(c=>c.classList.remove('active'));card.classList.add('active');card.scrollIntoView({behavior:'smooth',block:'nearest'});}
+    });})(idx+1);
   });
   // рендерим первую страницу карточек
   _geoRendered=0;
@@ -787,10 +839,18 @@ function toggleFav(id){
   });
 }
 function clearFav(){saveFavs([]);renderFavSection();}
+function updateFavCount(){
+  const n=getFavs().length;
+  const btn=document.getElementById('fav-count-btn');
+  const num=document.getElementById('fav-count-num');
+  if(btn)btn.style.display=n>0?'':'none';
+  if(num)num.textContent=n;
+}
 function renderFavSection(){
   const favs=getFavs();
   const sec=document.getElementById('fav-section');
   const cont=document.getElementById('fav-cards');
+  updateFavCount();
   if(!sec||!cont)return;
   if(favs.length===0){sec.style.display='none';cont.innerHTML='';return;}
   sec.style.display='';
@@ -828,6 +888,49 @@ renderFavSection();
     }
   });
 })();
+
+// ── тёмная тема: переключение ──
+(function(){
+  const TKEY='sabaistay_theme';
+  const html=document.documentElement;
+  const btn=document.getElementById('theme-btn');
+  if(btn)btn.addEventListener('click',function(){
+    const nowDark=html.getAttribute('data-theme')==='dark';
+    const next=nowDark?'light':'dark';
+    html.setAttribute('data-theme',next);
+    localStorage.setItem(TKEY,next);
+    btn.textContent=next==='dark'?'☀️':'🌙';
+    tileL.setUrl(next==='dark'
+      ?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      :'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png');
+  });
+  window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',function(e){
+    if(localStorage.getItem(TKEY))return;
+    const next=e.matches?'dark':'light';
+    html.setAttribute('data-theme',next);
+    if(btn)btn.textContent=next==='dark'?'☀️':'🌙';
+    tileL.setUrl(next==='dark'
+      ?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      :'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png');
+  });
+})();
+
+// ── клавиатурный шорткат: / → поиск ──
+document.addEventListener('keydown',function(e){
+  if(e.key==='/'&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'&&document.activeElement.tagName!=='SELECT'){
+    e.preventDefault();
+    const s=document.getElementById('f-search');
+    if(s){s.focus();s.select();}
+  }
+});
+document.getElementById('f-search')?.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){this.value='';this.blur();render(false);}
+});
+
+// ── счётчик избранного: клик → скролл к секции ──
+document.getElementById('fav-count-btn')?.addEventListener('click',function(){
+  document.getElementById('fav-section')?.scrollIntoView({behavior:'smooth',block:'start'});
+});
 </script>
 </body>
 </html>"""

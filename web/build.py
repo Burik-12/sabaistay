@@ -682,7 +682,7 @@ function render(first){
     const unit=d.period==='daily'?' /д':(d.period==='weekly'?' /нед':'');
     const icon=L.divIcon({className:'',html:'<div class="sounding'+(d.fresh.stale?' dim':'')+'">'+(d.price!=null?compact(d.price):'·')+'</div>',iconSize:null});
     const m=L.marker([d.lat,d.lng],{icon});
-    const amenStr=(d.amenities||[]).map(a=>AMLABEL[a]||a).join(' ');
+    const amenStr=amen(d.amenities||{});
     clusterGroup.addLayer(m);
     m.bindPopup('<b>'+d.title+'</b><br>'+(TYPE[d.type]||d.type)+(d.bedrooms!=null?' · '+d.bedrooms+' сп.':'')+(amenStr?' '+amenStr:'')+'<br>'+(d.price!=null?priceFull(d.price)+' ฿'+unit:'цена не указана')+(d.sources.length>1?'<br>'+d.sources.length+' источника':'')+'<br><a href="'+(d.sources[0]?.source_url||'#')+'" target="_blank">оригинал ↗</a>');
     markers[idx+1]=m;

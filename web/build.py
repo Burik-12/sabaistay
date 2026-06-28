@@ -69,6 +69,7 @@ def build_rows() -> tuple[list[dict], str | None]:
             "bench": bench.compare(canon, p["price_amount"], p["price_period"], p["bedrooms"]),
             "contact": p.get("contact") or {},
             "text": (rep.get("raw_text") or "").strip(),
+            "available_from": p.get("available_from"),
         })
     # свежие — выше: по умолчанию сортируем по возрасту (None-возраст в конец)
     rows.sort(key=lambda r: (r["fresh"]["age_days"] is None, r["fresh"]["age_days"] or 0))
@@ -239,6 +240,10 @@ HTML = r"""<!DOCTYPE html>
 @media(max-width:760px){.view-toggle{display:flex}}
 @media(max-width:760px){.wrap.mobile-list #map{display:none}.wrap.mobile-map .list{display:none}.wrap.mobile-map #map{height:80vh!important}}
 
+/* ── дата доступности ── */
+.avail-now{font-family:var(--mono);font-size:11px;color:#2d9e5f;font-weight:700;letter-spacing:.2px}
+.avail-date{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.2px}
+
 /* ── строка поиска (широкая) ── */
 .f-search-wrap{flex:0 0 100%!important;max-width:100%}
 .f-search-wrap input{width:100%;min-width:0;box-sizing:border-box}
@@ -289,6 +294,7 @@ details[open] .card-raw-toggle::before{content:'▾ '}
   <label class="chk"><input type="checkbox" class="f-am" value="kitchen"> 🍳 кухня</label>
   <label class="chk"><input type="checkbox" class="f-am" value="aircon"> ❄️ кондей</label>
   <label class="chk"><input type="checkbox" id="f-stale"> скрыть неактуальные</label>
+  <label class="chk"><input type="checkbox" id="f-avail"> только с датой заезда</label>
   <div class="f"><label for="f-sort">Сортировка</label>
     <select id="f-sort"><option value="">сначала свежие</option><option value="cheap">сначала дешёвые</option><option value="pricey">сначала дорогие</option></select></div>
   <button class="reset" id="reset">сбросить</button>
@@ -340,6 +346,7 @@ function readF(){return{
   type:document.getElementById('f-type').value,
   amenities:Array.from(document.querySelectorAll('.f-am:checked')).map(e=>e.value),
   hideStale:document.getElementById('f-stale').checked,
+  onlyAvail:document.getElementById('f-avail').checked,
   search:(document.getElementById('f-search').value||'').trim().toLowerCase()};
 }
 function passes(d,f){
@@ -349,6 +356,7 @@ function passes(d,f){
   if(f.type&&d.type!==f.type)return false;
   for(const a of f.amenities){if(!d.amenities[a])return false;}
   if(f.hideStale&&d.fresh.stale)return false;
+  if(f.onlyAvail&&!d.available_from)return false;
   if(f.search){const hay=(d.title+' '+d.text+' '+(d.district||'')).toLowerCase();if(!hay.includes(f.search))return false;}
   return true;}
 const amen=a=>Object.keys(AM).filter(k=>a[k]).map(k=>AM[k]).join(" ");
@@ -367,11 +375,19 @@ function makeCard(d,i,key,target){
   const benchBadge=b?'<span class="bench bench-'+b.kind+'" title="медиана района: '+priceFull(b.monthly_median)+' ฿/мес">'+b.label+'</span>':'';
   const ref=b&&b.airbnb_adr?'<div class="ref">🏨 Airbnb здесь ~'+priceFull(b.airbnb_adr)+'฿/ночь'+(b.seed?' <span class="seed">оценка</span>':'')+'</div>':'';
   const amenStr=amen(d.amenities);
+  const availHtml=(()=>{
+    if(!d.available_from)return '';
+    if(d.available_from==='now')return '<span class="avail-now">🟢 доступно сейчас</span>';
+    const parts=d.available_from.split('-');
+    const mon=['','янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+    const label=parts.length===2?mon[+parts[1]]+' '+parts[0]:(parts[2]+' '+mon[+parts[1]]+' '+parts[0]);
+    return '<span class="avail-date">📅 с '+label+'</span>';
+  })();
   const expandHtml=d.text?'<details class="card-raw"><summary class="card-raw-toggle">читать целиком</summary><pre class="card-raw-text">'+escHtml(d.text)+'</pre></details>':'';
   card.setAttribute('data-type',d.type);
   card.innerHTML='<div class="card-top">'+dtag+fb+'</div>'+
     '<div class="title">'+d.title+draft+'</div>'+
-    '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span>'+(amenStr?'<span class="spec-amen">'+amenStr+'</span>':'')+'</div>'+
+    '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span>'+(amenStr?'<span class="spec-amen">'+amenStr+'</span>':'')+(availHtml?availHtml:'')+'</div>'+
     ref+
     '<div class="foot"><span class="priceblock">'+price+benchBadge+'</span><span class="srcs">'+contactBtn(d.contact)+sourcesHtml(d.sources)+'</span></div>'+
     expandHtml;
@@ -429,7 +445,7 @@ function render(first){
   document.getElementById('count2').textContent=shown+'/'+DATA.length;
   writeHash(f);
   // обновляем бейдж активных фильтров
-  const n=(f.district?1:0)+(f.price?1:0)+(f.bed?1:0)+(f.type?1:0)+f.amenities.length+(f.hideStale?1:0)+(f.search?1:0);
+  const n=(f.district?1:0)+(f.price?1:0)+(f.bed?1:0)+(f.type?1:0)+f.amenities.length+(f.hideStale?1:0)+(f.onlyAvail?1:0)+(f.search?1:0);
   const fb=document.getElementById('ftbadge');if(fb)fb.textContent=n?' · '+n:'';
 }
 function chipClear(k){
@@ -446,6 +462,7 @@ function writeHash(f){
   if(f.type)p.set('type',f.type);
   if(f.amenities.length)p.set('am',f.amenities.join(','));
   if(f.hideStale)p.set('stale','1');
+  if(f.onlyAvail)p.set('avail','1');
   if(f.search)p.set('q',f.search);
   const sort=document.getElementById('f-sort').value; if(sort)p.set('sort',sort);
   const s=p.toString();
@@ -458,10 +475,11 @@ function applyHash(){
   set('f-district','district');set('f-price','price');set('f-bed','bed');set('f-type','type');set('f-sort','sort');set('f-search','q');
   const am=p.get('am'); if(am)am.split(',').forEach(v=>{const el=document.querySelector('.f-am[value="'+v+'"]');if(el)el.checked=true;});
   document.getElementById('f-stale').checked=p.get('stale')==='1';
+  document.getElementById('f-avail').checked=p.get('avail')==='1';
 }
-function resetFilters(){['f-district','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=false;render(false);}
+function resetFilters(){['f-district','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=false;document.getElementById('f-avail').checked=false;render(false);}
 ['f-district','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).addEventListener('input',()=>render(false)));
-document.querySelectorAll('.f-am, #f-stale').forEach(e=>e.addEventListener('change',()=>render(false)));
+document.querySelectorAll('.f-am, #f-stale, #f-avail').forEach(e=>e.addEventListener('change',()=>render(false)));
 document.getElementById('reset').onclick=resetFilters;
 // мобильный toggle фильтра
 (function(){

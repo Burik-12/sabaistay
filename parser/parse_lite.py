@@ -215,6 +215,131 @@ def _parse_status(text: str) -> str:
     return "rented" if _RENTED.search(text) else "active"
 
 
+# ── дата доступности ────────────────────────────────────────────────────────
+_MONTH_EN = {
+    "jan": 1, "january": 1, "feb": 2, "february": 2, "mar": 3, "march": 3,
+    "apr": 4, "april": 4, "may": 5, "jun": 6, "june": 6,
+    "jul": 7, "july": 7, "aug": 8, "august": 8, "sep": 9, "sept": 9, "september": 9,
+    "oct": 10, "october": 10, "nov": 11, "november": 11, "dec": 12, "december": 12,
+}
+_MONTH_RU = {
+    "янв": 1, "фев": 2, "мар": 3, "апр": 4, "май": 5, "мая": 5,
+    "июн": 6, "июл": 7, "авг": 8, "сен": 9, "окт": 10, "ноя": 11, "дек": 12,
+}
+# "1 March 2026", "March 1", "1 Mar"
+_AVAIL_EN_DMY = re.compile(
+    r"(?:available\s+(?:from\s+)?|from\s+|avail\.?\s+(?:from\s+)?)"
+    r"(\d{1,2})\s*(?:st|nd|rd|th)?\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)"
+    r"(?:\s+(\d{4}))?",
+    re.IGNORECASE,
+)
+_AVAIL_EN_MDY = re.compile(
+    r"(?:available\s+(?:from\s+)?|from\s+|avail\.?\s+(?:from\s+)?)"
+    r"(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)"
+    r"\s+(\d{1,2})(?:st|nd|rd|th)?(?:\s+(\d{4}))?",
+    re.IGNORECASE,
+)
+# "available from January" (только месяц, без дня)
+_AVAIL_EN_M = re.compile(
+    r"(?:available\s+(?:from\s+)?|avail\.?\s+(?:from\s+)?|from\s+)"
+    r"(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)"
+    r"(?:\s+(\d{4}))?(?!\s*\d)",
+    re.IGNORECASE,
+)
+# "с 1 марта", "доступно с 5 апреля", "свободно с марта"
+_AVAIL_RU = re.compile(
+    r"(?:доступн[оа]?\s+с|свободн[оа]?\s+с|сдаётся\s+с|заезд\s+с|от|с)\s+"
+    r"(?:(\d{1,2})\s+)?"
+    r"(янв(?:аря?)?|фев(?:раля?)?|мар(?:та?)?|апр(?:еля?)?|мая|май(?:я)?|июн(?:я)?|июл(?:я)?|авг(?:уста?)?|сен(?:тября?)?|окт(?:ября?)?|ноя(?:бря?)?|дек(?:абря?)?)"
+    r"(?:\s+(\d{4}))?",
+    re.IGNORECASE,
+)
+# ISO / DD.MM.YYYY / DD/MM/YYYY после ключевого слова
+_AVAIL_DATE = re.compile(
+    r"(?:available\s+(?:from\s+)?|from\s+|доступн[оа]?\s+с|свободн[оа]?\s+с|с\s+)"
+    r"(\d{1,2})[./](\d{1,2})(?:[./](\d{4}|\d{2}))?",
+    re.IGNORECASE,
+)
+# "available now"
+_AVAIL_NOW = re.compile(r"\bavailable\s+now\b|\bсвободно?\s+сейчас\b|\bдоступно?\s+сейчас\b", re.IGNORECASE)
+
+
+def _parse_available_from(text: str) -> str | None:
+    """Возвращает ISO дату 'YYYY-MM-DD' или 'YYYY-MM' (если день неизвестен), либо 'now', либо None."""
+    import datetime
+    cur_year = datetime.date.today().year
+    _YEAR_MIN, _YEAR_MAX = cur_year - 1, cur_year + 3
+
+    def _valid_year(yr_str: str | None) -> int | None:
+        if not yr_str:
+            return cur_year
+        y = int(yr_str)
+        if y < 100:
+            y += 2000
+        return y if _YEAR_MIN <= y <= _YEAR_MAX else None
+
+    if _AVAIL_NOW.search(text):
+        return "now"
+
+    # ISO / DD.MM.YYYY
+    m = _AVAIL_DATE.search(text)
+    if m:
+        d, mo, yr = m.group(1), m.group(2), m.group(3)
+        try:
+            day, month = int(d), int(mo)
+            if 1 <= month <= 12 and 1 <= day <= 31:
+                year = _valid_year(yr)
+                if year:
+                    return f"{year}-{month:02d}-{day:02d}"
+        except ValueError:
+            pass
+
+    # "1 March [2026]"
+    m = _AVAIL_EN_DMY.search(text)
+    if m:
+        day, mon_str, yr = int(m.group(1)), m.group(2).lower()[:3], m.group(3)
+        month = _MONTH_EN.get(mon_str)
+        if month:
+            year = _valid_year(yr)
+            if year:
+                return f"{year}-{month:02d}-{day:02d}"
+
+    # "March 1 [2026]"
+    m = _AVAIL_EN_MDY.search(text)
+    if m:
+        mon_str, day, yr = m.group(1).lower()[:3], int(m.group(2)), m.group(3)
+        month = _MONTH_EN.get(mon_str)
+        if month:
+            year = _valid_year(yr)
+            if year:
+                return f"{year}-{month:02d}-{day:02d}"
+
+    # "available from January [2026]"
+    m = _AVAIL_EN_M.search(text)
+    if m:
+        mon_str, yr = m.group(1).lower()[:3], m.group(2)
+        month = _MONTH_EN.get(mon_str)
+        if month:
+            year = _valid_year(yr)
+            if year:
+                return f"{year}-{month:02d}"
+
+    # "с 1 марта [2026]"
+    m = _AVAIL_RU.search(text)
+    if m:
+        day_s, mon_str, yr = m.group(1), m.group(2).lower()[:3], m.group(3)
+        month = _MONTH_RU.get(mon_str)
+        if month:
+            year = _valid_year(yr)
+            if year:
+                day = int(day_s) if day_s else None
+                if day:
+                    return f"{year}-{month:02d}-{day:02d}"
+                return f"{year}-{month:02d}"
+
+    return None
+
+
 # ── контакт ─────────────────────────────────────────────────────────────────
 _CONTACT_TG = re.compile(
     r"(?<![A-Za-z0-9_])@([A-Za-z][A-Za-z0-9_]{3,31})(?![A-Za-z0-9_])",
@@ -295,6 +420,7 @@ def parse_post(post: dict) -> dict:
     status = _parse_status(text)
     lang = _parse_language(text)
     contact = _parse_contact(text)
+    available_from = _parse_available_from(text)
     listing = _is_listing(text, price, district_canon)
 
     # уверенность: считаем сколько ключевых полей найдено
@@ -318,7 +444,7 @@ def parse_post(post: dict) -> dict:
             "property_type": ptype,
             "area_sqm": None,
             "amenities": amenities,
-            "available_from": None,
+            "available_from": available_from,
             "available_to": None,
             "min_stay_months": None,
             "language": lang,

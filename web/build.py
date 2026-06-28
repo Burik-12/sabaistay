@@ -248,6 +248,22 @@ HTML = r"""<!DOCTYPE html>
 .f-search-wrap{flex:0 0 100%!important;max-width:100%}
 .f-search-wrap input{width:100%;min-width:0;box-sizing:border-box}
 
+/* ── закладки ── */
+.bm-btn{position:absolute;top:10px;right:12px;background:none;border:none;font-size:16px;cursor:pointer;line-height:1;padding:2px;opacity:.5;transition:opacity .15s,transform .15s}
+.bm-btn:hover{opacity:1;transform:scale(1.2)}
+.bm-btn.saved{opacity:1;color:var(--coral)}
+.card{position:relative}
+.fav-section{background:#fff8f6;border-bottom:2px solid var(--coral);padding:10px 22px 14px}
+.fav-section h3{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--coral-d);margin:0 0 8px}
+.fav-section .fav-cards{display:flex;flex-direction:column}
+.fav-clear{font-family:var(--mono);font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;padding:0;margin-top:6px}
+.fav-clear:hover{color:var(--coral)}
+
+/* ── кнопка поделиться ── */
+.share-btn{font-family:var(--mono);font-size:11px;color:var(--sea);background:none;border:1px solid var(--hair);border-radius:6px;padding:4px 10px;cursor:pointer;letter-spacing:.3px;white-space:nowrap}
+.share-btn:hover{border-color:var(--sea);background:var(--surface)}
+.share-btn.copied{color:#2d9e5f;border-color:#2d9e5f}
+
 /* ── expand карточки ── */
 .card-raw{margin-top:8px;border-top:1px solid var(--hair);padding-top:2px}
 .card-raw-toggle{font-family:var(--mono);font-size:11px;color:var(--sea);cursor:pointer;padding:6px 0 0;list-style:none;display:block}
@@ -266,7 +282,7 @@ details[open] .card-raw-toggle::before{content:'▾ '}
     <svg class="brandmark" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="26" r="12" fill="#ef6c45"/><g stroke="#bfe0db" stroke-linecap="round" fill="none"><line x1="8" y1="40" x2="56" y2="40" stroke-width="3.4"/><line x1="14" y1="47" x2="50" y2="47" stroke-width="2.8" opacity=".55"/><line x1="21" y1="53" x2="43" y2="53" stroke-width="2.8" opacity=".3"/></g></svg>
     <span class="mark">Sabai<span class="m2">Stay</span></span>
     <span class="tagline">все объявления Пхангана из Telegram-каналов аренды — с фильтром, картой и ценой к рынку</span>
-    <span class="coordbar"><span class="compass">✦&nbsp;N</span><span class="geo">9.74°N · 100.01°E</span><span class="snap">снимок __SNAPSHOT__</span><span id="count2"></span></span>
+    <span class="coordbar"><span class="compass">✦&nbsp;N</span><span class="geo">9.74°N · 100.01°E</span><span class="snap">снимок __SNAPSHOT__</span><span id="count2"></span><button class="share-btn" id="share-btn" title="Скопировать ссылку с фильтрами">🔗 поделиться</button></span>
   </div>
 </header>
 
@@ -282,6 +298,8 @@ details[open] .card-raw-toggle::before{content:'▾ '}
     <input id="f-search" type="text" placeholder="pool, sea view, 2br, studio…" autocomplete="off"></div>
   <div class="f"><label for="f-district">Район</label>
     <select id="f-district"><option value="">весь остров</option></select></div>
+  <div class="f"><label for="f-price-min">Цена от, ฿/мес</label>
+    <input id="f-price-min" type="number" step="5000" placeholder="от 0"></div>
   <div class="f"><label for="f-price">Цена до, ฿/мес</label>
     <input id="f-price" type="number" step="5000" placeholder="без лимита"></div>
   <div class="f"><label for="f-bed">Спален от</label>
@@ -299,6 +317,12 @@ details[open] .card-raw-toggle::before{content:'▾ '}
     <select id="f-sort"><option value="">сначала свежие</option><option value="cheap">сначала дешёвые</option><option value="pricey">сначала дорогие</option></select></div>
   <button class="reset" id="reset">сбросить</button>
 </section>
+
+<div id="fav-section" class="fav-section" style="display:none">
+  <h3>🔖 Избранное</h3>
+  <div class="fav-cards" id="fav-cards"></div>
+  <button class="fav-clear" onclick="clearFav()">очистить избранное</button>
+</div>
 
 <div class="wrap">
   <div class="list"><div class="count" id="count"></div><div id="cards"></div>
@@ -341,6 +365,7 @@ let markers={};
 const AMLABEL={pool:'🏊 бассейн',seaview:'🌊 море',wifi:'📶 wi-fi',kitchen:'🍳 кухня',aircon:'❄️ кондей'};
 function readF(){return{
   district:document.getElementById('f-district').value,
+  priceMin:+document.getElementById('f-price-min').value||0,
   price:+document.getElementById('f-price').value||0,
   bed:+document.getElementById('f-bed').value||0,
   type:document.getElementById('f-type').value,
@@ -351,6 +376,7 @@ function readF(){return{
 }
 function passes(d,f){
   if(f.district&&d.district!==f.district)return false;
+  if(f.priceMin&&(d.price==null||d.price<f.priceMin))return false;
   if(f.price&&(d.price==null||d.price>f.price))return false;
   if(f.bed&&(d.bedrooms==null||d.bedrooms<f.bed))return false;
   if(f.type&&d.type!==f.type)return false;
@@ -384,8 +410,10 @@ function makeCard(d,i,key,target){
     return '<span class="avail-date">📅 с '+label+'</span>';
   })();
   const expandHtml=d.text?'<details class="card-raw"><summary class="card-raw-toggle">читать целиком</summary><pre class="card-raw-text">'+escHtml(d.text)+'</pre></details>':'';
+  const isSaved=getFavs().includes(d.id);
+  const bmBtn='<button class="bm-btn'+(isSaved?' saved':'')+'" data-id="'+escHtml(d.id)+'" title="'+(isSaved?'Убрать из избранного':'В избранное')+'" aria-label="Закладка">🔖</button>';
   card.setAttribute('data-type',d.type);
-  card.innerHTML='<div class="card-top">'+dtag+fb+'</div>'+
+  card.innerHTML=bmBtn+'<div class="card-top">'+dtag+fb+'</div>'+
     '<div class="title">'+d.title+draft+'</div>'+
     '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span>'+(amenStr?'<span class="spec-amen">'+amenStr+'</span>':'')+(availHtml?availHtml:'')+'</div>'+
     ref+
@@ -393,6 +421,8 @@ function makeCard(d,i,key,target){
     expandHtml;
   // клик по expand не должен открывать карту / ссылку
   card.querySelector('details')?.addEventListener('click',e=>e.stopPropagation());
+  // закладка — стопим всплытие, переключаем
+  card.querySelector('.bm-btn')?.addEventListener('click',e=>{e.stopPropagation();toggleFav(d.id);});
   if(d.lat!=null){
     const icon=L.divIcon({className:'',html:'<div class="sounding'+(d.fresh.stale?' dim':'')+'">'+(d.price!=null?compact(d.price):'·')+'</div>',iconSize:null});
     const m=L.marker([d.lat,d.lng],{icon}).addTo(map)
@@ -445,7 +475,7 @@ function render(first){
   document.getElementById('count2').textContent=shown+'/'+DATA.length;
   writeHash(f);
   // обновляем бейдж активных фильтров
-  const n=(f.district?1:0)+(f.price?1:0)+(f.bed?1:0)+(f.type?1:0)+f.amenities.length+(f.hideStale?1:0)+(f.onlyAvail?1:0)+(f.search?1:0);
+  const n=(f.district?1:0)+(f.priceMin?1:0)+(f.price?1:0)+(f.bed?1:0)+(f.type?1:0)+f.amenities.length+(f.hideStale?1:0)+(f.onlyAvail?1:0)+(f.search?1:0);
   const fb=document.getElementById('ftbadge');if(fb)fb.textContent=n?' · '+n:'';
 }
 function chipClear(k){
@@ -457,6 +487,7 @@ function chipClear(k){
 function writeHash(f){
   const p=new URLSearchParams();
   if(f.district)p.set('district',f.district);
+  if(f.priceMin)p.set('priceMin',f.priceMin);
   if(f.price)p.set('price',f.price);
   if(f.bed)p.set('bed',f.bed);
   if(f.type)p.set('type',f.type);
@@ -472,13 +503,13 @@ function applyHash(){
   if(!location.hash)return;
   const p=new URLSearchParams(location.hash.slice(1));
   const set=(id,key)=>{const v=p.get(key);if(v!=null)document.getElementById(id).value=v;};
-  set('f-district','district');set('f-price','price');set('f-bed','bed');set('f-type','type');set('f-sort','sort');set('f-search','q');
+  set('f-district','district');set('f-price-min','priceMin');set('f-price','price');set('f-bed','bed');set('f-type','type');set('f-sort','sort');set('f-search','q');
   const am=p.get('am'); if(am)am.split(',').forEach(v=>{const el=document.querySelector('.f-am[value="'+v+'"]');if(el)el.checked=true;});
   document.getElementById('f-stale').checked=p.get('stale')==='1';
   document.getElementById('f-avail').checked=p.get('avail')==='1';
 }
-function resetFilters(){['f-district','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=false;document.getElementById('f-avail').checked=false;render(false);}
-['f-district','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).addEventListener('input',()=>render(false)));
+function resetFilters(){['f-district','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=false;document.getElementById('f-avail').checked=false;render(false);}
+['f-district','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).addEventListener('input',()=>render(false)));
 document.querySelectorAll('.f-am, #f-stale, #f-avail').forEach(e=>e.addEventListener('change',()=>render(false)));
 document.getElementById('reset').onclick=resetFilters;
 // мобильный toggle фильтра
@@ -500,6 +531,64 @@ render(true);
   btnList.addEventListener('click',showList);
   btnMap.addEventListener('click',showMap);
   showList();
+})();
+
+// ── закладки (localStorage) ──────────────────────────
+const FAV_KEY='sabaistay_fav';
+function getFavs(){try{return JSON.parse(localStorage.getItem(FAV_KEY)||'[]');}catch{return[];}}
+function saveFavs(a){localStorage.setItem(FAV_KEY,JSON.stringify(a));}
+function toggleFav(id){
+  let a=getFavs();
+  const i=a.indexOf(id);
+  if(i>=0){a.splice(i,1);}else{a.push(id);}
+  saveFavs(a);
+  renderFavSection();
+  document.querySelectorAll('.bm-btn[data-id="'+id+'"]').forEach(b=>{
+    b.classList.toggle('saved',a.includes(id));
+    b.title=a.includes(id)?'Убрать из избранного':'В избранное';
+  });
+}
+function clearFav(){saveFavs([]);renderFavSection();}
+function renderFavSection(){
+  const favs=getFavs();
+  const sec=document.getElementById('fav-section');
+  const cont=document.getElementById('fav-cards');
+  if(!sec||!cont)return;
+  if(favs.length===0){sec.style.display='none';cont.innerHTML='';return;}
+  sec.style.display='';
+  cont.innerHTML='';
+  const all=DATA.filter(d=>favs.includes(d.id));
+  all.forEach(d=>{
+    const el=makeCard(d);
+    el.querySelector('.bm-btn')?.classList.add('saved');
+    cont.appendChild(el);
+  });
+  // обновляем звёздочки в основном списке
+  document.querySelectorAll('.bm-btn').forEach(b=>{
+    b.classList.toggle('saved',favs.includes(b.dataset.id));
+    b.title=favs.includes(b.dataset.id)?'Убрать из избранного':'В избранное';
+  });
+}
+renderFavSection();
+
+// ── кнопка «поделиться» ─────────────────────────────
+(function(){
+  const btn=document.getElementById('share-btn');
+  if(!btn)return;
+  btn.addEventListener('click',()=>{
+    const url=location.href;
+    if(navigator.clipboard){
+      navigator.clipboard.writeText(url).then(()=>{
+        btn.textContent='✓ скопировано';btn.classList.add('copied');
+        setTimeout(()=>{btn.textContent='🔗 поделиться';btn.classList.remove('copied');},2000);
+      });
+    }else{
+      const el=document.createElement('textarea');el.value=url;
+      document.body.appendChild(el);el.select();document.execCommand('copy');document.body.removeChild(el);
+      btn.textContent='✓ скопировано';btn.classList.add('copied');
+      setTimeout(()=>{btn.textContent='🔗 поделиться';btn.classList.remove('copied');},2000);
+    }
+  });
 })();
 </script>
 </body>

@@ -10,6 +10,7 @@ SabaiStay — сборка витрины (demo). Визуальный стил�
 from __future__ import annotations
 
 import json
+import math
 import sys
 from pathlib import Path
 from urllib.parse import quote
@@ -38,6 +39,16 @@ from dedup import dedup               # noqa: E402  — склейка одно�
 from freshness import assess         # noqa: E402  — возраст/статус (active/rented/expired)
 
 
+_THONG_SALA = (9.7117, 100.0036)  # пирс Тонгсала — точка отсчёта расстояний
+
+
+def _haversine(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    R = 6371.0
+    r = math.radians
+    a = math.sin(r(lat2 - lat1) / 2) ** 2 + math.cos(r(lat1)) * math.cos(r(lat2)) * math.sin(r(lng2 - lng1) / 2) ** 2
+    return R * 2 * math.asin(math.sqrt(a))
+
+
 def build_rows() -> tuple[list[dict], str | None]:
     data = json.loads(LISTINGS.read_text(encoding="utf-8"))
     coords = {d["canonical"]: (d["lat"], d["lng"]) for d in json.loads(DISTRICTS.read_text(encoding="utf-8"))["districts"]}
@@ -51,12 +62,13 @@ def build_rows() -> tuple[list[dict], str | None]:
         rep = g["representative"]
         p = rep["parsed"]
         canon = p["district_canonical"]
-        lat = lng = None
+        lat = lng = dist = None
         if canon and canon in coords:
-            lat, lng = coords[canon]
+            lat_c, lng_c = coords[canon]
+            dist = round(_haversine(lat_c, lng_c, *_THONG_SALA), 1)
             n = seen.get(canon, 0); seen[canon] = n + 1
-            lat += ((n % 5) - 2) * 0.0045
-            lng += (((n // 5) % 5) - 2) * 0.0045
+            lat = lat_c + ((n % 5) - 2) * 0.0045
+            lng = lng_c + (((n // 5) % 5) - 2) * 0.0045
         fresh = assess(rep.get("posted_at"), p.get("status_hint"), snapshot)
         rows.append({
             "sources": g["sources"], "dup": g["size"],
@@ -71,6 +83,7 @@ def build_rows() -> tuple[list[dict], str | None]:
             "text": (rep.get("raw_text") or "").strip(),
             "available_from": p.get("available_from"),
             "area_sqm": p.get("area_sqm"),
+            "dist_km": dist,
             "id": rep.get("external_id") or g["sources"][0]["source_url"],
         })
     # свежие — выше: по умолчанию сортируем по возрасту (None-возраст в конец)
@@ -345,6 +358,26 @@ details[open] .card-raw-toggle::before{content:'▾ '}
 .scroll-top-btn:hover{opacity:1;background:var(--sea-deep)}
 html[data-theme="dark"] .scroll-top-btn{box-shadow:0 2px 10px rgba(0,0,0,.5)}
 
+/* ── кнопка помощи / шорткаты ── */
+.help-btn{font-family:var(--mono);font-size:13px;font-weight:700;background:none;border:1px solid var(--hair);border-radius:6px;padding:4px 8px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.help-btn:hover{border-color:var(--sea);color:var(--sea)}
+.shortcuts-popup{position:fixed;z-index:9999;background:var(--paper);border:1px solid var(--hair);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.18);padding:14px 18px;font-size:12px;top:62px;right:14px;min-width:195px}
+.shortcuts-popup h4{margin:0 0 9px;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+.shortcuts-popup table{border-collapse:collapse;width:100%}
+.shortcuts-popup td{padding:3px 0;color:var(--muted)}
+.shortcuts-popup td:first-child{padding-right:12px}
+kbd{background:var(--surface);border:1px solid var(--hair);border-radius:4px;padding:1px 6px;font-family:var(--mono);font-size:11px;color:var(--ink);display:inline-block}
+
+/* ── печать ── */
+@media print{
+  .header-actions,.view-toggle,.filter-toggle,.filters,.scroll-top-btn,.load-more-wrap{display:none!important}
+  .wrap{height:auto;display:block}
+  #map{display:none!important}
+  .list{width:100%;overflow:visible;max-height:none;height:auto}
+  .card{break-inside:avoid;box-shadow:none}
+  .hot-section,.fav-section{display:none!important}
+}
+
 /* ── тёмная тема ── */
 html[data-theme="dark"] {
   --paper:#0e1c20; --surface:#152027; --ink:#d4e8e4; --hair:#263c44;
@@ -385,6 +418,7 @@ html[data-theme="dark"] .vt-btn.active{background:var(--sea);color:#fff;border-c
       <button class="export-btn" id="export-btn" title="Скачать список в CSV">⬇ CSV</button>
       <button class="share-btn" id="stats-btn" title="Статистика по районам">📊 районы</button>
       <button class="fav-count-btn" id="fav-count-btn" title="Перейти к избранному">🔖 <span id="fav-count-num">0</span></button>
+      <button class="help-btn" id="help-btn" title="Горячие клавиши">?</button>
       <button class="theme-btn" id="theme-btn" title="Переключить тёмную тему">🌙</button>
     </span>
   </div>
@@ -423,7 +457,7 @@ html[data-theme="dark"] .vt-btn.active{background:var(--sea);color:#fff;border-c
   <label class="chk"><input type="checkbox" id="f-avail"> только с датой заезда</label>
   <label class="chk"><input type="checkbox" id="f-hide-seen"> скрыть просмотренные</label>
   <div class="f"><label for="f-sort">Сортировка</label>
-    <select id="f-sort"><option value="">сначала свежие</option><option value="cheap">сначала дешёвые</option><option value="pricey">сначала дорогие</option><option value="sqm_desc">площадь: больше</option><option value="sqm_asc">площадь: меньше</option></select></div>
+    <select id="f-sort"><option value="">сначала свежие</option><option value="cheap">сначала дешёвые</option><option value="pricey">сначала дорогие</option><option value="sqm_desc">площадь: больше</option><option value="sqm_asc">площадь: меньше</option><option value="price_sqm_asc">цена/м²: дешевле</option><option value="dist_asc">ближе к Тонгсале</option></select></div>
   <button class="reset" id="reset">сбросить</button>
 </section>
 
@@ -573,6 +607,7 @@ function makeCard(d,i,key,target){
   const seen=getSeen().has(d.id);
   const bmBtn='<button class="bm-btn'+(isSaved?' saved':'')+'" data-id="'+escHtml(d.id)+'" title="'+(isSaved?'Убрать из избранного':'В избранное')+'" aria-label="Закладка">🔖</button>';
   const sqmHtml=d.area_sqm?'<span>📐 '+d.area_sqm+' м²</span>':'';
+  const distHtml=d.dist_km!=null?'<span title="от пирса Тонгсала">🛥 '+d.dist_km+' км</span>':'';
   const seenHtml=seen?'<span class="seen-badge">уже смотрел</span>':'';
   // качество объявления
   const qScore=(d.price!=null?1:0)+(d.district?1:0)+(d.bedrooms!=null?1:0)+(d.type&&d.type!=='other'?1:0);
@@ -584,7 +619,7 @@ function makeCard(d,i,key,target){
   if(key!=null)card.setAttribute('data-key',String(key));
   card.innerHTML=bmBtn+'<div class="card-top">'+dtag+fb+'</div>'+
     '<div class="title">'+hlTitle(escHtml(d.title))+draft+qHtml+seenHtml+'</div>'+
-    '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span>'+sqmHtml+(amenStr?'<span class="spec-amen">'+amenStr+'</span>':'')+(availHtml?availHtml:'')+'</div>'+
+    '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span>'+sqmHtml+distHtml+(amenStr?'<span class="spec-amen">'+amenStr+'</span>':'')+(availHtml?availHtml:'')+'</div>'+
     ref+
     '<div class="foot"><span class="priceblock">'+price+benchBadge+'</span><span class="srcs">'+contactBtn(d.contact)+sourcesHtml(d.sources)+'</span></div>'+
     expandHtml;
@@ -636,6 +671,8 @@ function render(first){
   else if(sortV==='fresh')view.sort((a,b)=>String(b.posted_at||'').localeCompare(String(a.posted_at||'')));
   else if(sortV==='sqm_desc')view.sort((a,b)=>(b.area_sqm??-1)-(a.area_sqm??-1));
   else if(sortV==='sqm_asc')view.sort((a,b)=>(a.area_sqm??Infinity)-(b.area_sqm??Infinity));
+  else if(sortV==='price_sqm_asc')view.sort((a,b)=>{const ar=a.price&&a.area_sqm?a.price/a.area_sqm:Infinity;const br=b.price&&b.area_sqm?b.price/b.area_sqm:Infinity;return ar-br;});
+  else if(sortV==='dist_asc')view.sort((a,b)=>(a.dist_km??Infinity)-(b.dist_km??Infinity));
   _geoView=[]; _noGeoView=[];
   view.forEach(d=>{if(!passes(d,f))return; (d.lat!=null?_geoView:_noGeoView).push(d);});
   const shown=_geoView.length+_noGeoView.length;
@@ -685,7 +722,7 @@ function render(first){
   if(f.sqmMax)chips.push(['sqm-max','до '+f.sqmMax+' м²']);
   if(f.priceMin)chips.push(['price-min','цена от '+priceFull(f.priceMin)+'฿']);
   if(f.search)chips.push(['search','«'+f.search+'»']);
-  const SORT_LABELS={'cheap':'сначала дешёвые','pricey':'сначала дорогие','fresh':'сначала свежие','sqm_desc':'площадь: больше','sqm_asc':'площадь: меньше'};
+  const SORT_LABELS={'cheap':'сначала дешёвые','pricey':'сначала дорогие','fresh':'сначала свежие','sqm_desc':'площадь: больше','sqm_asc':'площадь: меньше','price_sqm_asc':'цена/м²: дешевле','dist_asc':'ближе к пирсу'};
   if(sortV&&SORT_LABELS[sortV])chips.push(['sort',SORT_LABELS[sortV]]);
   document.getElementById('count').innerHTML='<span class="rcount">'+shown+' '+word+'</span>'+tail+
     chips.map(c=>'<button class="chip" onclick="chipClear(\''+c[0]+'\')">'+c[1]+'<span class="x">✕</span></button>').join('');
@@ -715,6 +752,7 @@ function writeHash(f){
   if(f.amenities.length)p.set('am',f.amenities.join(','));
   if(f.hideStale)p.set('stale','1');
   if(f.onlyAvail)p.set('avail','1');
+  if(f.hideSeen)p.set('seen','1');
   if(f.search)p.set('q',f.search);
   const sort=document.getElementById('f-sort').value; if(sort)p.set('sort',sort);
   const s=p.toString();
@@ -728,6 +766,7 @@ function applyHash(){
   const am=p.get('am'); if(am)am.split(',').forEach(v=>{const el=document.querySelector('.f-am[value="'+v+'"]');if(el)el.checked=true;});
   document.getElementById('f-stale').checked=p.get('stale')==='1';
   document.getElementById('f-avail').checked=p.get('avail')==='1';
+  const _hs=document.getElementById('f-hide-seen');if(_hs)_hs.checked=p.get('seen')==='1';
 }
 function resetFilters(){['f-district','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=false;document.getElementById('f-avail').checked=false;const hs=document.getElementById('f-hide-seen');if(hs)hs.checked=false;render(false);}
 ['f-district','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).addEventListener('input',()=>render(false)));
@@ -953,6 +992,28 @@ document.getElementById('f-search')?.addEventListener('keydown',function(e){
 document.getElementById('fav-count-btn')?.addEventListener('click',function(){
   document.getElementById('fav-section')?.scrollIntoView({behavior:'smooth',block:'start'});
 });
+
+// ── кнопка ? (шорткаты) ──
+(function(){
+  const btn=document.getElementById('help-btn');
+  if(!btn)return;
+  let popup=null;
+  function closePopup(){if(popup){popup.remove();popup=null;}}
+  btn.addEventListener('click',function(e){
+    e.stopPropagation();
+    if(popup){closePopup();return;}
+    popup=document.createElement('div');
+    popup.className='shortcuts-popup';
+    popup.innerHTML='<h4>Горячие клавиши</h4><table>'+
+      '<tr><td><kbd>/</kbd></td><td>фокус на поиск</td></tr>'+
+      '<tr><td><kbd>Esc</kbd></td><td>очистить поиск</td></tr>'+
+      '<tr><td><kbd>r</kbd></td><td>сбросить все фильтры</td></tr>'+
+      '</table>';
+    document.body.appendChild(popup);
+    setTimeout(function(){document.addEventListener('click',function h(){closePopup();document.removeEventListener('click',h);},{once:true});},0);
+  });
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')closePopup();});
+})();
 
 // ── кнопка ↑ (scroll-to-top) ──
 (function(){

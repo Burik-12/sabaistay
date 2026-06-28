@@ -1987,11 +1987,11 @@
       "posted_at": "2026-06-26T05:52:02+00:00",
       "raw_text": "2х Спальный Дом на Пангане всего за 25 000бат!\nНовый ремонт!\n📍Район Баан Суан, премиум резорт с виллами и бассейнами\n\n‼️Супер Тихо, Нет Строек, Нет тусовок вокруг. Только пение птиц и красивые виды. Вокруг резорта живописные улочки для прогулок и бега почти без движения, тут гуляют пешком с детьми. Рядом-300м- детский садик\n\nЕстт своя Лаундри\nЭлектричество 7б/юнит\n(В месяц при 2х кондеях около 500 бат)\n\nКондиционеры в каждой комнате. Вентилятор и телевизор на террасе. Кухня со всем необходимым на террасе. \n\nКаждая спальня с отдельным входом\n\nАренда от месяца до года! Всего 25 000бат\n\nПишите @olga_laktionova\nАренда напрямую от собственников, без комиссий",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 25000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -2013,7 +2013,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -2315,9 +2315,9 @@
         "title": "Sri Thanu — вилла 2 спал.",
         "district_raw": "Sri Thanu",
         "district_canonical": "Sri Thanu",
-        "price_amount": null,
+        "price_amount": 900.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": 2,
         "bathrooms": null,
         "property_type": "villa",
@@ -2337,7 +2337,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.86
+        "confidence": 0.92
       }
     },
     {
@@ -2455,11 +2455,11 @@
       "posted_at": "2026-06-12T09:57:37+00:00",
       "raw_text": "Двуспальные и односпальные дома посуточно, на месяц и долгосрок по специальным условиям! Локации: Мадуеван, Найсуан\n\nСутки - от 700 бат \nМесяц - от 18 тыс бат \n\nПишите в лс за подробностями и подбором домов.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Madeua Wan — жильё",
         "district_raw": "Madeua Wan",
         "district_canonical": "Madeua Wan",
-        "price_amount": null,
+        "price_amount": 18000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -2481,7 +2481,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -2743,11 +2743,11 @@
       "posted_at": "2026-06-04T10:39:37+00:00",
       "raw_text": "Современные односпальные и двуспальные дома доступны на низкий сезон по вкусным ценам.\nПосуточно от 700 бат\nМесяц от 20 тыс бат\nПодробности в лс",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 20000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -2769,7 +2769,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -2815,13 +2815,13 @@
       "posted_at": "2026-06-03T06:15:17+00:00",
       "raw_text": "Уютные апартаменты в Тонгсале (42 метра)\n\nБлижайшие свободные даты:\n\n3.06 - 3.07 / месяц 20 000 бат + свет\n\nСутки от 750 бат\nНеделя от 5 00 бат \n\nГостиная с угловым диваном (превращается в 2х спальную кровать) и большим smart TV, рабочий стол, просторная спальня с кондиционером, кухня со всем необходимым, патио, личная терраса.\n\nЛокация супер удобная - 1 минута от входа 7/11 и фуд-корта, на территории не шумно. 4 минуты до пляжа пешком.\n\nWiFi - 1 gb/s. Делаем ТМ30, составляем контракт\n\nВ ЛС пришлю точные цены на ваши даты, локацию, отзывы, больше фото/видео😉\n\nРейтинг 5/5, все гости очень довольны.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — апартаменты",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
-        "price_amount": null,
+        "price_amount": 20000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "apartment",
@@ -2841,7 +2841,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -3211,13 +3211,13 @@
       "posted_at": "2026-05-24T08:32:41+00:00",
       "raw_text": "Уютный, красивый дом 55кв.м, расположен в  luxury resort в окружении зелени и сада 👉1 большая спальня, кухня, гардеробная, просторная чистая ванная комната и большая терраса с гаражом. Вся мебель новая, дом новый. Кондиционеры в спальне и на кухне. \n\n‼️Есть такой же дом соседний, где 2 спальни и кухня оборудована на террасе. Цена такая же🤩\n\nСутки - 1000бат (от 3х дней)\nНеделя - 7000бат\nМесяц - 25 000 бат (цена актуальна и на высокий сезон)\n\nЕлектричество по счетчику 7б/юнит. Выходит в месяц при нон стоп работающих кондеях около 500б\n\nВ резорте своя лаундри, бассейн, сад с лежаками. 7 мин до Тонг Салы, 10 мин до Шритану. Район БААН СУАН. Ориентир в гугл картах - детский сад Kinderland Kindergarden, он рядом. Тихие улочки для бега, нет шума, нет тусовок. \n\nЕсть Хонды Клик 2023г в аренду - 4000б в месяц с минимальным пробегом (синий, алый)\n\nПодробности, фото и бронь в личку @olga_laktionova\n\n✅ Также доступны - премиум виллы 60-100кв.м (1-2 спальни) с бассейнами по цене от 30 000бат/мес для действительно роскошного отдыха:)",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Sri Thanu — дом 2 спал.",
         "district_raw": "Sri Thanu",
         "district_canonical": "Sri Thanu",
-        "price_amount": null,
+        "price_amount": 7000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": 2,
         "bathrooms": null,
         "property_type": "house",
@@ -3237,7 +3237,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.92
       }
     },
     {
@@ -3355,13 +3355,13 @@
       "posted_at": "2026-05-19T01:01:34+00:00",
       "raw_text": "Уютные апартаменты в Тонгсале (42 метра)\n\nБлижайшие свободные даты:\n\nС 20.05 неделя / месяц \n\nСутки от 800 бат \nНеделя от 5 500 бат\nМесяц от 20 000 бат \n\nГостиная с угловым диваном (превращается в 2х спальную кровать) и большим smart TV, рабочий стол, просторная спальня с кондиционером, кухня со всем необходимым, патио, личная терраса.\n\nЛокация супер удобная - 1 минута от входа 7/11 и фуд-корта, на территории не шумно. 4 минуты до пляжа пешком.\n\nWiFi - 1 gb/s. Делаем ТМ30, составляем контракт\n\nВ ЛС пришлю точные цены на ваши даты, локацию, отзывы, больше фото/видео😉\n\nРейтинг 5/5, все гости очень довольны.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — апартаменты",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
-        "price_amount": null,
+        "price_amount": 5500.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "apartment",
@@ -3381,7 +3381,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -3391,7 +3391,7 @@
       "posted_at": "2026-05-18T18:12:02+00:00",
       "raw_text": "Сдается дом \nБантай 1к бат сутки от недели возможно долгосрочная аренда пишите в л/с скоростной инет тихое место 🙏",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Ban Tai — дом",
         "district_raw": "Ban Tai",
         "district_canonical": "Ban Tai",
@@ -3417,7 +3417,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -3463,11 +3463,11 @@
       "posted_at": "2026-05-18T02:13:09+00:00",
       "raw_text": "🏝 Эко A-Frame и новые студии с кухней на Мадеа Ван\n\n🛖Домики А-Фрейм: Кокосовая крыша, высокий потолок, тиковый пол, кухня-веранда и полная тишина. Райский отдых душой и телом.\n\n🏡Студии: Новые, светлые, есть всё от блендера до фужеров \n\n📍 Между Шритану и Чалоклам.\n💰 A-Frame Месяц: 15-20 тыс tnb  (цены студий уточняйте). Цены посуточно: в ЛС.\n\n📸 Отзывы в профиле. не риэлтор. Свободно сегодня!",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Chaloklum — жильё",
         "district_raw": "Chaloklum",
         "district_canonical": "Chaloklum",
-        "price_amount": null,
+        "price_amount": 20000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -3489,7 +3489,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -3607,13 +3607,13 @@
       "posted_at": "2026-05-11T06:15:00+00:00",
       "raw_text": "🏡 Дом с 2 спальнями + бассейн + 🏍️ Honda Forza 300cc\nНа время своего отъезда сдам дом в районе Baannaisuan с разрешения тайских хозяев.\n\n📍5 минут езды до Тонгсалы  \n🌿 Очень тихое и живописное место\n\nВ доме:\n• 2 спальни  \n• 2 санузла  \n• просторный холл  \n• полностью оборудованная кухня со множеством кухонных приборов и посуды  \n• 2 кондиционера  \n• Wi-Fi 1 Gb  \n• 2 полноценных рабочих места  \n• монитор 27\"  \n• профессиональное пианино Yamaha P-125  \n• бассейн\n🏍️ Также вместе с домом Honda Forza 300cc за 4000 в мес.\n\nДом доступен с 20 мая.  \nСрок аренды — до конца сентября или начала октября \n\n👌 Сдаю с целью компенсации простоя по максимально возможно низкой цене 25000 в месяц (электричество 7 бат/юнит отдельно) при аренде на весь срок!\n@iamgoldfinch",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Ban Nai Suan — дом 2 спал.",
         "district_raw": "Ban Nai Suan",
         "district_canonical": "Ban Nai Suan",
-        "price_amount": null,
+        "price_amount": 4000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": 2,
         "bathrooms": null,
         "property_type": "house",
@@ -3633,7 +3633,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.92
       }
     },
     {
@@ -3931,11 +3931,11 @@
       "posted_at": "2026-05-03T12:43:31+00:00",
       "raw_text": "Красивый новый дом с 1 большой спальней, большой кухней с диваном и террасой доступен уже сегодня на месяц или дольше!\nНовая мебель и сантехника\n\nРасположен в премиум резорте с бассейнами и виллами. Есть общий бассейн и зона отдыха для гостей.\n\n2 кондиционера\nВ резорте есть лаундри сервис\n\nОчень тихо, джунгли, сад, никаких тусовок рядом! При этом рядом от всех локаций!\n\nРасположен в Баан Суан, 7 мин до Тонгсалы, 10 мин до Шритану и всех пляжей\n\nТихие улочки вокруг, где все бегают по утрам и вечерами. \n\nВ 200 метрах от дома есть крутой детский сад\n\nСдается напрямую от владельцев без комиссий\n\n25 000бат в месяц\nЕлектричество выходит 400бат в месяц\n\nДля связи @Olga_Laktionova",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Sri Thanu — дом",
         "district_raw": "Sri Thanu",
         "district_canonical": "Sri Thanu",
-        "price_amount": null,
+        "price_amount": 25000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -3957,7 +3957,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -4039,13 +4039,13 @@
       "posted_at": "2026-04-28T06:46:13+00:00",
       "raw_text": "🌴 Панорамный дом с видом на Море \n\nСдаём наш уютный дом на время уезда, доступен с 3 мая.\nПросторный, светлый и уединённый.\n\n\n📍 Локация: между Тонг Сала и Хин Конг\n\n🏡 Что внутри:\n— Панорамные окна с видом на джунгли и Самуи\n— Удобное рабочее место с красивым видом\n— Панорамная ванная комната 🛀\n— комфортная кухня \n— светлое просторное пространство \n\n🌿 Дом полностью приватный, находится в стороне от соседей.\n\n\n— Идеально для тех, кто ценит красоту, тишину и комфорт.\n\n💰 23 000฿ / месяц ( от 6 месяцев) \n\nПишите в личку, с радостью отвечу на вопросы и покажу дом!",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — дом",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
-        "price_amount": null,
+        "price_amount": 23000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "house",
@@ -4065,7 +4065,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -4399,13 +4399,13 @@
       "posted_at": "2026-04-22T12:53:41+00:00",
       "raw_text": "✨ Специальное предложение низкого сезона! Приватная вилла в Премиум Резорте с личным бассейном!✨\n\n📍  BAAN SUAN (8 минут до Thong Sala)\n🏝 До пляжей — 7-10 минут на байке\n🛵 До магазинов и кафе — 7 минут\nПлюс есть магазин прямо около резорта\n\n🏡 65 кв.м\n2 спальни\n1 гостиная с кухней\n2 ванные комнаты\n❄️ Кондиционеры в каждой комнате\n🖥 Smart TV\n🌿 Терраса и сад с уличной мебелью\n🌴 Вид на Джунгли и гору\n🚗 Парковка\n\n🧹 Уборка 1 раз в неделю включена\nЕсть свои стиральные машины и сушилки!\n\n💰 44 000 бат / месяц + электричество\n⚡ Электричество: 7 бат / юнит (выходит где то 800 бат в мес)\n\n✨ Уютный новый роскошный дом в тихом природном месте но близко от всех классных мест— идеально для комфортной жизни на острове!\n\n‼️ Также есть Вилла бОльшего размера 100кв.м за 62 000бат\n\nИ 2 новых дома комфорт класса с 1 спальней за 25 000 бат\n\nАренда напрямую от собственника",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — вилла 2 спал.",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
-        "price_amount": null,
+        "price_amount": 44000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": 2,
         "bathrooms": null,
         "property_type": "villa",
@@ -4425,7 +4425,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.92
       }
     },
     {
@@ -4651,7 +4651,7 @@
       "posted_at": "2026-04-20T12:37:44+00:00",
       "raw_text": "Привет,\nПересдам свой односпальный дом 23.04-09.05 с возможностью продления \n- Тихий резорт в центре Thong Sala: 500м от моря, 500м до Phantip Market\n- кондиционер, кухня\n- Электричество включено, уборка не включена (500 бат/раз) \n- Стоимость за период 11к бат\nПодробности в ЛС",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — дом",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
@@ -4677,7 +4677,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -5227,13 +5227,13 @@
       "posted_at": "2026-04-16T15:04:18+00:00",
       "raw_text": "🌴 Панорамный дом с видом на Море \n\nСдаём наш уютный дом, на время уезда доступен с 1 мая.\nПросторный, светлый и уединённый.\n\n\n📍 Локация: между Тонг Сала и Хин Конг\n\n🏡 Что внутри:\n— Панорамные окна с видом на джунгли и Самуи\n— Большая кровать, сделанная на заказ\n— Удобное рабочее место с красивым видом\n— Быстрый стабильный Wi-Fi\n— Панорамная ванная комната 🛀\n— Полностью оборудованная кухня + профессиональный блендер для смузи\n— Кондиционер + вентилятор\n\n🌿 Дом полностью приватный, находится в стороне от соседей.\n\n⚠️\n— Мы строили этот дом для себя, поэтому в нём нельзя курить и устраивать вечеринки.\n— Идеально для тех, кто ценит красоту, тишину и комфорт.\n\n💰 25 000฿ / месяц\n\nПишите в личку, с радостью отвечу на вопросы и покажем дом!",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — дом",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
-        "price_amount": null,
+        "price_amount": 25000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "house",
@@ -5253,7 +5253,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -5335,11 +5335,11 @@
       "posted_at": "2026-04-16T04:32:51+00:00",
       "raw_text": "🏝 Эко A-Frame и новые студии с кухней на Мадеа Ван\n\n🛖Домики А-Фрейм: Кокосовая крыша, тиковый пол, кухня-веранда и полная тишина. Райский отдых душой и телом.\n\n🏡Студии: Новые, светлые, есть всё от блендера до фужеров. Заезд с 25/04; 4/05\n\n📍 Между Шритану и Чалоклам.\n💰 A-Frame Месяц: 16-23 тыс tnb  (цены студий уточняйте). Цены посуточно: в ЛС.\n\n📸 Отзывы в профиле. не риэлтор. Свободно сегодня!",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Chaloklum — жильё",
         "district_raw": "Chaloklum",
         "district_canonical": "Chaloklum",
-        "price_amount": null,
+        "price_amount": 23000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -5361,7 +5361,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -5443,13 +5443,13 @@
       "posted_at": "2026-04-15T10:00:44+00:00",
       "raw_text": "📆Свободен на любой срок с 15.04 \n\nСвеженький, абсолютно новый двуспальный дом!\nПолностью экипированный, доступен на любой срок.\n3 кондиционера, огромные кровати King size и просторная уютная терраса в тени 😍\n📍Локация: рядом Wonderland, Madue Wan\n \n💸Цена: 1300 бат в сутки (включая электричество)\nМесяц  - 37 тыс бат\nЭлектричество 7 бат за юнит.\n🔍 Подробности и подбор вариантов в лс!",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1300.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "house",
@@ -5469,7 +5469,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -5767,11 +5767,11 @@
       "posted_at": "2026-04-13T11:00:01+00:00",
       "raw_text": "Загляните в наш новый просторный Deluxe Double Room! 🤩 Недавно мы закончили в нём ремонт, и теперь номер сияет свежестью и готов принять первых гостей. Представьте, вы можете стать тем самым счастливчиком, который первым оценит его уют и комфорт. 😉\n\nВ 5 минутах ходьбы от пирса Тонгсала в новом номере вас ждёт комфорт:\n\n✅  кондиционер\n✅  водонагреватель\n✅  холодильник\n✅  чайник\n✅  фен\n✅  телевизор\n✅  уборка помещения\n✅  мыло/шампунь\n\nЦена за сутки: 3000 бат\n\nИдеально для романтического отдыха или просто, чтобы побаловать себя. Скорее бронируйте и наслаждайтесь! 👇\n\nЛокация: 📍Centerpoint Hotel (https://maps.app.goo.gl/7QDNQwNcch8qsX5p6)\nЧасы работы: 🕐 с 09:00 до 19:00\nЗабронировать: ✍🏻 @ru_phangan",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — комната",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
-        "price_amount": null,
+        "price_amount": 3000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -5793,7 +5793,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -6451,13 +6451,13 @@
       "posted_at": "2026-04-08T09:10:57+00:00",
       "raw_text": "Свободен Дом. Bantai. С 01.05(май) До 01.09(до сентября). \n\nДве комнаты, гостиная и спальня. Кухня, ванна оборудованны. \n\nГорячая вода есть. Кондиционер есть, плита газовая есть. \n\nДиван и двухспальная кровать есть. \n\nЕсть веранда \n\nБез животных :( \n\nРайон тихий, строек нет. \n\nЦена 20000 бат месяц. По всем вопросам в лс. Скину больше фото",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Ban Tai — дом",
         "district_raw": "Ban Tai",
         "district_canonical": "Ban Tai",
-        "price_amount": null,
+        "price_amount": 20000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "house",
@@ -6477,7 +6477,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -6703,11 +6703,11 @@
       "posted_at": "2026-04-06T07:48:28+00:00",
       "raw_text": "Сдается номер с собственным бассейном на вилле, состоящей из 2х номеров с отдельными входами\n\n15 000бат в месяц‼️ + электричество около 500бат/мес\n\nВ резорте есть стиральные машинки и сушилки, уборка номеров. Очень Тихо и Красиво! Джунгли и подножие Горы💞 Район Баан Суан, между Мадеуваном и Подиум Джим \n\nРезорт премиум класса. Все окружение очень приличные и состоятельные гости и собственники вилл\n\nТакже с мая есть отдельные дома с 1 спальней, кухней с диваном и большой террасой и гаражом за 25 000 надолго с хайсизон или за 23 000 в лоу сизон",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 15000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -6729,7 +6729,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -6775,13 +6775,13 @@
       "posted_at": "2026-04-06T06:09:49+00:00",
       "raw_text": "Уютные апартаменты в Тонгсале (42 метра)\n\nБлижайшие свободные даты:\n\n7-22.04 / 15 дней\nС 16.04 на месяц \n\nСутки 850-1000 бат\nМесяц от 22 000 бат \n\nГостиная с угловым диваном (превращается в 2х спальную кровать) и большим smart TV, рабочий стол, просторная спальня с кондиционером, кухня со всем необходимым, патио, личная терраса.\n\nЛокация супер удобная - 1 минута от входа 7/11 и фуд-корта, на территории не шумно. 4 минуты до пляжа пешком.\n\nWiFi - 1 gb/s. Делаем ТМ30, составляем контракт\n\nВ ЛС пришлю точные цены на ваши даты, локацию, отзывы, больше фото/видео😉\n\nРейтинг 5/5, все гости очень довольны.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — апартаменты",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
-        "price_amount": null,
+        "price_amount": 1000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "apartment",
@@ -6801,7 +6801,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -6811,11 +6811,11 @@
       "posted_at": "2026-04-06T03:14:42+00:00",
       "raw_text": "эко домик Афрейм 🏝️ и новые студии с кухней.\n\nНасладись райским островом в стильных треугольных эко-домиках А-Фрейм!\n\nНе бетонная коробка, а A-Frame домик с душой:\n\n• Пушистая крыша из кокоса\n• Не кафельный, а тиковый пол\n• Высокий потолок и уютное пространство\n• «Летняя» кухня-веранда с кофемашиной на территории\n• Тишина, птицы, покой (никакого шума строек!)\n• Всё для быта: фен, утюг, гладильная доска \n\nЗдесь просыпаешься с чувством, что ты на отдыхе. Здесь душа и тело отдыхают!\nПопробуйте — это другой опыт. 😌\n\n📍 Удобная локация: Мадеа Ван, между Шритану и Чалоклам.\n\n📅 Свободны с сегодня ! \n\n💰 Стоимость:\n• 20-35 тыс. за месяц (точная цена — от дат и срока).\n• Длительный контракт: 16-28 тыс./мес.\n• Посуточно — пишите в ЛС, расчитаем.\n\n🏠 А для тех, кто ценит современные удобства тут же у нас есть пару уютных студий со своей кухней: с 15/04\n\nНовые, светлые, чистые пространства с видом на пальмы! \n\nВсё новое: отличный блендер, фужеры, качественные полотенца, бельё и посуда. И конечно, фен, утюг и гладильная доска!\n\nОтзывы в профиле!\n\nНЕ РИЭЛТОР.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Chaloklum — жильё",
         "district_raw": "Chaloklum",
         "district_canonical": "Chaloklum",
-        "price_amount": null,
+        "price_amount": 35000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -6837,7 +6837,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -7063,7 +7063,7 @@
       "posted_at": "2026-04-04T11:00:01+00:00",
       "raw_text": "Хостел в центре Тонгсалы\n\nХостел для комфортного отдыха, новых знакомств и атмосферных вечеров в кругу путешественников.\n\n✅Самый центр Тонг Салы -Близкое расположение к пирсу и уличным рынкам.\n✅На территории отеля есть аренда байков\n✅Есть зал для йоги и танцев \n✅Кафе с русско-европейской кухней\nПосмотреть актуальные цены и проверить доступность номера на ваши даты:\nhttps://litepms.ru/widget/search?id=7874&wid=793\n\nЗабронировать: @ru_phangan",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — жильё",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
@@ -7089,7 +7089,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -7459,13 +7459,13 @@
       "posted_at": "2026-04-01T12:55:43+00:00",
       "raw_text": "Сдается Стильный номер с панорамными окнами на сад и бассейн в элитном поселке вилл в Баан Суан - 15 000thb в месяц!🔥‼️ (7 мин от Подиум Джим, между Мадеван и Русским Храмом, 4 мин до Паддл теннис)\n\nНомер с отдельным входом располагается на вилле. Вторая часть виллы также сдается, но  посуточно - там кухня + гостиная и спальня 2300thb/сутки\n\nВ поселке всего 10 вилл с бассейнами, прачечная, рецепш.\n\n Вокруг тишина и природа - расположено все у подножия горы. Нет строек, нет тусовок поблизости, только тихие живописные улочки для бега или велосипеда🚴\n\nНе посредник! Сдаю напрямую от девелопера! \n\nТакже есть 2 отдельных дома с 1 спальней,кухней и большой террасой помесячно за 25 000thb🔥🔥🔥\n\nПиши в личку вышлю фото внутри виллы @Olga_Laktionova",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 2300.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -7485,7 +7485,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -7855,7 +7855,7 @@
       "posted_at": "2026-03-28T09:00:01+00:00",
       "raw_text": "Хостел в центре Тонгсалы\n\nХостел для комфортного отдыха, новых знакомств и атмосферных вечеров в кругу путешественников.\n\n✅Самый центр Тонг Салы -Близкое расположение к пирсу и уличным рынкам.\n✅На территории отеля есть аренда байков\n✅Есть зал для йоги и танцев \n✅Кафе с русско-европейской кухней\n\nПосмотреть актуальные цены и проверить доступность номера на ваши даты:\nhttps://litepms.ru/widget/search?id=7874&wid=793\n\nЗабронировать: @ru_phangan",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — жильё",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
@@ -7881,7 +7881,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -8107,11 +8107,11 @@
       "posted_at": "2026-03-26T07:47:50+00:00",
       "raw_text": "🎄✨ ВНИМАНИЕ! АКЦИЯ! СЕМЕЙНАЯ ВИЛЛА НА ПАНГАНЕ — СКИДКА 1 000 000 БАТ! ✨🎄\n\n🏡 8 500 000 вместо 9 500 000 бат\nСовременная семейная вилла в самом центре Sri Thanu — идеальное место для жизни и отдыха!\n🌴 Частный бассейн\n🌿 Собственный сад\n🛏 2–3 спальни\n📐 Участок 460 м²\n\n✨ Уникальный бонус:\nВилла ещё в стадии строительства — около 70% готовности.\nЭто значит: вы сами выбираете плитку, цвета, материалы и можете вносить свои изменения.\nСоздайте дом своей мечты с нуля! 🛠💛\n\nТакже продается земельный участок 530 кв. м, ровная местность, отдельный подъезд, бетонная дорога, собственный трансформатор.\n\nТихое место в центре острова,\n5 минут до пляжа и пирса. Документы на землю, на компанию,  разрешение на строительство готовы.\n\nРестораны и больница поблизости.\n\n Стоимость 2.5 млн\n\nЯ - не риелтор! Благодарность от сердца - это донейшен.  Вы сами решаете какой суммой отблагодарить нас. \n\nДругие дома, земля и виллы для аренды и покупки на канале для друзей. \n\nВсе подробности в ЛС! Во благо! Всего доброго!",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Sri Thanu — вилла 3 спал.",
         "district_raw": "Sri Thanu",
         "district_canonical": "Sri Thanu",
-        "price_amount": null,
+        "price_amount": 1000000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": 3,
@@ -8133,7 +8133,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.92
       }
     },
     {
@@ -8287,7 +8287,7 @@
       "posted_at": "2026-03-24T06:33:17+00:00",
       "raw_text": "Сдам дом бантай тихое место нет строек скоростной инет долгосрок 25к бат помесячно 29к бат пишите в л/с",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Ban Tai — дом",
         "district_raw": "Ban Tai",
         "district_canonical": "Ban Tai",
@@ -8313,7 +8313,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -8503,11 +8503,11 @@
       "posted_at": "2026-03-22T06:07:57+00:00",
       "raw_text": "‼️Свободен с 25.03 на любой срок ‼️\n\nСвеженький, абсолютно новый двуспальный дом!\nПолностью экипированный, доступен на любой срок.\n3 кондиционера, огромные кровати King size и просторная уютная терраса в тени 😍\nМесяц- 38 тыс бат\nЭлектричество 7 бат за юнит\nСутки - 1400 бат (включая электричество)\nСтраховой депозит - 5 тыс бат\n\nЕще дома в наличии в личных сообщениях!",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 38000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -8529,7 +8529,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -8899,11 +8899,11 @@
       "posted_at": "2026-03-18T12:01:46+00:00",
       "raw_text": "Новые уютные апартаменты в Тонгсале (42 метра)\n\nБлижайшие свободные даты:\n\n20.03-1.04 (12 дней)\n3-10.04 (неделя)\n\nСутки 1300-1500 бат + свет\n\nГостиная с угловым диваном (превращается в 2х спальную кровать) и большим smart TV, рабочий стол, просторная спальня с кондиционером, кухня со всем необходимым, патио, личная терраса.\n\nЛокация супер удобная - 1 минута от входа 7/11 и фуд-корта, на территории не шумно. 4 минуты до пляжа пешком.\n\nWiFi - 1 gb/s. Делаем ТМ30, составляем контракт\n\nВ ЛС пришлю точные цены на ваши даты, локацию, отзывы, больше фото/видео😉\n\nРейтинг 5/5, все гости очень довольны.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — апартаменты",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
-        "price_amount": null,
+        "price_amount": 1500.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -8925,7 +8925,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -9475,11 +9475,11 @@
       "posted_at": "2026-03-15T00:57:58+00:00",
       "raw_text": "эко домик Афрейм 🏝️ и новые студии с кухней.\n\nНасладись райским островом в стильных треугольных эко-домиках А-Фрейм!\n\nНе бетонная коробка, а A-Frame домик с душой:\n\n• Пушистая крыша из кокоса\n• Не кафельный, а тиковый пол\n• Высокий потолок и уютное пространство\n• «Летняя» кухня-веранда с кофемашиной на территории\n• Тишина, птицы, покой (никакого шума строек!)\n• Всё для быта: фен, утюг, гладильная доска \n\nЗдесь просыпаешься с чувством, что ты на отдыхе. Здесь душа и тело отдыхают!\nПопробуйте — это другой опыт. 😌\n\n📍 Удобная локация: Мадеа Ван, между Шритану и Чалоклам.\n\n📅 Свободные даты на февраль, март уточняйте в лс \n\n💰 Стоимость:\n• 20-35 тыс. за месяц (точная цена — от дат и срока).\n• Длительный контракт: 16-28 тыс./мес.\n• Посуточно — пишите в ЛС, расчитаем.\n\n🏠 А для тех, кто ценит современные удобства тут же у нас есть пару уютных студий со своей кухней: с 28/03\n\nНовые, светлые, чистые пространства с видом на пальмы! \n\nВсё новое: отличный блендер, фужеры, качественные полотенца, бельё и посуда. И конечно, фен, утюг и гладильная доска!\n\nПосуточно или на длительный срок. Отзывы в профиле!\n\nНЕ РИЭЛТОР.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Chaloklum — жильё",
         "district_raw": "Chaloklum",
         "district_canonical": "Chaloklum",
-        "price_amount": null,
+        "price_amount": 35000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -9501,7 +9501,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -9511,13 +9511,13 @@
       "posted_at": "2026-03-14T14:35:37+00:00",
       "raw_text": "⚡️Ищет семью замечательный дом. Центральный район, популярный резорт, современный дом. Просторная территория: Бассейн, газоны, пальмы, без шума стройки. Уютная спальня, гостиная, тв, два кондера, полноценная кухня, хорошая ванная комната. Дом, в котором приятно жить. Вся коммуналка включена! \nУборка каждые 3 дня включена в стоимость!\n⚡️Свободен с 15.03 по цене 1000 бат/сутки, свет включён.\n\nБольше интересных вариантов в личные сообщения",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "house",
@@ -9537,7 +9537,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -9691,11 +9691,11 @@
       "posted_at": "2026-03-13T11:00:01+00:00",
       "raw_text": "Загляните в наш новый просторный Deluxe Double Room! 🤩 Недавно мы закончили в нём ремонт, и теперь номер сияет свежестью и готов принять первых гостей. Представьте, вы можете стать тем самым счастливчиком, который первым оценит его уют и комфорт. 😉\n\nВ 5 минутах ходьбы от пирса Тонгсала в новом номере вас ждёт комфорт:\n\n✅  кондиционер\n✅  водонагреватель\n✅  холодильник\n✅  чайник\n✅  фен\n✅  телевизор\n✅  уборка помещения\n✅  мыло/шампунь\n\nЦена за сутки: 3000 бат\n\nИдеально для романтического отдыха или просто, чтобы побаловать себя. Скорее бронируйте и наслаждайтесь! 👇\n\nЛокация: 📍Centerpoint Hotel (https://maps.app.goo.gl/7QDNQwNcch8qsX5p6)\nЧасы работы: 🕐 с 09:00 до 19:00\nЗабронировать: ✍🏻 @ru_phangan",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — комната",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
-        "price_amount": null,
+        "price_amount": 3000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -9717,7 +9717,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -9799,13 +9799,13 @@
       "posted_at": "2026-03-13T04:04:42+00:00",
       "raw_text": "Светлый современный дом в тихом зеленом резорте в районе Баан Най Суан. Все сияет свежестью, как с иголочки. Хороший матрас. Большой телевизор смарт тв. \nВысокоскоростной интернет, хороший напор воды, стиральные машины в резорте.  \n\n30к бат в месяц\n5к депозит \n6 бат/квт\n\nДополнительные фото/видео и прочие подробности в лс",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 5000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "house",
@@ -9825,7 +9825,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -9835,7 +9835,7 @@
       "posted_at": "2026-03-12T02:08:35+00:00",
       "raw_text": "Сдается дом 35к бат/месяц  с 14 марта на любой срок, две спальни пишите в л/с за подробностями \nРайон бантай рядом Инфинити бич клаб \nНет строек \nДо пляжа 3 мин пешком",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Ban Tai — дом",
         "district_raw": "Ban Tai",
         "district_canonical": "Ban Tai",
@@ -9861,7 +9861,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -10091,7 +10091,7 @@
         "title": "Ban Tai — дом 2 спал.",
         "district_raw": "Ban Tai",
         "district_canonical": "Ban Tai",
-        "price_amount": null,
+        "price_amount": 31000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": 2,
@@ -10113,7 +10113,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.86
+        "confidence": 0.92
       }
     },
     {
@@ -10591,11 +10591,11 @@
       "posted_at": "2026-03-06T11:11:43+00:00",
       "raw_text": "⚡️Новенький уютный светлый домик☀️\nСпальня с большой кроватью, жилая комната с удобным диваном и рабочим столом, оборудованная кухня. \nСветлое пространство, окна в пол, все свежее. Два кондера в обеих комнатах.\nУдобное расположение между чаликом и тонг салой.\nИдеально для одного или пары ❤️\n\n⭐️ Доступен с 8.03 по цене 30 тыс бат + свет. \nМожно до конца марта за меньшую сумму\n\nБольше интересных вариантов в личные сообщения",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 30000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -10617,7 +10617,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -10663,13 +10663,13 @@
       "posted_at": "2026-03-06T10:01:41+00:00",
       "raw_text": "Доступен ТОЛЬКО с заселением в ближайшие дни.\n\nПросторный дом с 1 спальней, гостиной и кухней, находится рядом с резортом \nPunch & Gun (Google maps) \n\nКровать king size с хорошим матрасом, тихое место, огромные стильные окна, вид из спальни выходит на лес и небольшую речку. Высокоскоростной интернет. \n\nЦена:\n30к бат/месяц \n1500/сутки (от 10 дней)\n\nЕсть и другие дома\nБольше фоток/видео по запросу\nПрошу сразу писать интересующие вас даты",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1500.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "house",
@@ -10689,7 +10689,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -10771,11 +10771,11 @@
       "posted_at": "2026-03-06T03:00:20+00:00",
       "raw_text": "Новые уютные апартаменты в Тонгсале (42 метра)\n\nБлижайшие свободные даты:\n\n6-8.03 / 2 дня за 2600 бат (СЕГОДНЯ❗️)\n\n14.03-1.04 / 2 недели \n\nСутки 1400 бат + свет\n\nГостиная с угловым диваном (превращается в 2х спальную кровать) и большим smart TV, рабочий стол, просторная спальня с кондиционером, кухня со всем необходимым, патио, личная терраса.\n\nЛокация супер удобная - 1 минута от входа 7/11 и фуд-корта, на территории не шумно. 4 минуты до пляжа пешком.\n\nWiFi - 1 gb/s. Делаем ТМ30, составляем контракт\n\nВ ЛС пришлю точные цены на ваши даты, локацию, отзывы, больше фото/видео😉\n\nРейтинг 5/5, все гости очень довольны.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — апартаменты",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
-        "price_amount": null,
+        "price_amount": 2600.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -10797,7 +10797,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -10951,13 +10951,13 @@
       "posted_at": "2026-03-05T06:32:07+00:00",
       "raw_text": "🌴ГОТОВА К ЗАСЕЛЕНИЮ  С СЕЙЧАС И НА ЛЮБОЙ СРОК \n(Предпочтение долгосрочным гостям 6-12 мес!)\n\n 3 спальни вилла Хинконг — приватность, большой сад и идеальная локация (рядом с Дели Деви)\n\n🏡 120 м² вилла + 350 м² тропический сад\n💦 бассейн\n🔥 BBQ сала\n🌿 соседей не видно\n\nПланировка:\n• 3 спальни\n• 3 ванные комнаты\n• кабинет для работы\n• большая кухня-гостиная open space\n• полностью оборудованная кухня\n• Smart TV, аудио, кондиционеры\n\nНа территории:\n• бассейн\n• BBQ павильон\n• уличный душ\n• парковка\n• тропический сад\n\n💧 Включено:\nWiFi, вода, уборка 1 раз в неделю, бассейн и сад сервис\n\n⚡ электричество 8 бат / юнит\n💰 депозит 30 000 бат\n\n📍 Coconut Lane — Hin Kong\n\n🚶‍♀️ 12 мин пешком до пляжа и лучших закатов\n☕ 4 мин до Deli Devi\n🍹 10 мин до Indigo и 7/11\n\n💰 от 6500 бат / сутки\n\n✨ скидки от 2 месяцев\n✨ возможен годовой контракт\n✨ возможна прямая покупка от собственника\n\n📩 Пишите в директ / PM для просмотра",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Coconut Lane — вилла 3 спал.",
         "district_raw": "Coconut Lane",
         "district_canonical": "Coconut Lane",
-        "price_amount": null,
+        "price_amount": 6500.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": 3,
         "bathrooms": null,
         "property_type": "villa",
@@ -10977,7 +10977,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.92
       }
     },
     {
@@ -10987,11 +10987,11 @@
       "posted_at": "2026-03-05T05:57:21+00:00",
       "raw_text": "Красивый, полностью оборудованный дом с 2 спальнями и 2 отдельными ванными комнатами.\nПросторная гостиная, полностью укомплектованная кухня и всё необходимое для комфортного проживания.\nСобственный бассейн и быстрый интернет\nЦена за месяц (март) — 80 000 бат (электричество оплачивается отдельно — 7 бат за кВт).\nЦена за сутки — 4 500 бат (всё включено).\nСвободен с 9 марта \nВозвратный депозит",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 80000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -11013,7 +11013,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -11059,7 +11059,7 @@
       "posted_at": "2026-03-04T11:00:03+00:00",
       "raw_text": "Хостел в центре Тонгсалы\n\nХостел для комфортного отдыха, новых знакомств и атмосферных вечеров в кругу путешественников.\n\n✅Самый центр Тонг Салы -Близкое расположение к пирсу и уличным рынкам.\n✅На территории отеля есть аренда байков\n✅Есть зал для йоги и танцев \n✅Кафе с русско-европейской кухней\nПосмотреть актуальные цены и проверить доступность номера на ваши даты:\nhttps://litepms.ru/widget/search?id=7874&wid=793\n\nЗабронировать: @ru_phangan",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — жильё",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
@@ -11085,7 +11085,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -11563,7 +11563,7 @@
       "posted_at": "2026-02-28T15:35:02+00:00",
       "raw_text": "Сдам два дома в аренду \nОдин Дом с бассейном 65к бат месяц,возможно понедельное размещани\nБез бассейна Дом 35к бат, все дома по две спальни, район бантай рядом бич клаб Инфинити 3 мин пешком",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Ban Tai — дом",
         "district_raw": "Ban Tai",
         "district_canonical": "Ban Tai",
@@ -11589,7 +11589,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -11635,7 +11635,7 @@
       "posted_at": "2026-02-28T09:00:05+00:00",
       "raw_text": "Хостел в центре Тонгсалы\n\nХостел для комфортного отдыха, новых знакомств и атмосферных вечеров в кругу путешественников.\n\n✅Самый центр Тонг Салы -Близкое расположение к пирсу и уличным рынкам.\n✅На территории отеля есть аренда байков\n✅Есть зал для йоги и танцев \n✅Кафе с русско-европейской кухней\n\nПосмотреть актуальные цены и проверить доступность номера на ваши даты:\nhttps://litepms.ru/widget/search?id=7874&wid=793\n\nЗабронировать: @ru_phangan",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — жильё",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
@@ -11661,7 +11661,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -11707,13 +11707,13 @@
       "posted_at": "2026-02-27T06:15:17+00:00",
       "raw_text": "Есть несколько хороших домов с 1 спальней и гостиной. \nПрошу вас сразу писать интересующие даты. \n\nЦены:\n25-42к бат в месяц \n1200-1900 бат в день (от 10 дней) \n\n \nБольше фоток/видео и прочих подробностей в лс",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1200.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -11733,7 +11733,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -11779,11 +11779,11 @@
       "posted_at": "2026-02-25T09:17:10+00:00",
       "raw_text": "⚡️Ищет гостей новый светлый дом в районе церкви. Удобная локация. \nСпальня с большой кроватью и местом для вещей. \nПросторная гостиная с тв, диваном + диван на трассе. \nКухня, где есть все необходимое.\nАккуратный ремонт, все новое и приятное\n⭐️ Доступен с 1.03 по цене 35 тыс бат + свет\n\nБольше интересных вариантов в личные сообщения",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 35000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -11805,7 +11805,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -11815,11 +11815,11 @@
       "posted_at": "2026-02-24T14:24:26+00:00",
       "raw_text": "Привет, жители острова Панган! Мои друзья были вынуждены срочно покинуть остров. У них остался оплаченный на два месяца красивый, уникальный дом в современном тайском стиле. \nЭто центральное место острова. Тонг Сала. \n\nУединенный, тихий, атмосферный. Этот дом сочетает в себе возможность размещения любителей комфорта с кондиционером, а также для любителей спать на свежем воздухе под звуки природы. \n\n1 этаж [modern] \nОткрытая кухня + гостиная\nСпальня [кондиционер]\nВанная комната с горячей водой\n2 этаж [тайский стиль]\nГардеробная\nСпальня [вентилятор]\nБалкон [вид на сад]\nРасположение📍 Тонг Сала, недалеко от центра AUM. \n\n1 неделя: 18 тысяч\n2 недели: 35 тысяч\n3 недели: 50 тыс.\n1 месяц: 65 тыс.\nВозможно на длительный срок. \n\nДоступно с 1.03\nЦена с мая: 50 тыс. в месяц.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — дом",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
-        "price_amount": null,
+        "price_amount": 18000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -11841,7 +11841,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -11851,11 +11851,11 @@
       "posted_at": "2026-02-23T11:38:43+00:00",
       "raw_text": "С 6 марта до 7 апреля (верхний)\nдвуспальный дом \nМесяц - 56 тыс бат \nМожно посуточно - 2200 бат \n\nС 6 марта на любой срок (справа)\nдвуспальный дом \nМесяц - 53 тыс бат (март)\nПосуточно - 2000 бат \n\nС 9 марта до 25 марта (нижний)\nдвуспальный дом \nПосуточно - 2200 бат \n\nЭлектричество отдельно 7 бат за юнит \nСтраховой депозит\n\nПодробности и другие дома в личных сообщениях!",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 56000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -11877,7 +11877,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -11959,11 +11959,11 @@
       "posted_at": "2026-02-21T03:09:51+00:00",
       "raw_text": "эко домик Афрейм 🏝️ и новые студии с кухней.\n\nНасладись райским островом в стильных треугольных эко-домиках А-Фрейм!\n\nНе бетонная коробка, а A-Frame домик с душой:\n\n• Пушистая крыша из кокоса\n• Не кафельный, а тиковый пол\n• Высокий потолок и уютное пространство\n• «Летняя» кухня-веранда с кофемашиной на территории\n• Тишина, птицы, покой (никакого шума строек!)\n• Всё для быта: фен, утюг, гладильная доска \n\nЗдесь просыпаешься с чувством, что ты на отдыхе. Здесь душа и тело отдыхают!\nПопробуйте — это другой опыт. 😌\n\n📍 Удобная локация: Мадеа Ван, между Шритану и Чалоклам.\n\n📅 Свободные даты на февраль, март уточняйте в лс \n\n💰 Стоимость:\n• Высокий сезон: 30-35 тыс. за месяц (точная цена — от дат и срока).\n• Длительный контракт: 16-28 тыс./мес.\n• Посуточно — пишите в ЛС, расчитаем.\n\n🏠 А для тех, кто ценит современные удобства тут же у нас есть пару уютных студий со своей кухней: с 23/02\n\nНовые, светлые, чистые пространства с видом на пальмы! \n\nВсё новое: отличный блендер, фужеры, качественные полотенца, бельё и посуда. И конечно, фен, утюг и гладильная доска!\n\nПосуточно или на длительный срок. Отзывы в профиле!\n\nНЕ РИЭЛТОР.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Chaloklum — жильё",
         "district_raw": "Chaloklum",
         "district_canonical": "Chaloklum",
-        "price_amount": null,
+        "price_amount": 35000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -11985,7 +11985,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -11995,7 +11995,7 @@
       "posted_at": "2026-02-18T05:11:14+00:00",
       "raw_text": "Сдам апартаменты у моря Чалоклам\n\n23-28 февраля\n100$ сутки\n\n\nСдам лофт дом в лесу Шритану\n\nС 20-28 февраля \n130$ сутки\n\n\nФото в личные🙏🏼",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Chaloklum — апартаменты",
         "district_raw": "Chaloklum",
         "district_canonical": "Chaloklum",
@@ -12021,7 +12021,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -12283,11 +12283,11 @@
       "posted_at": "2026-02-15T14:22:09+00:00",
       "raw_text": "С 15.02 по 03.03 свободна семейная вилла в резорте\n\nОбщий бассейн на 5 домов.\nОтдельная спальня с двуспальной кроватью и собственной ванной комнатой, сквозная спальня с двухъярусной кроватью для детей и ванная комната, гостиная-кухня с огромным столом и телевизором.\nВысокоскоростной интернет.\nУборка раз в неделю включена в стоимость (при бронировании от 8 дней).\nЦена посуточно - 4100 тыс бат. Электричество включено в стоимость.\nС 9 марта свободна на любой срок. Доступна на долгосрок.\n\nПодробности и другие дома в личных сообщениях.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 4100000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -12309,7 +12309,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -12715,11 +12715,11 @@
       "posted_at": "2026-02-13T11:00:02+00:00",
       "raw_text": "Загляните в наш новый просторный Deluxe Double Room! 🤩 Недавно мы закончили в нём ремонт, и теперь номер сияет свежестью и готов принять первых гостей. Представьте, вы можете стать тем самым счастливчиком, который первым оценит его уют и комфорт. 😉\n\nВ 5 минутах ходьбы от пирса Тонгсала в новом номере вас ждёт комфорт:\n\n✅  кондиционер\n✅  водонагреватель\n✅  холодильник\n✅  чайник\n✅  фен\n✅  телевизор\n✅  уборка помещения\n✅  мыло/шампунь\n\nЦена за сутки: 3000 бат\n\nИдеально для романтического отдыха или просто, чтобы побаловать себя. Скорее бронируйте и наслаждайтесь! 👇\n\nЛокация: 📍Centerpoint Hotel (https://maps.app.goo.gl/7QDNQwNcch8qsX5p6)\nЧасы работы: 🕐 с 09:00 до 19:00\nЗабронировать: ✍🏻 @ru_phangan",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — комната",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
-        "price_amount": null,
+        "price_amount": 3000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -12741,7 +12741,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -12859,11 +12859,11 @@
       "posted_at": "2026-02-13T06:01:50+00:00",
       "raw_text": "Новые уютные апартаменты в Тонгсале (42 метра)\n\nБлижайшие свободные даты:\n\n13-15.02 / 2 дня за 3000 бат (СЕГОДНЯ ЗАЕЗД❗️)\n\n20-23.02\n21-24.02\n27.02-9.03 \n\nСутки 1500-1700 бат + свет\n\nДалее с 6.03 на месяц и более \n\nГостиная с угловым диваном (превращается в 2х спальную кровать) и большим smart TV, рабочий стол, просторная спальня с кондиционером, кухня со всем необходимым, патио, личная терраса.\n\nЛокация супер удобная - 1 минута от входа 7/11 и фуд-корта, на территории не шумно. 4 минуты до пляжа пешком.\n\nWiFi - 1 gb/s. Делаем ТМ30, составляем контракт\n\nВ ЛС пришлю точные цены на ваши даты, локацию, отзывы, больше фото/видео😉\n\nРейтинг 5/5, все гости очень довольны.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — апартаменты",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
-        "price_amount": null,
+        "price_amount": 3000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -12885,7 +12885,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -12967,13 +12967,13 @@
       "posted_at": "2026-02-10T12:40:32+00:00",
       "raw_text": "Есть несколько хороших домов с 1 спальней и гостиной. \nПрошу вас сразу писать интересующие даты. \n\nЦены:\n25-45к бат в месяц \n1200-1900 бат в день (мин.10дней) \n\n \nБольше фоток/видео и прочих подробностей в лс",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1200.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -12993,7 +12993,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -13723,7 +13723,7 @@
       "posted_at": "2026-02-06T08:43:02+00:00",
       "raw_text": "⚜️ Дом в аренду — 2 спальни, 2 ванные комнаты, 2 кондиционера.\n\n(Доступно с 4.03)\n\n☑️ Терраса и отдельный балкон.\n\n☑️ Частный двор + гараж под домом.\n\n☑️ 4 уборки в месяц включены в цену!\n\n☑️ Большой общий бассейн.\n\n☑️ Прекрасный вид, приятные соседи, тихий район.\n\n☑️ 3 минуты до пирса (Тонг Сала), 200 м до 7/11.\n\n☑️ Удобное расположение — одинаково близко ко всем основным пляжам.\n\nP.S. — есть еще один такой же дом в этом же месте. Доступен с 21.02.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — дом 2 спал.",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
@@ -13749,7 +13749,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -13903,11 +13903,11 @@
       "posted_at": "2026-02-05T08:38:55+00:00",
       "raw_text": "Новые уютные апартаменты в Тонгсале (42 метра)\n\nБлижайшие свободные даты:\n\n12-16.02 / 4 дня\n19-24.02 / 5 дней \n27.02-9.03 / 10 дней \n\nСутки 1650-1750 бат + свет\n\nДалее с 6.03 на месяц и более \n\nГостиная с угловым диваном (превращается в 2х спальную кровать) и большим smart TV, рабочий стол, просторная спальня с кондиционером, кухня со всем необходимым, патио, личная терраса.\n\nЛокация супер удобная - 1 минута от входа 7/11 и фуд-корта, на территории не шумно. 4 минуты до пляжа пешком.\n\nWiFi - 1 gb/s. Делаем ТМ30, составляем контракт\n\nВ ЛС пришлю точные цены на ваши даты, локацию, отзывы, больше фото/видео😉\n\nРейтинг 5/5, все гости очень довольны.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — апартаменты",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
-        "price_amount": null,
+        "price_amount": 1750.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -13929,7 +13929,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -14047,7 +14047,7 @@
       "posted_at": "2026-02-04T11:00:02+00:00",
       "raw_text": "Хостел в центре Тонгсалы\n\nХостел для комфортного отдыха, новых знакомств и атмосферных вечеров в кругу путешественников.\n\n✅Самый центр Тонг Салы -Близкое расположение к пирсу и уличным рынкам.\n✅На территории отеля есть аренда байков\n✅Есть зал для йоги и танцев \n✅Кафе с русско-европейской кухней\nПосмотреть актуальные цены и проверить доступность номера на ваши даты:\nhttps://litepms.ru/widget/search?id=7874&wid=793\n\nЗабронировать: @ru_phangan",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — жильё",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
@@ -14073,7 +14073,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -14263,13 +14263,13 @@
       "posted_at": "2026-02-02T13:00:23+00:00",
       "raw_text": "Есть несколько хороших домов с 1 спальней и гостиной. \nПринимаю брони ТОЛЬКО на даты с середины/конца февраля. \nПрошу вас сразу писать интересующие даты. \n\nЦены:\n28-45к бат в месяц \n1200-2000 бат в день (мин. 10 дней) \n\n \nБольше фоток/видео и прочих подробностей в лс",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1200.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -14289,7 +14289,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -16351,11 +16351,11 @@
       "posted_at": "2026-06-27T12:08:57+00:00",
       "raw_text": "ПРОДАЮ BROTHER \nшвейную машинку, \nстол в подарок 🎁 \nновая, состояние идеальное \nиспользовалась несколько раз \nотдаю за 8000 бат",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 8000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -16377,7 +16377,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -16387,11 +16387,11 @@
       "posted_at": "2026-06-27T12:07:42+00:00",
       "raw_text": "ПРОДАЮ \nYamaha Nmax  2023 года \nв хорошем состоянии ухожен, после капитального обследования у Аутена \nПробег 34 тыс \nSALE за 38тыс бат \nторг уместен \nпо вопросам пишите 💌",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 34000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -16413,7 +16413,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -16463,9 +16463,9 @@
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 150.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -16531,11 +16531,11 @@
       "posted_at": "2026-06-25T06:58:20+00:00",
       "raw_text": "В связи с отъездом продаю духовку Tefal 60L\nсостояние идеальное \n3000 бат",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 3000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -16557,7 +16557,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -16639,11 +16639,11 @@
       "posted_at": "2026-06-23T03:42:51+00:00",
       "raw_text": "Сдаем новый, просторный, современный дом 130 м² в районе Хинконг / Шритану на длительный период (полгода, год). В доме:\n• 2 спальни\n• 2 санузла\n• большая кухня-гостиная\n• большая гардеробная комната \n• зона кабинета\n• вся необходимая техника и посуда\n• Рядом море и вся инфраструктура, 7/11 в паре минут ходьбы. \n• Только что рядом закончилась стройка, так что в обозримом будущем точно будет тихо. \n\nСтоимость 60000 бат + электричество 8 бат за юнит + интернет, вода своя скважина. \n\nИщем пару или семью, которые будут бережно относиться к дому. Полное видео дома пришлю в личные сообщения.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Sri Thanu — дом 2 спал.",
         "district_raw": "Sri Thanu",
         "district_canonical": "Sri Thanu",
-        "price_amount": null,
+        "price_amount": 60000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": 2,
@@ -16665,7 +16665,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.92
       }
     },
     {
@@ -16891,11 +16891,11 @@
       "posted_at": "2026-06-21T05:08:17+00:00",
       "raw_text": "Туфли United Nude, 38 размер в идеальном состоянии. Покупались в Дубай. Продаю за 1000 бат \nПримерка: баан тай, Копанган",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Ban Tai — жильё",
         "district_raw": "Ban Tai",
         "district_canonical": "Ban Tai",
-        "price_amount": null,
+        "price_amount": 1000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -16917,7 +16917,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -16927,7 +16927,7 @@
       "posted_at": "2026-06-20T16:18:00+00:00",
       "raw_text": "Каяк и SUP в аренду на одном из самых красивых мест Пляж Хаад Яо\nЛокация рядом с морем, можно заказать коктейль в ресторане, принять душ, искупаться\n\nБронируйте @ru_phangan\nи приходите secret-place.info/find-us",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Haad Yao — жильё",
         "district_raw": "Haad Yao",
         "district_canonical": "Haad Yao",
@@ -16953,7 +16953,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -17071,11 +17071,11 @@
       "posted_at": "2026-06-19T14:04:08+00:00",
       "raw_text": "Продаю швейную машинку\nсостояние новое, использовалась несколько раз \n1000 бат \nтакже стол идеально подходит для работы \n600 бат",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -17097,7 +17097,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -17143,7 +17143,7 @@
       "posted_at": "2026-06-19T06:23:23+00:00",
       "raw_text": "Добрый день 🌞 Сдам комнату на 2 этаже большого дома в районе Аума, с отдельным входом с улицы, с душем, туалетом, большой верандой, ванной на ней, летней кухней  и маленьким холодильником. \n10 000 б. Можно на 2 месяца.\n\nСпокойным, осознанным людям, без вредных привычек.\n\nПодробности в личку.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
@@ -17169,7 +17169,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.5
       }
     },
     {
@@ -17179,7 +17179,7 @@
       "posted_at": "2026-06-18T18:30:23+00:00",
       "raw_text": "С 22 июня по 22 января 2027г. пересдам по себесу свой новый дом в 100 метрах от моря, Бантай. У меня годовой контракт до мая 2027, без повышения цены на хайсизон — гарантия. \n\nЕсть бассейн на берегу с видом на море. Вокруг дома ухоженный сад, всё утопает в зелени. В доме высокие потолки, свежий ремонт, всё есть для комфортной жизни 1-2 человек. Спальня (кровать king size, ортопедический матрас), кухня, рабочее место, барная стойка, обеденная зона на веранде, просторная ванная.\n\nЦена 20к бат / месяц + 6 бат электричество.\nПредоплата хозяину дома за 4 месяца вперёд.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Ban Tai — дом",
         "district_raw": "Ban Tai",
         "district_canonical": "Ban Tai",
@@ -17205,7 +17205,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -17219,9 +17219,9 @@
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 150.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -17287,7 +17287,7 @@
       "posted_at": "2026-06-18T01:45:15+00:00",
       "raw_text": "Продам большие безворсовые ковры, в бережной эксплуатации 1.5 месяца (животных/детей в доме не было), состояние отличное, без загрязнений и дефектов.\n\n160х230 см : 350 бат\n120х160 см : 150 бат\n\nСамовывоз Бантай",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Ban Tai — жильё",
         "district_raw": "Ban Tai",
         "district_canonical": "Ban Tai",
@@ -17313,7 +17313,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -17323,11 +17323,11 @@
       "posted_at": "2026-06-17T12:51:35+00:00",
       "raw_text": "FeiyuTech AK2000 профессиональный 3-осевой стабилизатор для зеркальных и беззеркальных камер \nОтлично подходит для тяжёлых камер\n– Мощный мотор, выдерживает до 2.8 кг \n– До 12 часов работы от батареи\nПричина продажи: не пользуюсь, лежит без дела, пусть послужит Вам\nЦена: 5 000 бат\n\nПродам сумку для фотоаппарата, в хорошем состоянии, в подарок несколько вещей для Кэнон.\n1000 Бат Торг уместен",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 5000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -17349,7 +17349,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -17503,11 +17503,11 @@
       "posted_at": "2026-06-14T11:40:38+00:00",
       "raw_text": "Мопед не мой, знакомый попросил разместить объявление вдруг кому из наших актуально будет \n\n🎵 Продаётся сабвуфер SVS SB-1000 Pro в оригинальной коробке, на гарантии.\n\n💰 Цена нового: 32 000 бат\n💰 Цена продажи: 29 000 бат\n\nОтличный вариант для тех, у кого уже есть хорошая аудиосистема и кто хочет перейти на полноценный формат 2.1.\n\nПодойдёт для:\n• Домашнего кинотеатра\n• Hi-Fi стереосистем\n• Студии или DJ-комнаты\n• Электронной музыки, джаза, даба, эмбиента\n• Просмотра фильмов\n• Всех, кто хочет добавить звуку глубины, тепла и объёма без гулкого и размазанного баса\n\nКомпактный, мощный и музыкальный сабвуфер с управлением через приложение и гибкими настройками.\n\n📍Ко Панган\n\nПодробнее о модели:\nhttps://www.svsound.com/collections/1000-pro-series-subwoofers\n\nПо всем вопросам обращайтесь напрямую Вацап \n+66 99 302 7013",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 32000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -17529,7 +17529,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -17611,7 +17611,7 @@
       "posted_at": "2026-06-12T16:18:00+00:00",
       "raw_text": "Каяк и SUP в аренду на одном из самых красивых мест Пляж Хаад Яо\nЛокация рядом с морем, можно заказать коктейль в ресторане, принять душ, искупаться\n\nБронируйте @ru_phangan\nи приходите secret-place.info/find-us",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Haad Yao — жильё",
         "district_raw": "Haad Yao",
         "district_canonical": "Haad Yao",
@@ -17637,7 +17637,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -17831,9 +17831,9 @@
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 150.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -18007,11 +18007,11 @@
       "posted_at": "2026-06-08T07:26:28+00:00",
       "raw_text": "С 10 июня Сдается очень уютный, комфортный односпальный дом на бантае рядом с морем.\n   Огромная терраса.\n   Гостиная комната.\n   Кухня с плитой.\n   Рабочее место с офисным стулом на колесиках.\n   30 сек пешком до моря с пляжем и кафе, на пляже есть бассейн, которым можно пользоваться жильцам этого дома.\n   30 сек пешком до бантайской дороги, где кафешки и можно поймать такси.\n1600 бат в месяц - прайс низкого сезона \nБайк pcx 150 идет за смешную цену (при желании) бонусом к дому.\nБольше инфо и фото в личку.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Ban Tai — дом",
         "district_raw": "Ban Tai",
         "district_canonical": "Ban Tai",
-        "price_amount": null,
+        "price_amount": 1600.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -18033,7 +18033,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -18331,7 +18331,7 @@
       "posted_at": "2026-06-04T16:18:00+00:00",
       "raw_text": "Каяк и SUP в аренду на одном из самых красивых мест Пляж Хаад Яо\nЛокация рядом с морем, можно заказать коктейль в ресторане, принять душ, искупаться\n\nБронируйте @ru_phangan\nи приходите secret-place.info/find-us",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Haad Yao — жильё",
         "district_raw": "Haad Yao",
         "district_canonical": "Haad Yao",
@@ -18357,7 +18357,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -18403,11 +18403,11 @@
       "posted_at": "2026-06-04T10:36:34+00:00",
       "raw_text": "Отличный новый портативный принтер этикеток/наклеек, очень удобен для быстрой печати с любого смартфона - 1000 бат",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -18429,7 +18429,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -18439,11 +18439,11 @@
       "posted_at": "2026-06-04T10:35:04+00:00",
       "raw_text": "Вытяжка / вентиляция под тайстайл дома - идеально от плесени - 1400 бат, полностью рабочая, 3 режима скорости + длинная складная труба-гофра",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1400.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -18465,7 +18465,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -18475,11 +18475,11 @@
       "posted_at": "2026-06-04T10:32:50+00:00",
       "raw_text": "Микшер (рабочий, но не идеал) - 1000 бат",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -18501,7 +18501,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -18511,11 +18511,11 @@
       "posted_at": "2026-06-04T10:30:52+00:00",
       "raw_text": "Напольный кондиционер - 3500 бат",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 3500.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -18537,7 +18537,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -18547,11 +18547,11 @@
       "posted_at": "2026-06-04T10:30:04+00:00",
       "raw_text": "Складной массажный стол в отличном состоянии - 1600 бат",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1600.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -18573,7 +18573,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -18583,11 +18583,11 @@
       "posted_at": "2026-06-04T10:28:45+00:00",
       "raw_text": "Колонки SKG 7013A, большущие со встроенным усилителем (включаются в розетку) - 4900 бат",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 4900.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -18609,7 +18609,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -18767,9 +18767,9 @@
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 150.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -19087,11 +19087,11 @@
       "posted_at": "2026-05-29T02:42:36+00:00",
       "raw_text": "С 10 июня Сдается очень уютный, комфортный односпальный дом на бантае рядом с морем.\n   Огромная терраса.\n   Гостиная комната.\n   Кухня с плитой.\n   Рабочее место с офисным стулом на колесиках.\n   30 сек пешком до моря с пляжем и кафе, на пляже есть бассейн, которым можно пользоваться жильцам этого дома.\n   30 сек пешком до бантайской дороги, где кафешки и можно поймать такси.\n17000 бат в месяц(байк pcx 150 идет бесплатно бонусом к дому) \nБольше инфо и фото в личку.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Ban Tai — дом",
         "district_raw": "Ban Tai",
         "district_canonical": "Ban Tai",
-        "price_amount": null,
+        "price_amount": 17000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -19113,7 +19113,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -19195,7 +19195,7 @@
       "posted_at": "2026-05-27T16:18:00+00:00",
       "raw_text": "Каяк и SUP в аренду на одном из самых красивых мест Пляж Хаад Яо\nЛокация рядом с морем, можно заказать коктейль в ресторане, принять душ, искупаться\n\nБронируйте @ru_phangan\nи приходите secret-place.info/find-us",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Haad Yao — жильё",
         "district_raw": "Haad Yao",
         "district_canonical": "Haad Yao",
@@ -19221,7 +19221,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -19411,11 +19411,11 @@
       "posted_at": "2026-05-26T04:02:31+00:00",
       "raw_text": "Ищу дом на 3 месяца: 2 спальни, хороший ремонт и интернет. Район желательно Тонгсала и соседние районы. Бюджет 20–30 тыс бат. Уже на Пангане, готов к осмотру. Пишите 🙂",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — дом 2 спал.",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
-        "price_amount": null,
+        "price_amount": 30000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": 2,
@@ -19437,7 +19437,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.92
       }
     },
     {
@@ -19451,9 +19451,9 @@
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 150.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -19519,11 +19519,11 @@
       "posted_at": "2026-05-25T06:55:10+00:00",
       "raw_text": "🔥🔥🔥🔥\n\nТовары, которые вы давно присматривали в корзине — пора наконец-то забрать! 🛒🔥\n\n😄 Конец месяца — значит время устроить себе нормальный шопинг \nLazada PAYDAY уже стартовал\n\n🛍🥳 Акции и скидки каждый день до самого конца месяца. Погнали! \n\nЧто дают:\n\n🪙 Купоны каждый день — до 3100 бат\n\n🪙 Чекин с монетками — можно получить до 55 555 монет\n\n✨ Ежедневные топ-сделки по промоакциям\n\n🛒 https://s.lazada.co.th/s.Z6G1x7?t=h5\n\n🗓 Акция проходит с 25 по 31 мая 2026\n\nУсловия действуют согласно правилам компании. Подробнее — в приложении Lazada и на сайте Lazada Thailand.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 3100.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -19545,7 +19545,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -19627,11 +19627,11 @@
       "posted_at": "2026-05-22T15:25:12+00:00",
       "raw_text": "Продам электронную гитару signature, состояние новой, 2000 бат (новая стоила 3500) \nВ комплекте чехол и ключ",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 2000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -19653,7 +19653,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -19699,13 +19699,13 @@
       "posted_at": "2026-05-22T10:52:25+00:00",
       "raw_text": "Сдам свои байки дешево:\nПсх 3500 в месяц, клик 125i 2500, фино 2000",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 3500.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -19725,7 +19725,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -19807,11 +19807,11 @@
       "posted_at": "2026-05-20T05:27:10+00:00",
       "raw_text": "FeiyuTech AK2000 профессиональный 3-осевой стабилизатор для зеркальных и беззеркальных камер \nОтлично подходит для тяжёлых камер\n– Мощный мотор, выдерживает до 2.8 кг \n– До 12 часов работы от батареи\nПричина продажи: не пользуюсь, лежит без дела, пусть послужит Вам\nЦена: 5 000 бат\n\nПродам сумку для фотоаппарата, в хорошем состоянии, в подарок несколько вещей для Кэнон.\n1000 Бат Торг уместен",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 5000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -19833,7 +19833,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -19843,7 +19843,7 @@
       "posted_at": "2026-05-19T16:18:00+00:00",
       "raw_text": "Каяк и SUP в аренду на одном из самых красивых мест Пляж Хаад Яо\nЛокация рядом с морем, можно заказать коктейль в ресторане, принять душ, искупаться\n\nБронируйте @ru_phangan\nи приходите secret-place.info/find-us",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Haad Yao — жильё",
         "district_raw": "Haad Yao",
         "district_canonical": "Haad Yao",
@@ -19869,7 +19869,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -20027,9 +20027,9 @@
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 150.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -20203,7 +20203,7 @@
       "posted_at": "2026-05-11T16:18:00+00:00",
       "raw_text": "Каяк и SUP в аренду на одном из самых красивых мест Пляж Хаад Яо\nЛокация рядом с морем, можно заказать коктейль в ресторане, принять душ, искупаться\n\nБронируйте @ru_phangan\nи приходите secret-place.info/find-us",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Haad Yao — жильё",
         "district_raw": "Haad Yao",
         "district_canonical": "Haad Yao",
@@ -20229,7 +20229,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -20311,13 +20311,13 @@
       "posted_at": "2026-05-11T06:11:44+00:00",
       "raw_text": "🏡 Дом с 2 спальнями + бассейн + 🏍️ Honda Forza 300cc\nНа время своего отъезда сдам дом в районе Baannaisuan с разрешения тайских хозяев.\n\n📍5 минут езды до Тонгсалы  \n🌿 Очень тихое и живописное место\n\nВ доме:\n• 2 спальни  \n• 2 санузла  \n• просторный холл  \n• полностью оборудованная кухня со множеством кухонных приборов и посуды  \n• 2 кондиционера  \n• Wi-Fi 1 Gb  \n• 2 полноценных рабочих места  \n• монитор 27\"  \n• профессиональное пианино Yamaha P-125  \n• бассейн\n🏍️ Также вместе с домом Honda Forza 300cc за 4000 в мес.\n\nДом доступен с 20 мая.  \nСрок аренды — до конца сентября или начала октября \n\n👌 Сдаю с целью компенсации простоя по максимально возможно низкой цене 25000 в месяц (электричество 7 бат/юнит отдельно) при аренде на весь срок!\nКонтакт @iamgoldfinch",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Ban Nai Suan — дом 2 спал.",
         "district_raw": "Ban Nai Suan",
         "district_canonical": "Ban Nai Suan",
-        "price_amount": null,
+        "price_amount": 4000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": 2,
         "bathrooms": null,
         "property_type": "house",
@@ -20337,7 +20337,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.92
       }
     },
     {
@@ -20423,9 +20423,9 @@
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 150.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -20491,7 +20491,7 @@
       "posted_at": "2026-05-08T09:13:26+00:00",
       "raw_text": "Остался блок стиков , 250 бат за пачку, а если блок сразу за 2000 бат. Уезжаю с острова 12 мая , забрать можно в Чалоклам",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Chaloklum — жильё",
         "district_raw": "Chaloklum",
         "district_canonical": "Chaloklum",
@@ -20517,7 +20517,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -20527,13 +20527,13 @@
       "posted_at": "2026-05-08T06:25:11+00:00",
       "raw_text": "Освобождается с 10.05 по 1.06 или до 10.06 белый  отдельно стоящий домик в живописном окружении пальм и зелени ( соседей не видно ), тихом месте на берегу красивого пляжа Баан Тай . Кухня, газ плита, кондиционер, холодильник, бойлер ( горячая вода), wifi, кино на проекторе, кровать king size. Видеонаблюдение, фильтр воды. Веранда, гамак. 2 вентилятора, чайник, 15метров до моря. \n\n8000бат -21 день\n10000бат/мес.\nГаз-500\nЭлектричество 7 бат\nДепозит 5000\n\nТакже доступен на этот период вместе с домом байк Honda Click125-3000бат/4000бат",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Ban Tai — жильё",
         "district_raw": "Ban Tai",
         "district_canonical": "Ban Tai",
-        "price_amount": null,
+        "price_amount": 10000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -20553,7 +20553,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -20599,11 +20599,11 @@
       "posted_at": "2026-05-07T12:40:03+00:00",
       "raw_text": "Продаю ноутбук \\ laptop на гарантии: \n\nЭкран: 15,6\n16 ГБ ОЗУ \n512 ГБ SSD\nIntel N95\nВес: 1.6 КГ\n\nПочти не использовался. Плёнку не снимал с экрана и задней части. Гарантия от производителя. В комплекте зарядка и их рюкзак.\n\nЦена: 7000 бат. \nТакже принимаю наличные доллары и usdt на крипто кошелёк.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 7000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -20625,7 +20625,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -21967,11 +21967,11 @@
       "posted_at": "2026-05-05T07:36:05+00:00",
       "raw_text": "Honda Scoopy Club 2022г. (с дополнительными колёсами)\nВ хорошем состоянии, отлично гоняет, тянет в горку без проблем. \nПробег 49000 км.\nРегулярная замена масла, байк вовремя обслуживался.\nГринбук 👌🏼\n45000 бат.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 45000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -21993,7 +21993,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -22147,7 +22147,7 @@
       "posted_at": "2026-05-03T16:18:00+00:00",
       "raw_text": "Каяк и SUP в аренду на одном из самых красивых мест Пляж Хаад Яо\nЛокация рядом с морем, можно заказать коктейль в ресторане, принять душ, искупаться\n\nБронируйте @ru_phangan\nи приходите secret-place.info/find-us",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Haad Yao — жильё",
         "district_raw": "Haad Yao",
         "district_canonical": "Haad Yao",
@@ -22173,7 +22173,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -22403,9 +22403,9 @@
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 150.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -22687,13 +22687,13 @@
       "posted_at": "2026-04-26T04:01:26+00:00",
       "raw_text": "Ребят, всем привет) \nПристраиваю домик… \nс 6-7 мая освободится очень уютный комфортный односпальный домик на бантае.\n\nНа любой срок. \n   Огромная терраса.\n   Гостиная комната.\n   Кухня с плитой и 2мя комфорками\n   Рабочее место с офисным стулом на колесиках.\n   30 сек пешком до моря с пляжем и кафе, на пляже есть бассейн, которым можно пользоваться жильцам этого дома.\n   30 сек пешком до бантайской дороги.\nБольше инфо и фото в личку.\n19000/мес на низкий сезон",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Ban Tai — жильё",
         "district_raw": "Ban Tai",
         "district_canonical": "Ban Tai",
-        "price_amount": null,
+        "price_amount": 19000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -22713,7 +22713,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -22723,7 +22723,7 @@
       "posted_at": "2026-04-25T16:18:00+00:00",
       "raw_text": "Каяк и SUP в аренду на одном из самых красивых мест Пляж Хаад Яо\nЛокация рядом с морем, можно заказать коктейль в ресторане, принять душ, искупаться\n\nБронируйте @ru_phangan\nи приходите secret-place.info/find-us",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Haad Yao — жильё",
         "district_raw": "Haad Yao",
         "district_canonical": "Haad Yao",
@@ -22749,7 +22749,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -23231,9 +23231,9 @@
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 150.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -23803,11 +23803,11 @@
       "posted_at": "2026-04-22T05:00:02+00:00",
       "raw_text": "🏍 Сегодня доступен для аренды💥 \n👉 Прекрасный Honda CBR500!\n\n💲Цена на сутки: 1200 бат \n💲Продажа: 80 000 бат\n\n✅ Шлемы и держатель для телефона \n✅ Оплата любой валютой и криптовалютой\n✅ Вся техника полностью обслужена \n\n✔️Узнавайте о наличии, задавайте интересующие вопросы и бронируйте @ru_phangan (https://t.me/ru_phangan)\n\nНаходимся тут:📍 https://goo.gl/maps/vxhLBMsWhdx1ApCX9 \n\nПриходите!🤗",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1200.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -23829,7 +23829,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -23839,13 +23839,13 @@
       "posted_at": "2026-04-21T10:03:00+00:00",
       "raw_text": "Пересдам свой домик по цене от хозяина. \nС начала мая до декабря/января. \n(Даты обсуждаемы)\n\nУдобная локация - рядом с Аум и кафе Balance. \n\nСовременный, стильный дом. \n1 комната с разделенным пространством. Небольшая  терраса. Современная сантехника и мебель. Панорамные окна.\nНет полноценной кухни, но есть пространство для готовки и техника: газовая плитка, аэрогриль, блендер, микроволновка… посуда, также есть холодильник, кофеварка, чайник… \n\nВокруг ухоженная зеленая территория, тихо, без строек.\n\n17к бат / месяц \n15к бат при оплате за 3 месяца сразу \n✅ Электричество включено\n✅ Также включена уборка каждые 3 дня 🔥 (моют посуду, пол, душ и туалет, меняют постельное и полотенца) \n\n🏍️ Также есть байк черный PCX, радио ключ, обслужен\nОставлю за 3к / месяц",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 15000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": 1,
         "bathrooms": null,
         "property_type": "house",
@@ -23865,7 +23865,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -24595,11 +24595,11 @@
       "posted_at": "2026-04-19T10:00:03+00:00",
       "raw_text": "🚙 Сегодня доступен для аренды и покупки💥\n👉 Прекрасный Mazda 2\n\nАренда: 1000 бат \nПродажа: 200 000 бат\n\n✅ Оплата любой валютой и криптовалютой\n✅ Вся техника полностью обслужена \n\n1️⃣ Можно взять технику в аренду на 1-2 дня. Если вы решили её приобрести, то цена аренды будет включена в сумму продажи.\n2️⃣ Мы проводим полную предпродажную подготовку проверяем уровень масла, тормоза, электронику и тд.\n3️⃣ Мы даём 2 недели гарантии на всю нашу технику. Если что-то пойдет не так, то мы всё исправим абсолютно бесплатно.\n4️⃣ Мы всегда и давно на Пангане. Не уедем и не скроемся. У нас на Пангане 2 отеля, кафе и пункт аренды мотобайков. \n5️⃣ Даём рассрочку на срок до 5 месяцев (подробности у менеджера на месте).\n\nЗабронировать 👉 tg: @ru_phangan\n\nИли приезжайте:\n\n и приезжайте:📍Phangan CenterPoint (https://goo.gl/maps/vxhLBMsWhdx1ApCX9) каждый день с 9:00 до 21:00!",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -24621,7 +24621,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -24703,11 +24703,11 @@
       "posted_at": "2026-04-19T08:00:02+00:00",
       "raw_text": "🏍 Сегодня доступен для аренды💥 \n👉 Прекрасный Honda CBR500!\n\n💲Цена на сутки: 1200 бат \n💲Продажа: 80 000 бат\n\n✅ Шлемы и держатель для телефона \n✅ Оплата любой валютой и криптовалютой\n✅ Вся техника полностью обслужена \n\n✔️Узнавайте о наличии, задавайте интересующие вопросы и бронируйте @ru_phangan (https://t.me/ru_phangan)\n\nНаходимся тут:📍 https://goo.gl/maps/vxhLBMsWhdx1ApCX9 \n\nПриходите!🤗",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1200.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -24729,7 +24729,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -24919,11 +24919,11 @@
       "posted_at": "2026-04-18T10:00:04+00:00",
       "raw_text": "🚙 Сегодня доступен для аренды и покупки 💥 \n\n👉 Прекрасная MG GS!\n\nАренда: 1000 бат\nПродажа: 250 000 бат\n\n✅ Оплата любой валютой и криптовалютой\n✅ Вся техника полностью обслужена \n\n1️⃣ Мы проводим полную предпродажную подготовку проверяем уровень масла, тормоза, электронику и тд.\n2️⃣ Мы даём 2 недели гарантии на всю нашу технику. Если что-то пойдет не так, то мы всё исправим абсолютно бесплатно.\n3️⃣ Мы всегда и давно на Пангане. Не уедем и не скроемся. У нас на Пангане 2 отеля, кафе и пункт аренды мотобайков. \n4️⃣ Даём рассрочку на срок до 5 месяцев (подробности у менеджера на месте).\n\nЗабронировать 👉 tg: @ru_phangan\n\nИли приезжайте:\n\n📍Phangan CenterPoint каждый день с 9:00 до 21:00!",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -24945,7 +24945,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -25135,11 +25135,11 @@
       "posted_at": "2026-04-18T05:00:02+00:00",
       "raw_text": "🏍 Сегодня доступен для аренды💥 \n👉 Прекрасный Honda CBR500!\n\n💲Цена на сутки: 1200 бат \n💲Продажа: 80 000 бат\n\n✅ Шлемы и держатель для телефона \n✅ Оплата любой валютой и криптовалютой\n✅ Вся техника полностью обслужена \n\n✔️Узнавайте о наличии, задавайте интересующие вопросы и бронируйте @ru_phangan (https://t.me/ru_phangan)\n\nНаходимся тут:📍 https://goo.gl/maps/vxhLBMsWhdx1ApCX9 \n\nПриходите!🤗",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1200.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -25161,7 +25161,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -25171,7 +25171,7 @@
       "posted_at": "2026-04-17T16:18:00+00:00",
       "raw_text": "Каяк и SUP в аренду на одном из самых красивых мест Пляж Хаад Яо\nЛокация рядом с морем, можно заказать коктейль в ресторане, принять душ, искупаться\n\nБронируйте @ru_phangan\nи приходите secret-place.info/find-us",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Haad Yao — жильё",
         "district_raw": "Haad Yao",
         "district_canonical": "Haad Yao",
@@ -25197,7 +25197,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -25531,11 +25531,11 @@
       "posted_at": "2026-04-17T05:00:02+00:00",
       "raw_text": "🏍 Сегодня доступен для аренды💥 \n👉 Прекрасный  Honda CB650F!\n\n💲Цена на сутки: 1200  бат \n💲Продажа:  110 000 бат\n\n✅ Шлемы и держатель для телефона \n✅ Оплата любой валютой и криптовалютой\n✅ Вся техника полностью обслужена \n\n✔️Узнавайте о наличии, задавайте интересующие вопросы и бронируйте @ru_phangan (https://t.me/ru_phangan)\n\nНаходимся тут:📍 https://goo.gl/maps/vxhLBMsWhdx1ApCX9 \n\nПриходите!🤗",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1200.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -25557,7 +25557,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -25711,13 +25711,13 @@
       "posted_at": "2026-03-04T10:50:13+00:00",
       "raw_text": "🏡 УЮТНЫЙ ДОМ В ДЖУНГЛЯХ BAAN TAI\nНовый дом с одной спальней и террасой, окружённый зеленью и тишиной — комфорт и приватность.\n\nПолностью оборудован для проживания: кухня с посудой, удобная мебель, новая бытовая техника, ТВ, Wi-Fi, кондиционер, газовая плита.\n\n🚗 Парковка не далеко от дома\n🛵 10 минут на байке до популярных пляжей\n☕️ Кафе и супермаркеты рядом\n🏖 Пляж Тан Садет — 15 минут\n\n📆 📆 ЖИЛЬЕ ДОСТУПНО:\n• С 7 АПРЕЛЬЯ\n• 27000 бат/месяц\n• 1000 бат/сутки (минимум 6 ночей)\n\n🚗 Доступ и парковка\nПарковка для мотоциклов прямо рядом с домом. Парковка для автомобиля расположена чуть ниже, на дороге.\n\n🏡 ВКЛЮЧЕНО В СТОИМОСТЬ:\n• Wi-Fi • Вода • Электричество\n📞 TELEGRAM / WHATSAPP: +34643594865",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Than Sadet — дом",
         "district_raw": "Than Sadet",
         "district_canonical": "Than Sadet",
-        "price_amount": null,
+        "price_amount": 1000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "house",
@@ -25737,7 +25737,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -25787,7 +25787,7 @@
         "title": "Ban Tai — студия (студия)",
         "district_raw": "Ban Tai",
         "district_canonical": "Ban Tai",
-        "price_amount": null,
+        "price_amount": 45000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": 0,
@@ -25809,7 +25809,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.86
+        "confidence": 0.92
       }
     },
     {
@@ -25927,7 +25927,7 @@
       "posted_at": "2024-12-03T06:51:23+00:00",
       "raw_text": "Сдается большой хороший чистый свежий однокомнатный дом. Район Бан Тай. В нем много бонусов и ценных деталей.\n\nБольшая спальня с большой кроватью.\n\nБольшое душевое пространство, с отдельной душевой кабиной, где очень просторно и комфортно. \n\nКачественный блендер, посуда.\n\nВ доме своя чистая вода из скважины, что даже когда у всех нет воды - в этом доме никогда не было проблем. Так же Привозят питьевую воду очень удобно. \n\nНа территории резорта есть бассейн.\n\nТак же территорию абсолютно каждый день подметают. Благодаря этому на территории нет насекомых, сколопендр, змей, скорпионов и прочих. Подъезд к дому комфортный, парковка крытая и асфальтирована. То есть в любые дожди - дом комфортен.\n\nЕщё большой плюс: нет вокруг шума, нет строек, петухов, шума дорог и прочего. Тихо и спокойно. Спокойные Соседи, без вечеринок и другого шума. \n\nДом - большая удача по меркам Пангана.\n\n32к в месяц. Сейчас освободился. Приоритет - долгосрок\n\nЭлектричество 7 бат за юнит.\nОплата любой валютой (рубли, ustd, баты).",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Ban Tai — дом",
         "district_raw": "Ban Tai",
         "district_canonical": "Ban Tai",
@@ -25953,7 +25953,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -26071,13 +26071,13 @@
       "posted_at": "2024-11-14T18:18:11+00:00",
       "raw_text": "Как понять сообщение? 40 000 в месяц! И потом тут же в сутки написано?",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 40000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -26097,7 +26097,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -26395,13 +26395,13 @@
       "posted_at": "2024-10-04T08:16:42+00:00",
       "raw_text": "Помесячно  с кондеем, кухней, гостиной на берегу в Тонг Сале. Есть плита, рисоварка, блендер, \n 12500 в месяц до декабря\nМожно по суточно",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 12500.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -26421,7 +26421,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -26647,7 +26647,7 @@
       "posted_at": "2024-05-30T08:39:46+00:00",
       "raw_text": "Сдам классный дом от хозяйки!\nОдна спальня с кондиционером\nОтдельная гостиная (кожаный диван, рабочее место, кондиционер)\nОтличный Wi-Fi \nПросторная терраса тоже с диваном\nКухня\nОчень тихий зеленый резорт (соседей не видно и не слышно)\nМожно арендовать долгосрочно без поднятия цены!\nДолгосрочно цена 21к + свет\nПомесячно цена 24к + свет",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
@@ -26673,7 +26673,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -26755,7 +26755,7 @@
       "posted_at": "2024-05-27T10:02:26+00:00",
       "raw_text": "Сдам большой новый дом с 2 спальнями🏡\nДом 130 кв м, современный ремонт\n2 раздельные спальни\nОтдельная гардеробная \n2 санузла\n3 кондиционера \nПанорамные окна\n📍центр острова\nЦена 40к бат + свет",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
@@ -26781,7 +26781,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -26791,7 +26791,7 @@
       "posted_at": "2024-05-27T09:02:59+00:00",
       "raw_text": "Сдам классный большой дом 🏡\nНаходится в красивом и тихом резорте, вокруг зелень. Соседей не видно и не слышно!\nОдна спальня с кондиционером \nОтдельная большая гостиная с диваном и рабочим местом (с кондиционером)\nБольшая терраса тоже с диваном\n📍бан тай\nДолгосрочно цена 21к + свет\nПомесячно цена 24к + свет\nКонтракт напрямую от хозяйки!",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Ban Tai — дом",
         "district_raw": "Ban Tai",
         "district_canonical": "Ban Tai",
@@ -26817,7 +26817,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -26827,11 +26827,11 @@
       "posted_at": "2024-05-26T09:05:49+00:00",
       "raw_text": "Ищем дом,виллу с тремя спальнями с кондиционером,бассейном и лоджией..Стоимость в месяц около 70 000 бат",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 70000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -26853,7 +26853,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -26971,7 +26971,7 @@
       "posted_at": "2024-05-19T07:50:50+00:00",
       "raw_text": "Сдам большой новый дом 🏡\nДве раздельные спальни\nГардеробная \nОгромная гостиная с зоной отдыха и телевизором\nОтлично подойдет для большой семьи или двух пар\nСдается с 19.05\n📍центр острова. Удобная развязка в любой район и к морю \nЦена 45к + свет",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
@@ -26997,7 +26997,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -27007,7 +27007,7 @@
       "posted_at": "2024-05-18T14:11:26+00:00",
       "raw_text": "Сдам новый домик 🏡\nОтдельная спальня с кондиционером \nОтдельная гостиная с рабочим столом , диваном и кондиционером \nОтличный вай фай\nКухня\nБольшая терраса \nНаходится в очень зеленом и тихом резорте🌿 соседей почти нет!\nСдается с 19.05 без животных и детей🙏🏼\nЦена 27к + свет",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
@@ -27033,7 +27033,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.5
       }
     },
     {
@@ -27043,7 +27043,7 @@
       "posted_at": "2024-05-16T06:38:03+00:00",
       "raw_text": "Сдам дом от хозяйки!\nОтдельная спальня с кондиционером \nОтдельная гостиная с кондиционером, кожаным диваном и рабочим столом\nМебель новая и хорошего качества \nБольшая терраса\nДом находится в зеленом и тихом резорте, соседей почти нет\nС сегодняшнего дня цена 21к + свет\nМожно долгосрочный контракт без поднятия цены на зиму🙏🏼",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
@@ -27069,7 +27069,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -27115,7 +27115,7 @@
       "posted_at": "2024-04-18T04:23:45+00:00",
       "raw_text": "Сдам классный большой новый дом 🏡\nОгромная гостиная с телевизором и зоной отдыха\nМастер спальня с гардеробной и своим санузлом\nВторая спальни + гостевой санузел\n3 кондиционера \nПолностью оборудованная кухня\nОтлично подойдет для 2 пар или семьи\n📍центр острова\nЦена 55к бат в месяц + свет\nАктуально с 23.04",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
@@ -27141,7 +27141,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -27151,7 +27151,7 @@
       "posted_at": "2024-04-14T06:04:41+00:00",
       "raw_text": "Сдам очень уютный дом с хорошим ремонтом\n2 спальни\n2 санузла (2 кондиционера)\nРезорт в красивом зеленом месте 🌿\nСдается с 14.04 \nВозможно посуточно и на долгосрок🙌🏼",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
@@ -27177,7 +27177,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -27223,11 +27223,11 @@
       "posted_at": "2024-02-24T05:10:36+00:00",
       "raw_text": "Всех приветствую.Ищем Виллу с тремя комнатами на период с 10 марта по 10 апреля.Бюджет около 6000 тысяч бат в сутки😚🪷🪷🪷",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 6000000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -27249,7 +27249,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -27727,13 +27727,13 @@
       "posted_at": "2023-09-27T02:50:17+00:00",
       "raw_text": "Вилла 3 спальни доступна 1 октября по май 3 спальни \n12000 сутки",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 12000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": 3,
         "bathrooms": null,
         "property_type": "villa",
@@ -27753,7 +27753,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -27839,9 +27839,9 @@
         "title": "Thong Sala — дом",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
-        "price_amount": null,
+        "price_amount": 600.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "house",
@@ -27861,7 +27861,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.74
+        "confidence": 0.86
       }
     },
     {
@@ -28087,11 +28087,11 @@
       "posted_at": "2023-07-01T10:38:39+00:00",
       "raw_text": "Добрый день. Сейчас 77 тыс.б.месяц",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 77000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -28113,7 +28113,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -28339,13 +28339,13 @@
       "posted_at": "2023-05-18T06:34:27+00:00",
       "raw_text": "Всем хорошего дня! Сдается дом недалеко от Альфа бар с 23.05 с хорошим видом на горе ( дорога на верх до дома ). Спальня,  кухня , балкон, АС. В тихом месте. 14000 бат/ месяц плюс электричество.  До декабря. Детали в ЛС",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 14000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "house",
@@ -28365,7 +28365,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -28735,11 +28735,11 @@
       "posted_at": "2023-03-31T08:53:36+00:00",
       "raw_text": "Очень нужен дом как можно скорее! С хорошим кондеем, кухней, светлый. До 15 тыс!\nПожалуйста, кто что знает, явки и пароли…\nДля себя с малышом. Жара с ума сводит🤪\n\nВзамен освобожу свой домик в Чалике за 12тыс (просторный, с кухней и кондеем-фигово работает, но может есть умельцы)",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 15000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -28761,7 +28761,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -28771,13 +28771,13 @@
       "posted_at": "2023-03-29T00:37:01+00:00",
       "raw_text": "❗ сдается однокомнатное бунгало🏡. Район Чалоклам🏝️ 30 метров до морского берега.\nХолодильник, газовая плита, необходимая посуда, вентилятор. Отсутствует водонагреватель, но из крана течет достаточно теплая вода. Возможна долгосрочная аренда. \nЦена за месяц 12000 и есть аналогичный за 11000. Лс",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Chaloklum — бунгало",
         "district_raw": "Chaloklum",
         "district_canonical": "Chaloklum",
-        "price_amount": null,
+        "price_amount": 12000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "bungalow",
@@ -28797,7 +28797,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -28807,11 +28807,11 @@
       "posted_at": "2023-03-28T06:12:55+00:00",
       "raw_text": "здравствуйте!\n\nвыезжаю раньше срока, сдам хороший домик в лесу недорого, 20 дней с 2/04 по 23 04 за 7500 бат.\nЕсли интересно пиши в личку вышлю фото!",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 7500.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -28833,7 +28833,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -29095,11 +29095,11 @@
       "posted_at": "2023-03-24T21:50:27+00:00",
       "raw_text": "Пришлите виллы фотоза 900000 бат без бассейна?  Мои даты   31 марта по 10 мая.!!!",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 900000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -29121,7 +29121,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -29167,11 +29167,11 @@
       "posted_at": "2023-03-20T23:04:08+00:00",
       "raw_text": "Добрый день, мы ищем дом красивый, стильный, просторный на 2-х на Пангане. С 30 марта по 10 мая, предложите что-нибудь. Или сделайте скидку пожалуйста на дома, которые предлагаете. Бюджет 70000 бат",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 70000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -29193,7 +29193,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -29203,11 +29203,11 @@
       "posted_at": "2023-03-20T22:34:19+00:00",
       "raw_text": "Добрый день, Ищем дом на 2-х с 30 марта по 10 мая, красивый  просторный, стильный. Бюджет на это время 70000 бат. Предложите пожалуйста что-нибудь.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 70000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -29229,7 +29229,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -29563,7 +29563,7 @@
       "posted_at": "2023-03-11T14:24:55+00:00",
       "raw_text": "Сдам в аренду комнату \nРайон Тонг сала \n( только девушка ) \n15т с электричеством \n\nДвухкомнатные апартаменты + гостиная \nРайон тонг сала \n\nДомик с 1 спальней + студия (гостиная + кухня) \nРайон вок тум \nДоступен с 18 марта \n\nБольшой двухкомнатный дом + гостиная, на территории есть бассейн \n\nБольше фото и информации в лс 📩",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — апартаменты (студия)",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
@@ -29589,7 +29589,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -29707,11 +29707,11 @@
       "posted_at": "2023-02-28T10:19:04+00:00",
       "raw_text": "Ищу жилье за 15-20 тысяч б в месяц ,по предложением пишите в личку",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 20000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -29733,7 +29733,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -29743,13 +29743,13 @@
       "posted_at": "2023-02-27T11:52:57+00:00",
       "raw_text": "Свободно бунгало:\n\n • 1 км до Хадрина, 2 минуты до пляжа, кафе и магазина\n • WiFi 100 Мбит\n • Вентилятор, холодильник, горячая вода\n • Электричество и вода включены в стоимость\n • Клининг раз в неделю\n\n500 бат в сутки (минимум 3 дня) даты возможного заселения с 27.02.2023 - 04.03.2023",
       "parsed": {
-        "is_listing": true,
+        "is_listing": false,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": 2202.0,
+        "price_amount": 500.0,
         "price_currency": "THB",
-        "price_period": "month",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "bungalow",
@@ -29769,7 +29769,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.74
+        "confidence": 0.1
       }
     },
     {
@@ -30355,11 +30355,11 @@
       "posted_at": "2022-12-30T04:13:09+00:00",
       "raw_text": "Есть 1 сп дом с 30.12 на месяц (или больше), Тонг Най пан Яй, новая мебель, кухня, ремонт, 28 тыс/мес\n@sharp_exp может показ",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Nai Pan Yai — дом",
         "district_raw": "Thong Nai Pan Yai",
         "district_canonical": "Thong Nai Pan Yai",
-        "price_amount": null,
+        "price_amount": 28000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -30381,7 +30381,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -30391,13 +30391,13 @@
       "posted_at": "2022-12-27T13:54:18+00:00",
       "raw_text": "Сдается уютное бунгало в резорте The Wild Side, недалеко от Тонг Салы. \nПросторный балкон, приятное освещение, бунгало окружено джунглями 🌴\n\nНет кухни, но есть маленький холодильник и чайник. \nМожно въехать уже сейчас. \n\n15000 - месяц\n4500 - неделя\n800 - сутки (минимум 3 дня)",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 4500.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "bungalow",
@@ -30417,7 +30417,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -30679,7 +30679,7 @@
       "posted_at": "2022-12-12T09:29:18+00:00",
       "raw_text": "Сдам однокомнатные апартаменты с кухней по суточно от 1800б. все включено. Бантай. Вопросы и дополнительные фотографии в л.с.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Ban Tai — апартаменты",
         "district_raw": "Ban Tai",
         "district_canonical": "Ban Tai",
@@ -30705,7 +30705,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -31075,11 +31075,11 @@
       "posted_at": "2022-12-09T11:44:45+00:00",
       "raw_text": "Всем привет, ищем дом для двоих или резорт (желательно с кухней) на Даты с 14.12-05.01, можно и на месяц или два (бюджет 30-40 тыс. бат в месяц)",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 40000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -31101,7 +31101,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -31111,13 +31111,13 @@
       "posted_at": "2022-12-08T10:02:59+00:00",
       "raw_text": "Свежий номер с современным ремонтом. Кондиционер, бассейн на территории резорта, кухня, тезевизор, интернет, просторный балкон для работы, удобное расплоложения (около полицейского участка в Тонг Сале). Раньше жил там, хозяйка написала, что с завтрашнего дня имеются места в моем номере, кому надо - реагируйте, отличные условия.\nСоседи, в основном, Русские (возможно это и не плюс, конечно). Выбирал его по принципу «не тай стайл», с чем он полностью справился.\n\nСтоимость новогоднего периода - 1800/сутки, я жил вообще по 1000/сутки, но уж сами там договаривайтесь, по острову покатаетесь, поймете, что 1800 сейчас шик цена.\n \nZohan Resort, пишите в Вотсап хозяйке +66 80 170 6238",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1800.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -31137,7 +31137,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -31867,11 +31867,11 @@
       "posted_at": "2022-12-02T06:08:53+00:00",
       "raw_text": "С 4 дек по 4 янв свободен дом-студия на первой линии, Чалоклам, подойдет для 1,2 чел или пары с ребенком. 35 тыс! + комиссия!\n\nЕсть нюансы!  Подробности в лс.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Chaloklum — студия (студия)",
         "district_raw": "Chaloklum",
         "district_canonical": "Chaloklum",
-        "price_amount": null,
+        "price_amount": 35000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": 0,
@@ -31893,7 +31893,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.92
       }
     },
     {
@@ -32083,7 +32083,7 @@
       "posted_at": "2022-11-23T08:26:21+00:00",
       "raw_text": "Всем привет! \nСдаю своё бунгало на 7 дней с 24 по 30 ноября в районе малибу бич. В комнате есть кондиционер, холодильник, одна двуспальная кровать и диван который раскладывается в полноценное спальное место. До пляжа 100 метров, в пешей доступности 7eleven.\nСутки 350 бат",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
@@ -32109,7 +32109,7 @@
         "min_stay_months": null,
         "language": "mixed",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -32299,13 +32299,13 @@
       "posted_at": "2022-11-17T05:10:02+00:00",
       "raw_text": "Свежий номер с современным ремонтом. Кондиционер, бассейн на территории резорта, кухня, тезевизор, интернет, просторный балкон для работы, удобное расплоложения (около полицейского участка в Тонг Сале). В связи с переездом перездаю. В данный момент номер снят до 07.12 по стоимости 1000 бат в сутки (электричество 7 бат за юнит). Я уступлю его в любой день, как договоримся с новым жильцом. Соседи, в основном, Русские. Выбирал его по принципу «Не тай стайл», с чем он полностью справился.\nЗа фотографиями пишите - скину в личку",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "night",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "other",
@@ -32325,7 +32325,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -32335,7 +32335,7 @@
       "posted_at": "2022-11-17T04:46:05+00:00",
       "raw_text": "Доступен дом 2 спальни.\nРайон Тонг Най Пан !!!\nПосмотрите районе, пожалуйста, перед тем как писать.\n\nДаты: 20 ноября на месяц",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Nai Pan Yai — дом 2 спал.",
         "district_raw": "Thong Nai Pan Yai",
         "district_canonical": "Thong Nai Pan Yai",
@@ -32361,7 +32361,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -32407,11 +32407,11 @@
       "posted_at": "2022-11-16T14:12:41+00:00",
       "raw_text": "Ноябрьские дни считаются из расчета 19000 бат, декабрьские 32000.\nКомиссия 3000 бат 🙏",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 19000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -32433,7 +32433,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -32875,13 +32875,13 @@
       "posted_at": "2022-11-16T13:14:56+00:00",
       "raw_text": "Есть вариант на двухкомнатные «Апартаменты» с 25.11 и на два месяца точно   Состояние комнат около 4 из пяти . \nЯ забронировал номер, внёс депозит и нашел другой вариант на районе с друзьями. \nТам 4 кровати , душ, можно разместить или две большие  или вообще убрать. Хорошая хозяйка , любящая животных. С ними там тоже живут другие жильцы. \nЯ думаю подойдёт вариант для семейной пары с детьми или две пары. На территории бассейн и расположение в 3-5 минутах езды от пантипа. \nЗа месяц 12к бат договорились. \nЧирикайте в личку, фото или завтра или постараюсь найти",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 12000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "apartment",
@@ -32901,7 +32901,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -32983,11 +32983,11 @@
       "posted_at": "2022-11-16T07:42:03+00:00",
       "raw_text": "Привет! Семья ищем дом с января 2 сп. \nБюджет до 20 тыс.\nМожет кто-то съезжает с такого?)",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 20000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -33009,7 +33009,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -33127,11 +33127,11 @@
       "posted_at": "2022-11-15T10:51:36+00:00",
       "raw_text": "Привет! \nНужно жилье - бунгало 1-2 спальни.\nРайон Тонгсала, Баан Тай, Хин Конг. Даты с 11 декабря по 11 января. Наличие кондиционера и вай фая обязательно. Бюджет 15000-20000 бат.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Thong Sala — бунгало 2 спал.",
         "district_raw": "Thong Sala",
         "district_canonical": "Thong Sala",
-        "price_amount": null,
+        "price_amount": 20000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": 2,
@@ -33153,7 +33153,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.92
       }
     },
     {
@@ -33847,13 +33847,13 @@
       "posted_at": "2022-11-11T01:26:14+00:00",
       "raw_text": "С ноября доступны студия-апартаменты  на 1м этаже на год! ( Также доступен 2, 3 этажи)\n\n1 спальня, а/с, панорамные окна, до пляжа 7 мин пешком (уютный красивый пляж хорошо для снорклинга) \n\nМинимальный срок аренды 3 мес. \n\n25 000 при оплате за 3 мес сразу. \n\nСохранный Депозит 10000 бат.\n\nВсе необходимое из мебели будет.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 25000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": 0,
         "bathrooms": null,
         "property_type": "apartment",
@@ -33873,7 +33873,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -34207,7 +34207,7 @@
       "posted_at": "2022-11-07T15:14:35+00:00",
       "raw_text": "Подскажите, как можно посмотреть? На долгий срок сдаётся?🌼",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
@@ -34233,7 +34233,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.5
       }
     },
     {
@@ -34279,11 +34279,11 @@
       "posted_at": "2022-11-07T11:40:08+00:00",
       "raw_text": "Это комната в строении из 4-х жилых комнат. 17000 месяц, свободен с сегодня по 7 декабря. Очень чисто, держат европейцы. Просторно, чистая территория, есть терраса, свой душ, кухня на террасе. Вчера ещё были два варианта за 25000 бат и 35000 примерно. Если нужно, то сможем съездить и сфоткать, если ещё не заняты.\nКомиссия 3500.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 25000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -34305,7 +34305,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -34315,11 +34315,11 @@
       "posted_at": "2022-11-07T11:38:27+00:00",
       "raw_text": "Комиссия - 2500 бат",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 2500.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -34341,7 +34341,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -34351,13 +34351,13 @@
       "posted_at": "2022-11-07T11:38:06+00:00",
       "raw_text": "Рядом с ним точно такой же дом, только без кухни. Пока что свободен, 9000 бат/месяц",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 9000.0,
         "price_currency": "THB",
-        "price_period": "unknown",
+        "price_period": "month",
         "bedrooms": null,
         "bathrooms": null,
         "property_type": "house",
@@ -34377,7 +34377,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -34387,11 +34387,11 @@
       "posted_at": "2022-11-07T11:37:15+00:00",
       "raw_text": "Комиссия 1000 бат",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 1000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -34413,7 +34413,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -34423,11 +34423,11 @@
       "posted_at": "2022-11-07T11:37:05+00:00",
       "raw_text": "Этот дом свободен с сейчас до 7 декабря. Стоит 7000 бат за две недели. Рядом с Тонг салой, большой. Находится на территории медовой фермы, очень доброжелательные хозяева. Есть кухня, кондей, теплый душ, кухня.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 7000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -34449,7 +34449,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -34459,11 +34459,11 @@
       "posted_at": "2022-11-07T11:35:50+00:00",
       "raw_text": "Комиссия по домику - 2000 бат.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 2000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -34485,7 +34485,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -34495,11 +34495,11 @@
       "posted_at": "2022-11-07T11:35:20+00:00",
       "raw_text": "Это дом рядом с Тонг салой. Свободен с сегодняшнего дня до 3 декабря. Стоит за это время 5000 бат. Красивое место, открывается вид на холмы Пангана, хорошо видны закаты. На территории несколько однотипных домиков, ухоженный вид, дорожки для Байков прям до дверей домов. Кондиционер, кухня, подогревающийся душ, вайфай, всё входит в стоимость.\nВнутри чисто и приятно, на фото выглядит темнее, потому что телефон старый*",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 5000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -34521,7 +34521,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.74
       }
     },
     {
@@ -34567,11 +34567,11 @@
       "posted_at": "2022-11-07T06:36:45+00:00",
       "raw_text": "Начинали же с 50 тысяч. Буквально два дня назад видела )",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
-        "price_amount": null,
+        "price_amount": 50000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -34593,7 +34593,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.62
       }
     },
     {
@@ -34603,11 +34603,11 @@
       "posted_at": "2022-11-07T02:33:10+00:00",
       "raw_text": "Только построенный дом \nВ Шритану!!\n Доступен с 23 февраля.\n10 минуту до пляжа пешком \n85000 бат.",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": "Sri Thanu — дом",
         "district_raw": "Sri Thanu",
         "district_canonical": "Sri Thanu",
-        "price_amount": null,
+        "price_amount": 85000.0,
         "price_currency": "THB",
         "price_period": "unknown",
         "bedrooms": null,
@@ -34629,7 +34629,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.86
       }
     },
     {
@@ -37771,7 +37771,7 @@
       "posted_at": "2022-12-07T08:37:10+00:00",
       "raw_text": "Сдаём в основном на самуи",
       "parsed": {
-        "is_listing": false,
+        "is_listing": true,
         "title": null,
         "district_raw": null,
         "district_canonical": null,
@@ -37797,7 +37797,7 @@
         "min_stay_months": null,
         "language": "ru",
         "status_hint": "active",
-        "confidence": 0.1
+        "confidence": 0.5
       }
     },
     {

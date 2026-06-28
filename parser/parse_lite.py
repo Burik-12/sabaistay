@@ -34,15 +34,24 @@ _SPAM = re.compile(
 # ── цена ─────────────────────────────────────────────────────────────────────
 # "35000 per month", "35,000/month", "35k/month", "35 000 ฿", "15 per month" (отсекаем < 1000)
 _PRICE = re.compile(
-    r"(\d[\d\s,]*)(?:\s*k)?\s*(?:per\s+month|/month|฿?\s*/\s*month|thb\s*/\s*month|baht\s*/\s*month)",
+    r"(\d[\d\s,]*)(?:\s*k)?\s*(?:per\s+month|/month|฿?\s*/\s*month|thb\s*/\s*month|baht\s*/\s*month|в\s+месяц|/\s*мес(?:яц)?|\s+в\s+мес(?:яц)?)",
     re.IGNORECASE,
 )
 _PRICE_SHORT = re.compile(
-    r"(\d+(?:[.,]\d{3})+)\s*(?:฿|thb|baht)?(?:\s*/\s*month|\s+per\s+month)?",
+    r"(\d+(?:[.,]\d{3})+)\s*(?:฿|thb|baht|бат)?(?:\s*/\s*month|\s+per\s+month)?",
     re.IGNORECASE,
 )
 _PRICE_K = re.compile(r"(\d+(?:\.\d+)?)k\s*(?:/\s*month|per\s+month)?", re.IGNORECASE)
-_NIGHT = re.compile(r"(\d[\d\s,]*)\s*(?:฿|thb)?\s*(?:per\s+night|/night|a\s+night)", re.IGNORECASE)
+_NIGHT = re.compile(r"(\d[\d\s,]*)\s*(?:฿|thb|бат)?\s*(?:per\s+night|/night|a\s+night|в\s+сутки|/\s*сутки|сутки)", re.IGNORECASE)
+# Русские форматы: "25 000бат", "20 000 бат", "18 тыс бат", "18тыс"
+_PRICE_RU_TYS = re.compile(r"(\d+(?:[.,]\d+)?)\s*тыс\.?\s*(?:бат|baht|฿)?", re.IGNORECASE)
+_PRICE_RU_BAT = re.compile(r"(\d[\d\s]{2,})\s*бат\b", re.IGNORECASE)
+# Контекстный: "месяц N бат/тыс" или "N бат ... месяц"
+_PRICE_RU_MONTH_CTX = re.compile(
+    r"(?:месяц|мес\.?)\s*(?:от\s+)?(\d[\d\s]*(?:тыс\.?)?)\s*(?:бат|baht|฿)?|"
+    r"(\d[\d\s]*)\s*(?:тыс\.?)?\s*(?:бат|baht|฿)\s*/?\s*(?:месяц|мес\.?|month)",
+    re.IGNORECASE,
+)
 
 
 def _parse_price(text: str) -> tuple[float | None, str]:
@@ -61,7 +70,7 @@ def _parse_price(text: str) -> tuple[float | None, str]:
         if v >= 1000:
             return v, "month"
 
-    # помесячно — явный per month
+    # помесячно — явный per month / в месяц
     m = _PRICE.search(text)
     if m:
         raw = re.sub(r"[\s,]", "", m.group(1))
@@ -72,6 +81,21 @@ def _parse_price(text: str) -> tuple[float | None, str]:
         except ValueError:
             pass
 
+    # помесячно — контекст "месяц N бат"
+    m = _PRICE_RU_MONTH_CTX.search(text)
+    if m:
+        raw = re.sub(r"[\s,]", "", m.group(1) or m.group(2) or "")
+        if raw:
+            raw = re.sub(r"тыс\.?$", "", raw, flags=re.IGNORECASE)
+            try:
+                v = float(raw)
+                if "тыс" in (m.group(0) or "").lower() or v < 500:
+                    v *= 1000
+                if v >= 1000:
+                    return v, "month"
+            except ValueError:
+                pass
+
     # помесячно — число с разделителем тысяч
     m = _PRICE_SHORT.search(text)
     if m:
@@ -80,6 +104,26 @@ def _parse_price(text: str) -> tuple[float | None, str]:
             v = float(raw)
             if v >= 1000:
                 return v, "month"
+        except ValueError:
+            pass
+
+    # русская цена "18 тыс бат"
+    m = _PRICE_RU_TYS.search(text)
+    if m:
+        try:
+            v = float(re.sub(r"[\s,]", "", m.group(1))) * 1000
+            if v >= 1000:
+                return v, "unknown"
+        except ValueError:
+            pass
+
+    # русская цена "25 000бат" / "25 000 бат"
+    m = _PRICE_RU_BAT.search(text)
+    if m:
+        try:
+            v = float(re.sub(r"[\s,]", "", m.group(1)))
+            if v >= 1000:
+                return v, "unknown"
         except ValueError:
             pass
 
@@ -174,18 +218,30 @@ def _parse_status(text: str) -> str:
 # ── is_listing ────────────────────────────────────────────────────────────────
 _RENT_SIGNAL = re.compile(
     r"\bfor\s+rent\b|\barendu\b|\barendat\b|\bper\s+month\b|\b/month\b|\bснять\b|\bсдаётся\b|"
+    r"\bсдам\b|\bсдаём\b|\bсдаем\b|\bсдаю\b|\bв\s+аренду\b|\bаренда\b|\bаренду\b|"
+    r"\bпомесячно\b|\bдолгосрок\b|\bна\s+месяц\b|\bв\s+месяц\b|\bтыс\.?\s*бат\b|\bбат\b|"
     r"\bавailable\b|\b฿\b|thb|\bbaht\b|\bper\s+night\b",
     re.IGNORECASE,
 )
+# Сильный сигнал предложения аренды (достаточно без района/цены)
+_SUPPLY_SIGNAL = re.compile(
+    r"\bсдам\b|\bсдаём\b|\bсдаем\b|\bсдаю\b|\bсдаётся\b",
+    re.IGNORECASE,
+)
+
 
 def _is_listing(text: str, price: float | None, district: str | None) -> bool:
     if _SPAM.search(text):
         return False
     if len(text.strip()) < 15:
         return False
-    # нужно хотя бы цена ИЛИ (район + сигнал аренды)
+    # цена ≥ 1000
     if price is not None and price >= 1000:
         return True
+    # сильный сигнал предложения аренды (сдам/сдаём/сдаю)
+    if _SUPPLY_SIGNAL.search(text):
+        return True
+    # район + сигнал аренды
     if district and _RENT_SIGNAL.search(text):
         return True
     return False

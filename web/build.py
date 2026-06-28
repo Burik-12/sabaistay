@@ -70,6 +70,8 @@ def build_rows() -> tuple[list[dict], str | None]:
             "contact": p.get("contact") or {},
             "text": (rep.get("raw_text") or "").strip(),
             "available_from": p.get("available_from"),
+            "area_sqm": p.get("area_sqm"),
+            "id": rep.get("external_id") or g["sources"][0]["source_url"],
         })
     # свежие — выше: по умолчанию сортируем по возрасту (None-возраст в конец)
     rows.sort(key=lambda r: (r["fresh"]["age_days"] is None, r["fresh"]["age_days"] or 0))
@@ -91,7 +93,10 @@ HTML = r"""<!DOCTYPE html>
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0d3b3a">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="icon" href="data:image/svg+xml,__FAVICON__">
@@ -264,6 +269,37 @@ HTML = r"""<!DOCTYPE html>
 .share-btn:hover{border-color:var(--sea);background:var(--surface)}
 .share-btn.copied{color:#2d9e5f;border-color:#2d9e5f}
 
+/* ── валюта ── */
+.cur-btn{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);background:none;border:1px solid var(--hair);border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.cur-btn:hover{border-color:var(--sea);color:var(--sea)}
+.cur-btn.usd{color:#2d9e5f;border-color:#2d9e5f}
+
+/* ── кнопки шапки ── */
+.header-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px}
+
+/* ── «уже смотрел» ── */
+.seen-badge{font-family:var(--mono);font-size:9px;letter-spacing:.3px;color:var(--muted);border:1px solid var(--hair);border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle}
+
+/* ── кластеры маркеров ── */
+.cluster-icon{width:34px;height:34px;background:var(--coral);color:#fff;font-family:var(--mono);font-size:12px;font-weight:700;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+
+/* ── модальное окно ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,30,30,.55);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:#fff;border-radius:14px;max-width:680px;width:100%;max-height:80vh;overflow-y:auto;padding:28px 28px 22px;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.25)}
+.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1}
+.modal-close:hover{color:var(--text)}
+.modal-box h2{font-family:var(--display);font-size:20px;margin:0 0 16px;color:var(--sea-d)}
+.stats-table{width:100%;border-collapse:collapse;font-size:13px}
+.stats-table th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:6px 10px;border-bottom:2px solid var(--hair);text-align:left}
+.stats-table td{padding:7px 10px;border-bottom:1px solid var(--hair)}
+.stats-table tr:hover td{background:var(--surface)}
+.stats-table .st-district{font-weight:700;color:var(--sea-d)}
+.stats-table .st-price{font-family:var(--mono);font-weight:700;color:var(--coral-d)}
+
+/* ── CSV кнопка ── */
+.export-btn{font-family:var(--mono);font-size:11px;color:var(--muted);background:none;border:1px solid var(--hair);border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap}
+.export-btn:hover{border-color:var(--sea);color:var(--sea)}
+
 /* ── expand карточки ── */
 .card-raw{margin-top:8px;border-top:1px solid var(--hair);padding-top:2px}
 .card-raw-toggle{font-family:var(--mono);font-size:11px;color:var(--sea);cursor:pointer;padding:6px 0 0;list-style:none;display:block}
@@ -282,7 +318,13 @@ details[open] .card-raw-toggle::before{content:'▾ '}
     <svg class="brandmark" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="26" r="12" fill="#ef6c45"/><g stroke="#bfe0db" stroke-linecap="round" fill="none"><line x1="8" y1="40" x2="56" y2="40" stroke-width="3.4"/><line x1="14" y1="47" x2="50" y2="47" stroke-width="2.8" opacity=".55"/><line x1="21" y1="53" x2="43" y2="53" stroke-width="2.8" opacity=".3"/></g></svg>
     <span class="mark">Sabai<span class="m2">Stay</span></span>
     <span class="tagline">все объявления Пхангана из Telegram-каналов аренды — с фильтром, картой и ценой к рынку</span>
-    <span class="coordbar"><span class="compass">✦&nbsp;N</span><span class="geo">9.74°N · 100.01°E</span><span class="snap">снимок __SNAPSHOT__</span><span id="count2"></span><button class="share-btn" id="share-btn" title="Скопировать ссылку с фильтрами">🔗 поделиться</button></span>
+    <span class="coordbar"><span class="compass">✦&nbsp;N</span><span class="geo">9.74°N · 100.01°E</span><span class="snap">снимок __SNAPSHOT__</span><span id="count2"></span></span>
+    <span class="header-actions">
+      <button class="share-btn" id="share-btn" title="Скопировать ссылку с фильтрами">🔗 поделиться</button>
+      <button class="cur-btn" id="cur-btn" title="Переключить валюту THB / USD">฿ THB</button>
+      <button class="export-btn" id="export-btn" title="Скачать список в CSV">⬇ CSV</button>
+      <button class="share-btn" id="stats-btn" title="Статистика по районам">📊 районы</button>
+    </span>
   </div>
 </header>
 
@@ -298,6 +340,10 @@ details[open] .card-raw-toggle::before{content:'▾ '}
     <input id="f-search" type="text" placeholder="pool, sea view, 2br, studio…" autocomplete="off"></div>
   <div class="f"><label for="f-district">Район</label>
     <select id="f-district"><option value="">весь остров</option></select></div>
+  <div class="f"><label for="f-sqm-min">Площадь от, м²</label>
+    <input id="f-sqm-min" type="number" step="10" placeholder="от"></div>
+  <div class="f"><label for="f-sqm-max">Площадь до, м²</label>
+    <input id="f-sqm-max" type="number" step="10" placeholder="до"></div>
   <div class="f"><label for="f-price-min">Цена от, ฿/мес</label>
     <input id="f-price-min" type="number" step="5000" placeholder="от 0"></div>
   <div class="f"><label for="f-price">Цена до, ฿/мес</label>
@@ -317,6 +363,14 @@ details[open] .card-raw-toggle::before{content:'▾ '}
     <select id="f-sort"><option value="">сначала свежие</option><option value="cheap">сначала дешёвые</option><option value="pricey">сначала дорогие</option></select></div>
   <button class="reset" id="reset">сбросить</button>
 </section>
+
+<div id="stats-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeStats()">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeStats()">✕</button>
+    <h2>Статистика по районам</h2>
+    <div id="stats-table-wrap"></div>
+  </div>
+</div>
 
 <div id="fav-section" class="fav-section" style="display:none">
   <h3>🔖 Избранное</h3>
@@ -338,8 +392,10 @@ const AM={pool:"🏊",wifi:"📶",kitchen:"🍳",aircon:"❄️",seaview:"🌊"}
 const PERIOD={month:"/мес",night:"/ночь",sale:""};
 const SRC={telegram:"Telegram",fb_group:"Facebook",fb_marketplace:"Facebook",booking:"Booking",airbnb:"Airbnb",manual:"вручную"};
 const SRCICON={telegram:"📨",fb_group:"📘",fb_marketplace:"📘",booking:"🏨",airbnb:"🛏"};
-const compact=n=>n>=1000?(n/1000)+"k":(""+n);
-const priceFull=n=>n==null?null:n.toLocaleString("ru-RU");
+let CUR='thb';
+const RATE_USD=35;
+const compact=n=>{if(CUR==='usd'){const u=Math.round(n/RATE_USD);return u>=1000?(u/1000).toFixed(1)+'k$':'$'+u;}return n>=1000?(n/1000)+'k':(''+n);};
+const priceFull=n=>{if(n==null)return null;if(CUR==='usd')return'$'+Math.round(n/RATE_USD).toLocaleString('en');return n.toLocaleString('ru-RU');};
 const firstUrl=d=>d.sources[0].source_url;
 function sourcesHtml(arr){
   if(arr.length===1){const s=arr[0];return '<a class="src" href="'+s.source_url+'" target="_blank" rel="noopener">↗ '+(SRC[s.source]||"оригинал")+'</a>';}
@@ -356,6 +412,8 @@ const map=L.map('map',{zoomControl:true}).setView([9.745,100.01],12);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
   {attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19}).addTo(map);
 let markers={};
+const clusterGroup=L.markerClusterGroup({maxClusterRadius:55,showCoverageOnHover:false,iconCreateFunction:function(c){return L.divIcon({className:'',html:'<div class="cluster-icon">'+c.getChildCount()+'</div>',iconSize:[34,34]});}});
+map.addLayer(clusterGroup);
 
 // район-дропдаун из реальных данных
 [...new Set(DATA.filter(d=>d.district).map(d=>d.district))].sort().forEach(d=>{
@@ -365,6 +423,8 @@ let markers={};
 const AMLABEL={pool:'🏊 бассейн',seaview:'🌊 море',wifi:'📶 wi-fi',kitchen:'🍳 кухня',aircon:'❄️ кондей'};
 function readF(){return{
   district:document.getElementById('f-district').value,
+  sqmMin:+document.getElementById('f-sqm-min').value||0,
+  sqmMax:+document.getElementById('f-sqm-max').value||0,
   priceMin:+document.getElementById('f-price-min').value||0,
   price:+document.getElementById('f-price').value||0,
   bed:+document.getElementById('f-bed').value||0,
@@ -376,6 +436,8 @@ function readF(){return{
 }
 function passes(d,f){
   if(f.district&&d.district!==f.district)return false;
+  if(f.sqmMin&&(d.area_sqm==null||d.area_sqm<f.sqmMin))return false;
+  if(f.sqmMax&&(d.area_sqm==null||d.area_sqm>f.sqmMax))return false;
   if(f.priceMin&&(d.price==null||d.price<f.priceMin))return false;
   if(f.price&&(d.price==null||d.price>f.price))return false;
   if(f.bed&&(d.bedrooms==null||d.bedrooms<f.bed))return false;
@@ -411,11 +473,14 @@ function makeCard(d,i,key,target){
   })();
   const expandHtml=d.text?'<details class="card-raw"><summary class="card-raw-toggle">читать целиком</summary><pre class="card-raw-text">'+escHtml(d.text)+'</pre></details>':'';
   const isSaved=getFavs().includes(d.id);
+  const seen=getSeen().has(d.id);
   const bmBtn='<button class="bm-btn'+(isSaved?' saved':'')+'" data-id="'+escHtml(d.id)+'" title="'+(isSaved?'Убрать из избранного':'В избранное')+'" aria-label="Закладка">🔖</button>';
+  const sqmHtml=d.area_sqm?'<span>📐 '+d.area_sqm+' м²</span>':'';
+  const seenHtml=seen?'<span class="seen-badge">уже смотрел</span>':'';
   card.setAttribute('data-type',d.type);
   card.innerHTML=bmBtn+'<div class="card-top">'+dtag+fb+'</div>'+
-    '<div class="title">'+d.title+draft+'</div>'+
-    '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span>'+(amenStr?'<span class="spec-amen">'+amenStr+'</span>':'')+(availHtml?availHtml:'')+'</div>'+
+    '<div class="title">'+d.title+draft+seenHtml+'</div>'+
+    '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span>'+sqmHtml+(amenStr?'<span class="spec-amen">'+amenStr+'</span>':'')+(availHtml?availHtml:'')+'</div>'+
     ref+
     '<div class="foot"><span class="priceblock">'+price+benchBadge+'</span><span class="srcs">'+contactBtn(d.contact)+sourcesHtml(d.sources)+'</span></div>'+
     expandHtml;
@@ -423,10 +488,13 @@ function makeCard(d,i,key,target){
   card.querySelector('details')?.addEventListener('click',e=>e.stopPropagation());
   // закладка — стопим всплытие, переключаем
   card.querySelector('.bm-btn')?.addEventListener('click',e=>{e.stopPropagation();toggleFav(d.id);});
+  // история просмотра
+  card.addEventListener('click',()=>{markSeen(d.id);card.querySelector('.seen-badge')||card.querySelector('.title')?.insertAdjacentHTML('beforeend','<span class="seen-badge">уже смотрел</span>');},{once:true,capture:false});
   if(d.lat!=null){
     const icon=L.divIcon({className:'',html:'<div class="sounding'+(d.fresh.stale?' dim':'')+'">'+(d.price!=null?compact(d.price):'·')+'</div>',iconSize:null});
-    const m=L.marker([d.lat,d.lng],{icon}).addTo(map)
-      .bindPopup('<b>'+d.title+'</b><br>'+(TYPE[d.type]||d.type)+(d.bedrooms!=null?' · '+d.bedrooms+' сп.':'')+(amenStr?' '+amenStr:'')+'<br>'+(d.price!=null?priceFull(d.price)+' ฿'+unit:'цена не указана')+(d.sources.length>1?'<br>'+d.sources.length+' источника':'')+'<br><a href="'+firstUrl(d)+'" target="_blank">оригинал ↗</a>');
+    const m=L.marker([d.lat,d.lng],{icon});
+    clusterGroup.addLayer(m);
+    m.bindPopup('<b>'+d.title+'</b><br>'+(TYPE[d.type]||d.type)+(d.bedrooms!=null?' · '+d.bedrooms+' сп.':'')+(amenStr?' '+amenStr:'')+'<br>'+(d.price!=null?priceFull(d.price)+' ฿'+unit:'цена не указана')+(d.sources.length>1?'<br>'+d.sources.length+' источника':'')+'<br><a href="'+firstUrl(d)+'" target="_blank">оригинал ↗</a>');
     markers[key]=m;
     const hot=on=>{const el=m.getElement&&m.getElement();if(el){const s=el.querySelector('.sounding');if(s)s.classList.toggle('hot',on);}};
     card.onmouseenter=()=>{hot(true);m.openPopup()};
@@ -439,7 +507,7 @@ function makeCard(d,i,key,target){
 function render(first){
   const f=readF(), cards=document.getElementById('cards');
   cards.innerHTML=""; cards.classList.toggle('anim',!!first);
-  Object.values(markers).forEach(m=>map.removeLayer(m)); markers={};
+  clusterGroup.clearLayers(); markers={};
   let i=0;
   let view=DATA.map(d=>d);
   const sortV=document.getElementById('f-sort').value;
@@ -475,7 +543,7 @@ function render(first){
   document.getElementById('count2').textContent=shown+'/'+DATA.length;
   writeHash(f);
   // обновляем бейдж активных фильтров
-  const n=(f.district?1:0)+(f.priceMin?1:0)+(f.price?1:0)+(f.bed?1:0)+(f.type?1:0)+f.amenities.length+(f.hideStale?1:0)+(f.onlyAvail?1:0)+(f.search?1:0);
+  const n=(f.district?1:0)+(f.sqmMin?1:0)+(f.sqmMax?1:0)+(f.priceMin?1:0)+(f.price?1:0)+(f.bed?1:0)+(f.type?1:0)+f.amenities.length+(f.hideStale?1:0)+(f.onlyAvail?1:0)+(f.search?1:0);
   const fb=document.getElementById('ftbadge');if(fb)fb.textContent=n?' · '+n:'';
 }
 function chipClear(k){
@@ -487,6 +555,8 @@ function chipClear(k){
 function writeHash(f){
   const p=new URLSearchParams();
   if(f.district)p.set('district',f.district);
+  if(f.sqmMin)p.set('sqmMin',f.sqmMin);
+  if(f.sqmMax)p.set('sqmMax',f.sqmMax);
   if(f.priceMin)p.set('priceMin',f.priceMin);
   if(f.price)p.set('price',f.price);
   if(f.bed)p.set('bed',f.bed);
@@ -503,13 +573,13 @@ function applyHash(){
   if(!location.hash)return;
   const p=new URLSearchParams(location.hash.slice(1));
   const set=(id,key)=>{const v=p.get(key);if(v!=null)document.getElementById(id).value=v;};
-  set('f-district','district');set('f-price-min','priceMin');set('f-price','price');set('f-bed','bed');set('f-type','type');set('f-sort','sort');set('f-search','q');
+  set('f-district','district');set('f-sqm-min','sqmMin');set('f-sqm-max','sqmMax');set('f-price-min','priceMin');set('f-price','price');set('f-bed','bed');set('f-type','type');set('f-sort','sort');set('f-search','q');
   const am=p.get('am'); if(am)am.split(',').forEach(v=>{const el=document.querySelector('.f-am[value="'+v+'"]');if(el)el.checked=true;});
   document.getElementById('f-stale').checked=p.get('stale')==='1';
   document.getElementById('f-avail').checked=p.get('avail')==='1';
 }
-function resetFilters(){['f-district','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=false;document.getElementById('f-avail').checked=false;render(false);}
-['f-district','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).addEventListener('input',()=>render(false)));
+function resetFilters(){['f-district','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=false;document.getElementById('f-avail').checked=false;render(false);}
+['f-district','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).addEventListener('input',()=>render(false)));
 document.querySelectorAll('.f-am, #f-stale, #f-avail').forEach(e=>e.addEventListener('change',()=>render(false)));
 document.getElementById('reset').onclick=resetFilters;
 // мобильный toggle фильтра
@@ -532,6 +602,66 @@ render(true);
   btnMap.addEventListener('click',showMap);
   showList();
 })();
+
+// ── валюта THB / USD ─────────────────────────────────
+(function(){
+  const btn=document.getElementById('cur-btn');
+  if(!btn)return;
+  btn.addEventListener('click',()=>{
+    CUR=CUR==='thb'?'usd':'thb';
+    btn.textContent=CUR==='usd'?'$ USD':'฿ THB';
+    btn.classList.toggle('usd',CUR==='usd');
+    render(false);
+  });
+})();
+
+// ── история просмотра ────────────────────────────────
+const SEEN_KEY='sabaistay_seen';
+function getSeen(){try{return new Set(JSON.parse(localStorage.getItem(SEEN_KEY)||'[]'));}catch{return new Set();}}
+function markSeen(id){const s=getSeen();s.add(id);localStorage.setItem(SEEN_KEY,JSON.stringify([...s]));}
+
+// ── статистика по районам ─────────────────────────────
+function openStats(){
+  const modal=document.getElementById('stats-modal');
+  const wrap=document.getElementById('stats-table-wrap');
+  if(!modal||!wrap)return;
+  const byDistrict={};
+  DATA.forEach(d=>{
+    const k=d.district||'Без района';
+    if(!byDistrict[k])byDistrict[k]={count:0,prices:[],active:0};
+    byDistrict[k].count++;
+    if(!d.fresh.stale)byDistrict[k].active++;
+    if(d.price!=null&&d.period==='monthly')byDistrict[k].prices.push(d.price);
+  });
+  const rows=Object.entries(byDistrict).sort((a,b)=>b[1].count-a[1].count);
+  const median=arr=>{if(!arr.length)return null;const s=[...arr].sort((a,b)=>a-b);const m=Math.floor(s.length/2);return s.length%2?s[m]:Math.round((s[m-1]+s[m])/2);};
+  wrap.innerHTML='<table class="stats-table"><thead><tr><th>Район</th><th>Объявл.</th><th>Актуальных</th><th>Медиана, ฿/мес</th></tr></thead><tbody>'+
+    rows.map(([d,v])=>{
+      const med=median(v.prices);
+      return'<tr><td class="st-district">'+d+'</td><td>'+v.count+'</td><td>'+v.active+'</td><td class="st-price">'+(med?med.toLocaleString('ru-RU')+' ฿':'—')+'</td></tr>';
+    }).join('')+'</tbody></table>';
+  modal.style.display='flex';
+}
+function closeStats(){const m=document.getElementById('stats-modal');if(m)m.style.display='none';}
+(function(){const btn=document.getElementById('stats-btn');if(btn)btn.addEventListener('click',openStats);})();
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeStats();});
+
+// ── экспорт CSV ──────────────────────────────────────
+function exportCSV(){
+  const f=readF();
+  const view=DATA.filter(d=>passes(d,f));
+  const hdr=['Заголовок','Район','Цена, ฿','Период','Спален','Тип','Площадь, м²','Доступно с','Свежесть','Ссылка'];
+  const esc=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const csv=[hdr,...view.map(d=>[
+    d.title,d.district||'',d.price||'',d.period||'',d.bedrooms??'',d.type||'',
+    d.area_sqm||'',d.available_from||'',d.fresh.label,firstUrl(d)
+  ])].map(r=>r.map(esc).join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='sabaistay_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
+(function(){const btn=document.getElementById('export-btn');if(btn)btn.addEventListener('click',exportCSV);})();
 
 // ── закладки (localStorage) ──────────────────────────
 const FAV_KEY='sabaistay_fav';

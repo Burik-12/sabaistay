@@ -1,10 +1,12 @@
 # секреты и ключи — НИКОГДА в репозиторий
 .env
 .env.*
-*.session            # Telethon-сессии
+# Telethon-сессии
+*.session
 *.session-journal
 secrets/
-cookies/             # cookie-сессии FB-аккаунтов
+# cookie-сессии FB-аккаунтов
+cookies/
 *credentials*.json
 
 # данные/выгрузки

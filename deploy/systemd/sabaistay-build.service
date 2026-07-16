@@ -1,0 +1,13 @@
+[Unit]
+Description=SabaiStay — сборка витрины из dumps и пуш (Vercel авто-деплой)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=rw
+Environment=HOME=/home/rw
+Environment=SABAI_DATA_DIR=/home/rw/sabaistay/data
+WorkingDirectory=/home/rw/sabaistay
+EnvironmentFile=-/home/rw/sabaistay-secrets/.env
+ExecStart=/home/rw/sabaistay/venv/bin/python scripts/update_site.py

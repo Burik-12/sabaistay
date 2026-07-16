@@ -1,8 +1,12 @@
 name: Update listings
 
 on:
-  schedule:
-    - cron: '0 */6 * * *'   # каждые 6 часов
+  # Плановый сбор отключён 16-07-2026: единственный канал этого режима (t.me/s
+  # koh_phangan_rent) мёртв с 07-2025, а живой сбор переехал на VPS (Telethon,
+  # systemd sabaistay-collector + таймер sabaistay-build). Оставлен ручной режим
+  # как бэкап-скрейп через t.me/s, чтобы не было второго писателя в main.
+  # schedule:
+  #   - cron: '0 */6 * * *'   # каждые 6 часов
   workflow_dispatch:          # ручной запуск кнопкой в GitHub UI
 
 permissions:

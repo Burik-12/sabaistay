@@ -37,14 +37,20 @@ except ImportError:
     sys.exit("Нужен пакет telethon: pip install telethon")
 
 CHANNELS = [
-    "rent_phangan",     # ~8к, рус, флагман — превью отключено
-    "koh_phangan_rent", # работает и через бесплатный метод, тут — для realtime
-    "adsphangan",       # объявления
-    "phangan_rent",
-    "arenda_phangan",
+    "rent_phangan",      # ~8к, рус, флагман — превью отключено
+    "koh_phangan_rent",  # работает и через бесплатный метод, тут — для realtime
+    "adsphangan",        # общие объявления Пхангана
+    "phangan_rent",      # аренда
+    "arenda_phangan",    # аренда (рус)
+    "phangan_homes",     # дома Пхангана
+    "phangan_longterm",  # долгосрочная аренда
+    "phangan_house",     # аренда домов
+    "ru_phangan",        # русскоязычный канал о Пхангане (общий, есть аренда)
 ]
 
-OUT_DIR = Path(__file__).resolve().parent.parent / "data" / "dumps"
+# Путь к данным можно переопределить (SABAI_DATA_DIR) — на VPS это /home/rw/sabaistay/data.
+_DATA_DIR = Path(os.getenv("SABAI_DATA_DIR") or (Path(__file__).resolve().parent.parent / "data"))
+OUT_DIR = _DATA_DIR / "dumps"
 POLL_INTERVAL_SEC = 300          # добор истории раз в 5 мин (страховка к realtime)
 BACKFILL_LIMIT = 100             # сколько последних постов подтянуть при старте
 WARMUP_SEC = 15                  # пауза после логина перед первым запросом (анти-флуд)
@@ -89,6 +95,7 @@ def save(post: dict) -> None:
     channel = post["external_id"].split("/")[0]
     with open(OUT_DIR / f"{channel}.ndjson", "a", encoding="utf-8") as f:
         f.write(json.dumps(post, ensure_ascii=False) + "\n")
+        f.flush()  # пайплайн сборки читает эти файлы конкурентно — не держим в буфере
     _seen.add(post["external_id"])
 
 

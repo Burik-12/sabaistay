@@ -3,7 +3,7 @@
 -- НЕ храним телефон/имя/контакт продавца как структурное поле (см. docs/legal-pdpa.md).
 
 -- ─────────────────────────── Перечисления ───────────────────────────
-CREATE TYPE source_kind   AS ENUM ('fb_marketplace', 'fb_group', 'telegram', 'airbnb', 'booking', 'manual');
+CREATE TYPE source_kind   AS ENUM ('fb_marketplace', 'fb_group', 'telegram', 'airbnb', 'booking', 'manual', 'own');
 CREATE TYPE price_period   AS ENUM ('month', 'night', 'sale', 'unknown');
 CREATE TYPE property_kind  AS ENUM ('house', 'villa', 'studio', 'bungalow', 'apartment', 'room', 'land', 'other');
 CREATE TYPE listing_status AS ENUM ('active', 'rented', 'expired', 'hidden');

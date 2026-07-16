@@ -49,26 +49,35 @@ def _haversine(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
     return R * 2 * math.asin(math.sqrt(a))
 
 
+def _place(canon: str | None, coords: dict, seen: dict) -> tuple:
+    """Координаты района с джиттером, чтобы карточки одного района не слипались на карте."""
+    if not (canon and canon in coords):
+        return None, None, None
+    lat_c, lng_c = coords[canon]
+    dist = round(_haversine(lat_c, lng_c, *_THONG_SALA), 1)
+    n = seen.get(canon, 0); seen[canon] = n + 1
+    lat = lat_c + ((n % 5) - 2) * 0.0045
+    lng = lng_c + (((n // 5) % 5) - 2) * 0.0045
+    return round(lat, 5), round(lng, 5), dist
+
+
 def build_rows() -> tuple[list[dict], str | None]:
     data = json.loads(LISTINGS.read_text(encoding="utf-8"))
     coords = {d["canonical"]: (d["lat"], d["lng"]) for d in json.loads(DISTRICTS.read_text(encoding="utf-8"))["districts"]}
     bench = MarketBenchmark()
     listings = [r for r in data["listings"] if r["parsed"]["is_listing"]]
+    # свои объявления SabaiStay (владелец согласился на контакты/фото — PDPA не нарушается)
+    own_path = ROOT / "data" / "own_listings.json"
+    own_records = json.loads(own_path.read_text(encoding="utf-8")).get("listings", []) if own_path.exists() else []
     # «снимок»: для статичного демо свежесть считаем от даты последнего поста (см. freshness.py).
-    snapshot = max((r.get("posted_at") for r in listings if r.get("posted_at")), default=None)
+    snapshot = max((r.get("posted_at") for r in listings + own_records if r.get("posted_at")), default=None)
     groups = dedup(listings)           # один объект = одна карточка, источников может быть несколько
     rows, seen = [], {}
     for g in groups:
         rep = g["representative"]
         p = rep["parsed"]
         canon = p["district_canonical"]
-        lat = lng = dist = None
-        if canon and canon in coords:
-            lat_c, lng_c = coords[canon]
-            dist = round(_haversine(lat_c, lng_c, *_THONG_SALA), 1)
-            n = seen.get(canon, 0); seen[canon] = n + 1
-            lat = lat_c + ((n % 5) - 2) * 0.0045
-            lng = lng_c + (((n // 5) % 5) - 2) * 0.0045
+        lat, lng, dist = _place(canon, coords, seen)
         fresh = assess(rep.get("posted_at"), p.get("status_hint"), snapshot)
         rows.append({
             "sources": g["sources"], "dup": g["size"],
@@ -77,7 +86,7 @@ def build_rows() -> tuple[list[dict], str | None]:
             "bedrooms": p["bedrooms"], "type": p["property_type"],
             "amenities": p["amenities"], "confidence": p["confidence"],
             "posted_at": rep.get("posted_at"), "fresh": fresh,
-            "lat": round(lat, 5) if lat else None, "lng": round(lng, 5) if lng else None,
+            "lat": lat, "lng": lng,
             "bench": bench.compare(canon, p["price_amount"], p["price_period"], p["bedrooms"]),
             "contact": p.get("contact") or {},
             "text": (rep.get("raw_text") or "").strip(),
@@ -86,8 +95,34 @@ def build_rows() -> tuple[list[dict], str | None]:
             "dist_km": dist,
             "id": rep.get("external_id") or g["sources"][0]["source_url"],
         })
-    # свежие — выше: по умолчанию сортируем по возрасту (None-возраст в конец)
-    rows.sort(key=lambda r: (r["fresh"]["age_days"] is None, r["fresh"]["age_days"] or 0))
+    # ── свои объявления: минуя дедуп (чтобы не слиплись с TG-дублем и не потеряли featured) ──
+    for i, rec in enumerate(own_records):
+        p = rec.get("parsed") or {}
+        canon = p.get("district_canonical")
+        lat, lng, dist = _place(canon, coords, seen)
+        fresh = assess(rec.get("posted_at"), p.get("status_hint"), snapshot)
+        src_url = rec.get("source_url") or ""
+        rows.append({
+            "sources": [{"source": "own", "source_url": src_url}], "dup": 1,
+            "title": p.get("title") or (canon or "Объявление"),
+            "district": canon, "price": p.get("price_amount"), "period": p.get("price_period") or "unknown",
+            "bedrooms": p.get("bedrooms"), "type": p.get("property_type"),
+            "amenities": p.get("amenities") or {}, "confidence": p.get("confidence"),
+            "posted_at": rec.get("posted_at"), "fresh": fresh,
+            "lat": lat, "lng": lng,
+            "bench": bench.compare(canon, p.get("price_amount"), p.get("price_period"), p.get("bedrooms")),
+            "contact": rec.get("contact") or p.get("contact") or {},
+            "text": (rec.get("raw_text") or "").strip(),
+            "available_from": p.get("available_from"),
+            "area_sqm": p.get("area_sqm"),
+            "dist_km": dist,
+            "id": rec.get("external_id") or src_url or f"own/{i + 1}",
+            "own": True,
+            "featured": bool(rec.get("featured", True)),
+            "photos": rec.get("photos") or [],
+        })
+    # свежие — выше, но свои featured всегда сверху
+    rows.sort(key=lambda r: (not r.get("featured"), r["fresh"]["age_days"] is None, r["fresh"]["age_days"] or 0))
     return rows, snapshot
 
 
@@ -168,6 +203,10 @@ HTML = r"""<!DOCTYPE html>
   .card{background:var(--surface);border:1px solid var(--hair);border-radius:13px;padding:13px 15px;margin-bottom:11px;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .15s}
   .card:hover,.card.active{border-color:var(--coral);box-shadow:0 4px 16px rgba(14,35,41,.09)}
   .card.active{transform:translateX(2px)}
+  .card.own{border:1.5px solid var(--coral);box-shadow:0 3px 14px rgba(239,108,69,.16)}
+  .card.own:hover,.card.own.active{box-shadow:0 5px 20px rgba(239,108,69,.26)}
+  .own-badge{font-family:var(--mono);font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#fff;background:var(--coral);border-radius:5px;padding:2px 7px;white-space:nowrap;flex:none}
+  .own-photo{width:calc(100% + 30px);margin:-13px -15px 10px;display:block;height:150px;object-fit:cover;border-radius:12px 12px 0 0}
   .card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;gap:6px;min-width:0}
   .dtag{font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--sea);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .dtag.nogeo{color:var(--muted)}
@@ -436,6 +475,8 @@ html[data-theme="dark"] .vt-btn.active{background:var(--sea);color:#fff;border-c
     <input id="f-search" type="text" placeholder="pool, sea view, 2br, studio…" autocomplete="off"></div>
   <div class="f"><label for="f-district">Район</label>
     <select id="f-district"><option value="">весь остров</option></select></div>
+  <div class="f"><label for="f-period">Аренда</label>
+    <select id="f-period"><option value="">любая</option><option value="month">помесячно</option><option value="night">посуточно</option></select></div>
   <div class="f"><label for="f-sqm-min">Площадь от, м²</label>
     <input id="f-sqm-min" type="number" step="10" placeholder="от"></div>
   <div class="f"><label for="f-sqm-max">Площадь до, м²</label>
@@ -495,8 +536,8 @@ const DATA = __DATA__;
 const TYPE={villa:"вилла",house:"дом",room:"комната",studio:"студия",bungalow:"бунгало",apartment:"апартаменты",land:"участок",other:"жильё"};
 const AM={pool:"🏊",wifi:"📶",kitchen:"🍳",aircon:"❄️",seaview:"🌊"};
 const PERIOD={month:"/мес",night:"/ночь",sale:""};
-const SRC={telegram:"Telegram",fb_group:"Facebook",fb_marketplace:"Facebook",booking:"Booking",airbnb:"Airbnb",manual:"вручную"};
-const SRCICON={telegram:"📨",fb_group:"📘",fb_marketplace:"📘",booking:"🏨",airbnb:"🛏"};
+const SRC={telegram:"Telegram",fb_group:"Facebook",fb_marketplace:"Facebook",booking:"Booking",airbnb:"Airbnb",manual:"вручную",own:"SabaiStay"};
+const SRCICON={telegram:"📨",fb_group:"📘",fb_marketplace:"📘",booking:"🏨",airbnb:"🛏",own:"⭐"};
 const SNAP_ISO='__SNAPSHOT_ISO__';
 const SNAP_DATE=SNAP_ISO?new Date(SNAP_ISO):null;
 let CUR='thb';
@@ -554,6 +595,7 @@ function readF(){return{
   hideStale:document.getElementById('f-stale').checked,
   onlyAvail:document.getElementById('f-avail').checked,
   hideSeen:document.getElementById('f-hide-seen')?.checked||false,
+  period:document.getElementById('f-period').value,
   search:(document.getElementById('f-search').value||'').trim().toLowerCase()};
 }
 function passes(d,f){
@@ -564,6 +606,8 @@ function passes(d,f){
   if(f.price&&(d.price==null||d.price>f.price))return false;
   if(f.bed&&(d.bedrooms==null||d.bedrooms<f.bed))return false;
   if(f.type&&d.type!==f.type)return false;
+  if(f.period==='month'&&!(d.period==='month'||d.period==='unknown'))return false;
+  if(f.period==='night'&&d.period!=='night')return false;
   for(const a of f.amenities){if(!d.amenities[a])return false;}
   if(f.hideStale&&d.fresh.stale)return false;
   if(f.onlyAvail&&!d.available_from)return false;
@@ -574,7 +618,7 @@ const amen=a=>Object.keys(AM).filter(k=>a[k]).map(k=>AM[k]).join(" ");
 const escHtml=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 function makeCard(d,i,key,target){
-  const card=document.createElement('article'); card.className="card"+(d.fresh.stale?" stale":""); card.style.setProperty('--i',i);
+  const card=document.createElement('article'); card.className="card"+(d.fresh.stale?" stale":"")+(d.own?" own":""); card.style.setProperty('--i',i);
   const fb='<span class="fresh-badge fb-'+d.fresh.cls+'">'+d.fresh.label+'</span>';
   const dtag=d.district?'<span class="dtag">📍 '+d.district+'</span>':'<span class="dtag nogeo">📍 район не указан</span>';
   const draft=d.confidence<0.6?' <span class="draft">черновик</span>':'';
@@ -617,7 +661,9 @@ function makeCard(d,i,key,target){
   function hlTitle(t){if(!_srch)return t;const re=new RegExp('('+_srch.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return t.replace(re,'<mark class="hl">$1</mark>');}
   card.setAttribute('data-type',d.type);
   if(key!=null)card.setAttribute('data-key',String(key));
-  card.innerHTML=bmBtn+'<div class="card-top">'+dtag+fb+'</div>'+
+  const ownBadge=d.own?'<span class="own-badge">⭐ SabaiStay</span>':'';
+  const photoHtml=(d.own&&d.photos&&d.photos.length)?'<img class="own-photo" src="'+escHtml(d.photos[0])+'" loading="lazy" alt="">':'';
+  card.innerHTML=bmBtn+photoHtml+'<div class="card-top">'+dtag+ownBadge+fb+'</div>'+
     '<div class="title">'+hlTitle(escHtml(d.title))+draft+qHtml+seenHtml+'</div>'+
     '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span>'+sqmHtml+distHtml+(amenStr?'<span class="spec-amen">'+amenStr+'</span>':'')+(availHtml?availHtml:'')+'</div>'+
     ref+
@@ -662,6 +708,7 @@ function renderPage(cards){
 
 function render(first){
   const f=readF(), cards=document.getElementById('cards');
+  {const u=f.period==='night'?'฿/ночь':'฿/мес';const l1=document.querySelector('label[for="f-price-min"]');const l2=document.querySelector('label[for="f-price"]');if(l1)l1.textContent='Цена от, '+u;if(l2)l2.textContent='Цена до, '+u;}
   cards.innerHTML=""; cards.classList.toggle('anim',!!first);
   clusterGroup.clearLayers(); markers={};
   let view=DATA.map(d=>d);
@@ -673,13 +720,14 @@ function render(first){
   else if(sortV==='sqm_asc')view.sort((a,b)=>(a.area_sqm??Infinity)-(b.area_sqm??Infinity));
   else if(sortV==='price_sqm_asc')view.sort((a,b)=>{const ar=a.price&&a.area_sqm?a.price/a.area_sqm:Infinity;const br=b.price&&b.area_sqm?b.price/b.area_sqm:Infinity;return ar-br;});
   else if(sortV==='dist_asc')view.sort((a,b)=>(a.dist_km??Infinity)-(b.dist_km??Infinity));
+  view=[...view.filter(d=>d.featured),...view.filter(d=>!d.featured)];
   _geoView=[]; _noGeoView=[];
   view.forEach(d=>{if(!passes(d,f))return; (d.lat!=null?_geoView:_noGeoView).push(d);});
   const shown=_geoView.length+_noGeoView.length;
   // добавляем все маркеры на карту сразу
   _geoView.forEach((d,idx)=>{
     if(d.lat==null)return;
-    const unit=d.period==='daily'?' /д':(d.period==='weekly'?' /нед':'');
+    const unit=PERIOD[d.period]?' '+PERIOD[d.period]:'';
     const icon=L.divIcon({className:'',html:'<div class="sounding'+(d.fresh.stale?' dim':'')+'">'+(d.price!=null?compact(d.price):'·')+'</div>',iconSize:null});
     const m=L.marker([d.lat,d.lng],{icon});
     const amenStr=amen(d.amenities||{});
@@ -711,6 +759,7 @@ function render(first){
   const tail=_noGeoView.length?' · '+_noGeoView.length+' без района':'';
   const chips=[];
   if(f.district)chips.push(['district',f.district]);
+  if(f.period)chips.push(['period',f.period==='month'?'помесячно':'посуточно']);
   if(f.price)chips.push(['price','до '+priceFull(f.price)+'฿']);
   if(f.bed)chips.push(['bed','от '+f.bed+' спален']);
   if(f.type)chips.push(['type',TYPE[f.type]||f.type]);
@@ -728,7 +777,7 @@ function render(first){
     chips.map(c=>'<button class="chip" onclick="chipClear(\''+c[0]+'\')">'+c[1]+'<span class="x">✕</span></button>').join('');
   document.getElementById('count2').textContent=shown+'/'+DATA.length;
   writeHash(f);
-  const n=(f.district?1:0)+(f.sqmMin?1:0)+(f.sqmMax?1:0)+(f.priceMin?1:0)+(f.price?1:0)+(f.bed?1:0)+(f.type?1:0)+f.amenities.length+(f.hideStale?1:0)+(f.onlyAvail?1:0)+(f.search?1:0)+(f.hideSeen?1:0)+(sortV?1:0);
+  const n=(f.district?1:0)+(f.period?1:0)+(f.sqmMin?1:0)+(f.sqmMax?1:0)+(f.priceMin?1:0)+(f.price?1:0)+(f.bed?1:0)+(f.type?1:0)+f.amenities.length+(f.hideStale?1:0)+(f.onlyAvail?1:0)+(f.search?1:0)+(f.hideSeen?1:0)+(sortV?1:0);
   const fb=document.getElementById('ftbadge');if(fb)fb.textContent=n?' · '+n:'';
   renderHotOffers();
 }
@@ -743,6 +792,7 @@ function chipClear(k){
 function writeHash(f){
   const p=new URLSearchParams();
   if(f.district)p.set('district',f.district);
+  if(f.period)p.set('period',f.period);
   if(f.sqmMin)p.set('sqmMin',f.sqmMin);
   if(f.sqmMax)p.set('sqmMax',f.sqmMax);
   if(f.priceMin)p.set('priceMin',f.priceMin);
@@ -762,14 +812,14 @@ function applyHash(){
   if(!location.hash)return;
   const p=new URLSearchParams(location.hash.slice(1));
   const set=(id,key)=>{const v=p.get(key);if(v!=null)document.getElementById(id).value=v;};
-  set('f-district','district');set('f-sqm-min','sqmMin');set('f-sqm-max','sqmMax');set('f-price-min','priceMin');set('f-price','price');set('f-bed','bed');set('f-type','type');set('f-sort','sort');set('f-search','q');
+  set('f-district','district');set('f-period','period');set('f-sqm-min','sqmMin');set('f-sqm-max','sqmMax');set('f-price-min','priceMin');set('f-price','price');set('f-bed','bed');set('f-type','type');set('f-sort','sort');set('f-search','q');
   const am=p.get('am'); if(am)am.split(',').forEach(v=>{const el=document.querySelector('.f-am[value="'+v+'"]');if(el)el.checked=true;});
   document.getElementById('f-stale').checked=p.get('stale')==='1';
   document.getElementById('f-avail').checked=p.get('avail')==='1';
   const _hs=document.getElementById('f-hide-seen');if(_hs)_hs.checked=p.get('seen')==='1';
 }
-function resetFilters(){['f-district','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=false;document.getElementById('f-avail').checked=false;const hs=document.getElementById('f-hide-seen');if(hs)hs.checked=false;render(false);}
-['f-district','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).addEventListener('input',()=>render(false)));
+function resetFilters(){['f-district','f-period','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=false;document.getElementById('f-avail').checked=false;const hs=document.getElementById('f-hide-seen');if(hs)hs.checked=false;render(false);}
+['f-district','f-period','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).addEventListener('input',()=>render(false)));
 document.querySelectorAll('.f-am, #f-stale, #f-avail, #f-hide-seen').forEach(e=>e.addEventListener('change',()=>render(false)));
 document.getElementById('reset').onclick=resetFilters;
 // мобильный toggle фильтра
@@ -804,7 +854,7 @@ function renderHotOffers(){
   const sec=document.getElementById('hot-section');
   const cont=document.getElementById('hot-cards');
   if(!sec||!cont)return;
-  const active=DATA.filter(d=>!d.fresh.stale&&d.price!=null&&d.period==='monthly'&&d.district&&d.lat!=null);
+  const active=DATA.filter(d=>!d.fresh.stale&&d.price!=null&&(d.period==='month'||d.period==='unknown')&&d.district&&d.lat!=null);
   // медиана по районам
   const medByDistrict={};
   const byD={};
@@ -853,7 +903,7 @@ function openStats(){
     if(!byDistrict[k])byDistrict[k]={count:0,prices:[],active:0};
     byDistrict[k].count++;
     if(!d.fresh.stale)byDistrict[k].active++;
-    if(d.price!=null&&d.period==='monthly')byDistrict[k].prices.push(d.price);
+    if(d.price!=null&&(d.period==='month'||d.period==='unknown'))byDistrict[k].prices.push(d.price);
   });
   const rows=Object.entries(byDistrict).sort((a,b)=>b[1].count-a[1].count);
   const median=arr=>{if(!arr.length)return null;const s=[...arr].sort((a,b)=>a-b);const m=Math.floor(s.length/2);return s.length%2?s[m]:Math.round((s[m-1]+s[m])/2);};

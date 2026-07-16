@@ -1,0 +1,85 @@
+{
+  "_comment": "ШАБЛОН своих объявлений SabaiStay. Скопируй нужные записи в own_listings.json — они попадут на витрину с бейджем ⭐ и закрепом наверху. Фото клади в web/img/own/ и указывай путь как 'img/own/имя.jpg'. Контакты и фото для своих объявлений хранить МОЖНО (согласие владельца есть). Позже эти записи добавляет бот командой /add.",
+  "listings": [
+    {
+      "source": "own",
+      "source_url": "https://t.me/your_contact",
+      "external_id": "own/1",
+      "posted_at": "2026-07-16T09:00:00+00:00",
+      "featured": true,
+      "photos": ["img/own/own-1-1.jpg", "img/own/own-1-2.jpg"],
+      "contact": { "telegram": "@your_contact", "whatsapp": "+66000000000" },
+      "raw_text": "Полное описание объекта, как ты бы написал его в объявлении.",
+      "parsed": {
+        "is_listing": true,
+        "title": "Sri Thanu — вилла 2 спал. с бассейном",
+        "district_raw": "Sri Thanu",
+        "district_canonical": "Sri Thanu",
+        "price_amount": 45000.0,
+        "price_currency": "THB",
+        "price_period": "month",
+        "bedrooms": 2,
+        "bathrooms": 2,
+        "property_type": "villa",
+        "area_sqm": 120,
+        "amenities": {
+          "pool": true,
+          "wifi": true,
+          "kitchen": true,
+          "aircon": true,
+          "seaview": false,
+          "washing_machine": true,
+          "pets_allowed": false,
+          "motorbike": false
+        },
+        "available_from": "2026-08-01",
+        "available_to": null,
+        "min_stay_months": 3,
+        "language": "ru",
+        "status_hint": "active",
+        "confidence": 1.0,
+        "contact": { "telegram": "@your_contact", "whatsapp": "+66000000000" }
+      }
+    },
+    {
+      "source": "own",
+      "source_url": "https://t.me/your_contact",
+      "external_id": "own/2",
+      "posted_at": "2026-07-16T09:00:00+00:00",
+      "featured": true,
+      "photos": [],
+      "contact": { "telegram": "@your_contact" },
+      "raw_text": "Посуточная студия у моря.",
+      "parsed": {
+        "is_listing": true,
+        "title": "Thong Sala — студия у моря",
+        "district_raw": "Thong Sala",
+        "district_canonical": "Thong Sala",
+        "price_amount": 1500.0,
+        "price_currency": "THB",
+        "price_period": "night",
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "property_type": "studio",
+        "area_sqm": 35,
+        "amenities": {
+          "pool": false,
+          "wifi": true,
+          "kitchen": true,
+          "aircon": true,
+          "seaview": true,
+          "washing_machine": false,
+          "pets_allowed": false,
+          "motorbike": false
+        },
+        "available_from": null,
+        "available_to": null,
+        "min_stay_months": null,
+        "language": "ru",
+        "status_hint": "active",
+        "confidence": 1.0,
+        "contact": { "telegram": "@your_contact" }
+      }
+    }
+  ]
+}

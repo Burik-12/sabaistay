@@ -42,7 +42,7 @@ _PRICE_SHORT = re.compile(
     re.IGNORECASE,
 )
 _PRICE_K = re.compile(r"(\d+(?:\.\d+)?)k\s*(?:/\s*month|per\s+month)?", re.IGNORECASE)
-_NIGHT = re.compile(r"(\d[\d\s,]*)\s*(?:฿|thb|бат)?\s*(?:per\s+night|/night|a\s+night|в\s+сутки|/\s*сутки|сутки)", re.IGNORECASE)
+_NIGHT = re.compile(r"(\d[\d\s,]*)\s*(?:฿|thb|бат)?\s*(?:per\s+night|/night|a\s+night|per\s+day|/day|a\s+day|daily|nightly|в\s+сутки|/\s*сутки|сутки|в\s+день|за\s+ночь|за\s+сутки)", re.IGNORECASE)
 # Русские форматы: "25 000бат", "20 000 бат", "18 тыс бат", "18тыс"
 _PRICE_RU_TYS = re.compile(r"(\d+(?:[.,]\d+)?)\s*тыс\.?\s*(?:бат|baht|฿)?", re.IGNORECASE)
 _PRICE_RU_BAT = re.compile(r"(\d[\d\s]{2,})\s*бат\b", re.IGNORECASE)

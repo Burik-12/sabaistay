@@ -23,6 +23,11 @@ from urllib.parse import quote
 # (переменной окружения или правкой этой строки).
 SITE_URL = os.getenv("SABAI_SITE_URL", "https://sabaistay.vercel.app")
 
+# Telegram-контакт для приёма объявлений от владельцев («Сдаёшь жильё?»).
+# Пока не задан — блок не рендерится: неработающая кнопка хуже её отсутствия.
+# Задать: SABAI_CONTACT_TG=nickname (без @) или правкой этой строки.
+CONTACT_TG = os.getenv("SABAI_CONTACT_TG", "").lstrip("@")
+
 # Лого-знак «закат над водой» для фавикона (тёмная бирюза — под светлую вкладку браузера). Канон — web/brand.svg.
 FAVICON_SVG = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
                '<circle cx="32" cy="26" r="12" fill="#ef6c45"/>'
@@ -197,6 +202,14 @@ HTML = r"""<!DOCTYPE html>
   .chk{font-family:var(--body);font-size:14px;text-transform:none;letter-spacing:normal;color:var(--ink);padding-bottom:7px;cursor:pointer}
   .chk input{width:17px;height:17px;min-width:0;flex:none;margin-right:5px;vertical-align:-3px;accent-color:var(--coral);cursor:pointer}
   .reset{font-family:var(--mono);font-size:11px;color:var(--sea);background:none;border:none;cursor:pointer;padding-bottom:9px;text-transform:uppercase;letter-spacing:.6px}
+  /* «Ещё фильтры»: редкое прячем, чтобы первый экран вёл к жилью, а не к пульту */
+  .f.adv,.chk.adv{display:none}
+  .filters.adv-open .f.adv{display:flex}
+  .filters.adv-open .chk.adv{display:block}
+  .more-btn{font-family:var(--mono);font-size:11px;color:var(--sea);background:none;border:none;cursor:pointer;padding-bottom:9px;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap}
+  .more-btn:hover{color:var(--coral)}
+  .more-btn .mb-arrow{display:inline-block;transition:transform .2s;font-size:9px}
+  .filters.adv-open .more-btn .mb-arrow{transform:rotate(180deg)}
   .reset:hover{color:var(--coral)}
 
   /* ── полотно ── */
@@ -205,6 +218,25 @@ HTML = r"""<!DOCTYPE html>
   #map{flex:1;min-width:0;height:100%;background:var(--land)}
   .count{font-family:var(--mono);font-size:11px;color:var(--muted);padding:2px 4px 11px;letter-spacing:.4px;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
   .rcount{font-weight:700;color:var(--sea)}
+  .stale-note{color:var(--muted);opacity:.85}
+  /* Блок для владельцев в конце списка: кто досмотрел до низа, тот либо не нашёл
+     (и тогда ему нечего предложить), либо сам сдаёт. Второй случай — наше наполнение. */
+  .owner-cta{background:var(--surface);border:1px dashed var(--coral);border-radius:12px;
+    padding:15px 17px;margin:14px 0 4px;text-align:center}
+  .owner-cta b{display:block;font-family:var(--disp);font-size:16px;color:var(--ink);margin-bottom:5px}
+  .owner-cta p{margin:0 0 11px;font-size:13px;color:var(--muted);line-height:1.5}
+  .owner-cta a{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;
+    font-family:var(--mono);font-size:12px;color:#fff;background:var(--coral);border-radius:8px;
+    padding:0 18px;text-decoration:none;letter-spacing:.3px}
+  .owner-cta a:hover{background:var(--coral-d)}
+  /* Плашка возраста данных: показывается сама, когда снимок старше 3 дней, и сама
+     исчезает, когда сбор работает. Честность здесь дешевле, чем разочарование
+     от звонка по объявлению месячной давности. */
+  .data-age{display:none;align-items:center;gap:9px;padding:9px 22px;font-size:13px;
+    background:#fdf3e3;color:#7a5a1e;border-bottom:1px solid #e8d5ab}
+  .data-age.vis{display:flex}
+  .data-age b{font-weight:700}
+  html[data-theme="dark"] .data-age{background:#2a2113;color:#e0c88a;border-bottom-color:#4a3a1c}
   .chip{font-family:var(--mono);font-size:11px;color:var(--ink);background:#fff;border:1px solid var(--hair);border-radius:20px;padding:3px 9px;cursor:pointer;letter-spacing:.2px}
   .chip:hover{border-color:var(--coral);color:var(--coral)}
   .chip .x{color:var(--muted);margin-left:3px}
@@ -302,8 +334,17 @@ HTML = r"""<!DOCTYPE html>
     .filters select,.filters input:not([type=checkbox]){width:100%;min-width:unset;box-sizing:border-box}
     .filters .chk{flex:0 0 auto}
     .reset{flex:0 0 auto}
+    .f-search-wrap{flex:0 0 100%;max-width:100%}
+    /* На телефоне первый экран должен вести к жилью. Кнопки для десктопной работы
+       (выгрузка, статистика районов, шорткаты) убираем — на ходу ими не пользуются. */
+    .export-btn,.help-btn,#stats-btn{display:none}
+    .tagline{font-size:11.5px;line-height:1.35;opacity:.85}
+    .snap{display:none}          /* дату снимка на мобиле показывает плашка возраста данных */
+    .data-age{padding:8px 16px;font-size:12.5px;line-height:1.4}
     /* тап-зоны: на тач-экране всё кликаемое ≥40px по высоте */
-    .contact-btn,.src,.share-btn,.cur-btn,.export-btn,.help-btn,.theme-btn,.fav-count-btn{
+    /* .export-btn/.help-btn сюда НЕ включаем — они скрыты выше, а display:inline-flex
+       здесь бы их вернул (одинаковая специфичность, правило ниже побеждает) */
+    .contact-btn,.src,.share-btn,.cur-btn,.theme-btn,.fav-count-btn{
       min-height:40px;display:inline-flex;align-items:center;justify-content:center;padding:8px 12px}
     .srcs{gap:10px 12px}
     .reset{min-height:40px;padding:0 8px}
@@ -322,7 +363,9 @@ HTML = r"""<!DOCTYPE html>
 .avail-date{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.2px}
 
 /* ── строка поиска (широкая) ── */
-.f-search-wrap{flex:0 0 100%!important;max-width:100%}
+/* Поиск стоит в общем ряду (раньше занимал отдельную строку целиком — минус ~60px
+   первого экрана). На мобиле ниже возвращается на всю ширину. */
+.f-search-wrap{flex:1 1 240px;max-width:420px}
 .f-search-wrap input{width:100%;min-width:0;box-sizing:border-box}
 
 /* ── закладки ── */
@@ -393,6 +436,16 @@ HTML = r"""<!DOCTYPE html>
 .hot-card .hc-title{font-size:12px;font-weight:700;color:var(--sea-deep);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hot-card .hc-price{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--coral-d)}
 .hot-card .hc-meta{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px}
+/* Мобильные правила для «горячих» держим ЗДЕСЬ, а не в общем медиазапросе выше:
+   базовые .hot-* объявлены после него и перебили бы их (специфичность равная — выигрывает
+   то, что ниже). Лента вбок вместо стопки вниз экономит ~120px первого экрана. */
+@media (max-width:760px){
+  .hot-section{padding:10px 0 12px}
+  .hot-section h3{padding:0 16px}
+  .hot-cards{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;
+    -webkit-overflow-scrolling:touch;padding:0 16px 4px;overscroll-behavior-x:contain}
+  .hot-card{flex:0 0 80%;scroll-snap-align:start}
+}
 
 /* ── качество объявления ── */
 .quality{font-size:11px;letter-spacing:-.5px;margin-left:4px;opacity:.8}
@@ -484,6 +537,8 @@ html[data-theme="dark"] .vt-btn.active{background:var(--sea);color:#fff;border-c
   </div>
 </header>
 
+<div class="data-age" id="data-age" role="status"></div>
+
 <div class="view-toggle" role="group" aria-label="Режим отображения">
   <button class="vt-btn active" id="vt-list">📋 Список</button>
   <button class="vt-btn" id="vt-map">🗺 Карта</button>
@@ -498,12 +553,6 @@ html[data-theme="dark"] .vt-btn.active{background:var(--sea);color:#fff;border-c
     <select id="f-district"><option value="">весь остров</option></select></div>
   <div class="f"><label for="f-period">Аренда</label>
     <select id="f-period"><option value="">любая</option><option value="month">помесячно</option><option value="night">посуточно</option></select></div>
-  <div class="f"><label for="f-sqm-min">Площадь от, м²</label>
-    <input id="f-sqm-min" type="number" step="10" placeholder="от"></div>
-  <div class="f"><label for="f-sqm-max">Площадь до, м²</label>
-    <input id="f-sqm-max" type="number" step="10" placeholder="до"></div>
-  <div class="f"><label for="f-price-min">Цена от, ฿/мес</label>
-    <input id="f-price-min" type="number" step="5000" placeholder="от 0"></div>
   <div class="f"><label for="f-price">Цена до, ฿/мес</label>
     <input id="f-price" type="number" step="5000" placeholder="без лимита"></div>
   <div class="f"><label for="f-bed">Спален от</label>
@@ -513,13 +562,22 @@ html[data-theme="dark"] .vt-btn.active{background:var(--sea);color:#fff;border-c
   <label class="chk"><input type="checkbox" class="f-am" value="pool"> 🏊 бассейн</label>
   <label class="chk"><input type="checkbox" class="f-am" value="seaview"> 🌊 море</label>
   <label class="chk"><input type="checkbox" class="f-am" value="wifi"> 📶 wi-fi</label>
-  <label class="chk"><input type="checkbox" class="f-am" value="kitchen"> 🍳 кухня</label>
-  <label class="chk"><input type="checkbox" class="f-am" value="aircon"> ❄️ кондей</label>
-  <label class="chk"><input type="checkbox" id="f-stale"> скрыть неактуальные</label>
-  <label class="chk"><input type="checkbox" id="f-avail"> только с датой заезда</label>
-  <label class="chk"><input type="checkbox" id="f-hide-seen"> скрыть просмотренные</label>
+  <!-- Редкие фильтры прячем под «ещё»: на первом экране должен быть путь к жилью,
+       а не панель управления. Раскрываются сами, если пришли по ссылке с ними. -->
+  <div class="f adv"><label for="f-price-min">Цена от, ฿/мес</label>
+    <input id="f-price-min" type="number" step="5000" placeholder="от 0"></div>
+  <div class="f adv"><label for="f-sqm-min">Площадь от, м²</label>
+    <input id="f-sqm-min" type="number" step="10" placeholder="от"></div>
+  <div class="f adv"><label for="f-sqm-max">Площадь до, м²</label>
+    <input id="f-sqm-max" type="number" step="10" placeholder="до"></div>
+  <label class="chk adv"><input type="checkbox" class="f-am" value="kitchen"> 🍳 кухня</label>
+  <label class="chk adv"><input type="checkbox" class="f-am" value="aircon"> ❄️ кондей</label>
+  <label class="chk adv"><input type="checkbox" id="f-stale" checked> скрыть неактуальные</label>
+  <label class="chk adv"><input type="checkbox" id="f-avail"> только с датой заезда</label>
+  <label class="chk adv"><input type="checkbox" id="f-hide-seen"> скрыть просмотренные</label>
   <div class="f"><label for="f-sort">Сортировка</label>
     <select id="f-sort"><option value="">сначала свежие</option><option value="cheap">сначала дешёвые</option><option value="pricey">сначала дорогие</option><option value="sqm_desc">площадь: больше</option><option value="sqm_asc">площадь: меньше</option><option value="price_sqm_asc">цена/м²: дешевле</option><option value="dist_asc">ближе к Тонгсале</option></select></div>
+  <button class="more-btn" id="more-btn" type="button" aria-expanded="false">ещё фильтры <span class="mb-arrow">▾</span></button>
   <button class="reset" id="reset">сбросить</button>
 </section>
 
@@ -547,6 +605,7 @@ html[data-theme="dark"] .vt-btn.active{background:var(--sea);color:#fff;border-c
     <div class="load-more-wrap" id="load-more-wrap" style="display:none">
       <button class="load-more-btn" id="load-more-btn">показать ещё</button>
     </div>
+    __OWNER_CTA__
     <footer class="listfoot">Источник: Telegram-каналы аренды Пхангана · каждое объявление ведёт в оригинал · снимок __SNAPSHOT__<br><a href="privacy.html">Приватность</a> · <a href="privacy.html#remove">Убрать объявление</a></footer>
   </div>
   <div id="map"></div>
@@ -561,6 +620,18 @@ const SRC={telegram:"Telegram",fb_group:"Facebook",fb_marketplace:"Facebook",boo
 const SRCICON={telegram:"📨",fb_group:"📘",fb_marketplace:"📘",booking:"🏨",airbnb:"🛏",own:"⭐"};
 const SNAP_ISO='__SNAPSHOT_ISO__';
 const SNAP_DATE=SNAP_ISO?new Date(SNAP_ISO):null;
+// Возраст данных показываем сами, до того как человек наткнётся на протухшее объявление.
+// Порог 3 дня: на Пхангане хороший вариант уходит за часы, неделя — это уже другая выдача.
+(function(){
+  if(!SNAP_DATE)return;
+  const days=Math.floor((Date.now()-SNAP_DATE.getTime())/864e5);
+  if(days<3)return;
+  const el=document.getElementById('data-age');
+  const plural=days%10===1&&days%100!==11?'день':(days%10>=2&&days%10<=4&&(days%100<10||days%100>=20)?'дня':'дней');
+  el.innerHTML='<span>🕓</span><span>Обновлено <b>'+days+' '+plural+
+    '</b> назад — часть вариантов могла уйти, пиши сразу нескольким.</span>';
+  el.classList.add('vis');
+})();
 let CUR='thb';
 const RATE_USD=35;
 const compact=n=>{if(CUR==='usd'){const u=Math.round(n/RATE_USD);return u>=1000?(u/1000).toFixed(1)+'k$':'$'+u;}return n>=1000?(n/1000)+'k':(''+n);};
@@ -781,7 +852,11 @@ function render(first){
   }
   if(!shown)cards.innerHTML='<div class="empty"><span class="big">🧭</span><b>В этих координатах пусто</b>под такой фильтр объявлений нет — ослабь условия<button class="clear" onclick="resetFilters()">сбросить фильтр</button></div>';
   const word='объявлени'+_pluralObj(shown);
-  const tail=_noGeoView.length?' · '+_noGeoView.length+' без района':'';
+  // Сколько объявлений спрятано именно из-за протухания — человек должен понимать,
+  // что «мало результатов» не значит «сайт пустой»: часть просто устарела.
+  const staleHidden=f.hideStale?DATA.filter(d=>d.fresh.stale&&passes(d,{...f,hideStale:false})).length:0;
+  const tail=(_noGeoView.length?' · '+_noGeoView.length+' без района':'')+
+             (staleHidden?' · <span class="stale-note">'+staleHidden+' устаревших скрыто</span>':'');
   const chips=[];
   if(f.district)chips.push(['district',f.district]);
   if(f.period)chips.push(['period',f.period==='month'?'помесячно':'посуточно']);
@@ -789,7 +864,9 @@ function render(first){
   if(f.bed)chips.push(['bed','от '+f.bed+' спален']);
   if(f.type)chips.push(['type',TYPE[f.type]||f.type]);
   f.amenities.forEach(a=>chips.push(['am:'+a,AMLABEL[a]||a]));
-  if(f.hideStale)chips.push(['stale','без неактуальных']);
+  // скрытие старых — состояние по умолчанию, поэтому чипом отмечаем ОБРАТНОЕ:
+  // человек должен видеть, если ему показывают заведомо протухшее
+  if(!f.hideStale)chips.push(['stale-off','показаны старые']);
   if(f.onlyAvail)chips.push(['avail','с датой заезда']);
   if(f.hideSeen)chips.push(['hide-seen','скрыть просмотренные']);
   if(f.sqmMin)chips.push(['sqm-min','от '+f.sqmMin+' м²']);
@@ -809,6 +886,7 @@ function render(first){
 function chipClear(k){
   if(k.startsWith('am:')){const el=document.querySelector('.f-am[value="'+k.slice(3)+'"]');if(el)el.checked=false;}
   else if(k==='stale')document.getElementById('f-stale').checked=false;
+  else if(k==='stale-off')document.getElementById('f-stale').checked=true;
   else if(k==='avail')document.getElementById('f-avail').checked=false;
   else if(k==='hide-seen')document.getElementById('f-hide-seen').checked=false;
   else document.getElementById('f-'+k)&&(document.getElementById('f-'+k).value='');
@@ -825,7 +903,8 @@ function writeHash(f){
   if(f.bed)p.set('bed',f.bed);
   if(f.type)p.set('type',f.type);
   if(f.amenities.length)p.set('am',f.amenities.join(','));
-  if(f.hideStale)p.set('stale','1');
+  p.set('stale',f.hideStale?'1':'0');  // пишем всегда: скрытие включено по умолчанию,
+                                       // и ссылка с выключенным фильтром должна его выключать
   if(f.onlyAvail)p.set('avail','1');
   if(f.hideSeen)p.set('seen','1');
   if(f.search)p.set('q',f.search);
@@ -839,13 +918,23 @@ function applyHash(){
   const set=(id,key)=>{const v=p.get(key);if(v!=null)document.getElementById(id).value=v;};
   set('f-district','district');set('f-period','period');set('f-sqm-min','sqmMin');set('f-sqm-max','sqmMax');set('f-price-min','priceMin');set('f-price','price');set('f-bed','bed');set('f-type','type');set('f-sort','sort');set('f-search','q');
   const am=p.get('am'); if(am)am.split(',').forEach(v=>{const el=document.querySelector('.f-am[value="'+v+'"]');if(el)el.checked=true;});
-  document.getElementById('f-stale').checked=p.get('stale')==='1';
+  document.getElementById('f-stale').checked=p.get('stale')!=='0';  // дефолт — скрывать
+  // Пришли по ссылке с редким фильтром — раскрываем «ещё», иначе человек не увидит,
+  // почему выдача сужена.
+  if(p.get('priceMin')||p.get('sqmMin')||p.get('sqmMax')||p.get('avail')||p.get('stale')==='0'||
+     (p.get('am')||'').split(',').some(a=>a==='kitchen'||a==='aircon'))
+    document.querySelector('.filters').classList.add('adv-open');
   document.getElementById('f-avail').checked=p.get('avail')==='1';
   const _hs=document.getElementById('f-hide-seen');if(_hs)_hs.checked=p.get('seen')==='1';
 }
-function resetFilters(){['f-district','f-period','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=false;document.getElementById('f-avail').checked=false;const hs=document.getElementById('f-hide-seen');if(hs)hs.checked=false;render(false);}
+function resetFilters(){['f-district','f-period','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=true;document.getElementById('f-avail').checked=false;const hs=document.getElementById('f-hide-seen');if(hs)hs.checked=false;render(false);}
 ['f-district','f-period','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).addEventListener('input',()=>render(false)));
 document.querySelectorAll('.f-am, #f-stale, #f-avail, #f-hide-seen').forEach(e=>e.addEventListener('change',()=>render(false)));
+{const mb=document.getElementById('more-btn');mb.addEventListener('click',()=>{
+  const open=document.querySelector('.filters').classList.toggle('adv-open');
+  mb.setAttribute('aria-expanded',String(open));
+  if(open&&window.map)setTimeout(()=>map.invalidateSize(),220);  // полотно сдвинулось — пересчитать карту
+});}
 document.getElementById('reset').onclick=resetFilters;
 // мобильный toggle фильтра
 (function(){
@@ -1144,7 +1233,16 @@ def _write_seo_files(snap_iso: str) -> None:
 def main() -> None:
     rows, snapshot = build_rows()
     snap_iso = snapshot[:10] if snapshot else ""
+    owner_cta = (
+        '<div class="owner-cta"><b>Сдаёшь жильё на Пхангане?</b>'
+        "<p>Добавим объявление на витрину бесплатно — его увидят те, кто уже ищет "
+        "жильё с фильтром по району и цене.</p>"
+        f'<a href="https://t.me/{CONTACT_TG}" target="_blank" rel="noopener">✚ Добавить объявление</a></div>'
+        if CONTACT_TG
+        else ""
+    )
     html = (HTML.replace("__DATA__", json.dumps(rows, ensure_ascii=False))
+                .replace("__OWNER_CTA__", owner_cta)
                 .replace("__SNAPSHOT__", _ru_date(snapshot))
                 .replace("__SNAPSHOT_ISO__", snap_iso)
                 .replace("__FAVICON__", quote(FAVICON_SVG))

@@ -1,0 +1,49 @@
+{
+  "_comment": [
+    "Конфиг сбора из Facebook через managed-акторы Apify (см. docs/facebook-ingest-plan.md).",
+    "Схемы входа акторов вынесены сюда намеренно: авторы меняют поля, и тогда правится",
+    "этот файл, а не код. actor — идентификатор в API-форме (владелец~имя).",
+    "input — тело запроса как есть; подстановки: {until_date} — дата последнего успешного",
+    "сбора (YYYY-MM-DD), {limit} — потолок результатов за прогон.",
+    "enabled:false у задачи = не запускать (так отключаем Marketplace, пока не оплачен ключ)."
+  ],
+  "defaults": {
+    "limit_per_run": 200,
+    "first_run_days_back": 14
+  },
+  "tasks": [
+    {
+      "name": "fb_groups",
+      "enabled": true,
+      "actor": "apify~facebook-groups-scraper",
+      "source": "fb_group",
+      "note": "Только ПУБЛИЧНЫЕ группы — закрытые актор не умеет (проверено 29-07-2026).",
+      "input": {
+        "startUrls": [
+          { "url": "https://www.facebook.com/groups/phanganhouserent" },
+          { "url": "https://www.facebook.com/groups/kohphanganrent" },
+          { "url": "https://www.facebook.com/groups/phanganrentals" }
+        ],
+        "resultsLimit": "{limit}"
+      }
+    },
+    {
+      "name": "fb_marketplace",
+      "enabled": false,
+      "actor": "curious_coder~facebook-marketplace",
+      "source": "fb_marketplace",
+      "note": "Cookies НЕ задаём — seller_details не собираем (PDPA + лишние списания).",
+      "input": {
+        "urls": [
+          "https://www.facebook.com/marketplace/kohphangan/propertyrentals?sortBy=creation_time_descend"
+        ],
+        "maxPagesPerUrl": 3,
+        "getListingDetails": false,
+        "getAllListingPhotos": false,
+        "strictFiltering": true,
+        "untilDate": "{until_date}",
+        "proxy": { "useApifyProxy": true, "apifyProxyCountry": "TH" }
+      }
+    }
+  ]
+}

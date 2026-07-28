@@ -144,6 +144,9 @@ HTML = r"""<!DOCTYPE html>
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0d3b3a">
 <link rel="canonical" href="__SITE__/">
+<!-- Vercel Web Analytics: без кук и персданных. Работает после включения тумблера
+     Analytics в дашборде проекта; пока он выключен — скрипт просто 404, это безвредно. -->
+<script defer src="/_vercel/insights/script.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">

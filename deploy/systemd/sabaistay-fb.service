@@ -1,0 +1,15 @@
+[Unit]
+Description=SabaiStay — сбор объявлений из Facebook через Apify
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=rw
+Environment=HOME=/home/rw
+Environment=SABAI_DATA_DIR=/home/rw/sabaistay/data
+WorkingDirectory=/home/rw/sabaistay
+EnvironmentFile=/home/rw/sabaistay-secrets/.env
+ExecStart=/home/rw/sabaistay/venv/bin/python ingest/fb_apify.py
+# Прогон актора идёт до 30 мин (см. RUN_TIMEOUT_SEC) — даём запас сверху.
+TimeoutStartSec=2400

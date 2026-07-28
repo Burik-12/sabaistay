@@ -1,0 +1,11 @@
+[Unit]
+Description=SabaiStay — сбор из Facebook каждые 4 часа
+
+[Timer]
+# Со сдвигом на :40, чтобы не совпадать со сборкой витрины (та ходит в 0/3:10).
+OnCalendar=*-*-* 0/4:40:00
+RandomizedDelaySec=900
+Persistent=true
+
+[Install]
+WantedBy=timers.target

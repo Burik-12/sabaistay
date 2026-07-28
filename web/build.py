@@ -11,14 +11,17 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import sys
 from pathlib import Path
 from urllib.parse import quote
 
-# Боевой домен для абсолютных ссылок в OG-мете (превью в Telegram/Facebook). Пусто до деплоя —
-# тогда превью-картинка не подтянется при шеринге (мета валидна, но нужен абсолютный URL + PNG).
-# На деплое: задай домен и экспортируй og.svg → og.png (FB/TG не рендерят SVG в og:image).
-SITE_URL = "https://sabaistay.co"
+# Боевой домен для абсолютных ссылок в OG-мете (превью в Telegram/Facebook) и canonical.
+# ВАЖНО: домен sabaistay.co на 29-07-2026 ещё НЕ куплен — пока он не зарегистрирован,
+# абсолютные ссылки на него мертвы и превью при шеринге не подтягивается. Поэтому по
+# умолчанию берём рабочий адрес Vercel; после покупки домена — задать SABAI_SITE_URL
+# (переменной окружения или правкой этой строки).
+SITE_URL = os.getenv("SABAI_SITE_URL", "https://sabaistay.vercel.app")
 
 # Лого-знак «закат над водой» для фавикона (тёмная бирюза — под светлую вкладку браузера). Канон — web/brand.svg.
 FAVICON_SVG = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
@@ -140,6 +143,7 @@ HTML = r"""<!DOCTYPE html>
 <meta property="og:url" content="__SITE__/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#0d3b3a">
+<link rel="canonical" href="__SITE__/">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
@@ -1110,6 +1114,30 @@ def _ru_date(iso: str | None) -> str:
     return f"{int(d)} {months[int(m)]} {y}"
 
 
+def _write_seo_files(snap_iso: str) -> None:
+    """robots.txt + sitemap.xml рядом с index.html.
+
+    Витрина — одна страница (состояние поиска живёт в URL-хэше, для поисковика
+    это тот же документ), поэтому в карте сайта только «/» и «/privacy».
+    lastmod берём от даты снимка данных — она и есть дата обновления содержимого.
+    """
+    (OUT.parent / "robots.txt").write_text(
+        "User-agent: *\nAllow: /\n\n" f"Sitemap: {SITE_URL}/sitemap.xml\n",
+        encoding="utf-8",
+    )
+    lastmod = f"\n    <lastmod>{snap_iso}</lastmod>" if snap_iso else ""
+    (OUT.parent / "sitemap.xml").write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"  <url>\n    <loc>{SITE_URL}/</loc>{lastmod}\n"
+        "    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n"
+        f"  <url>\n    <loc>{SITE_URL}/privacy</loc>\n"
+        "    <changefreq>yearly</changefreq>\n    <priority>0.3</priority>\n  </url>\n"
+        "</urlset>\n",
+        encoding="utf-8",
+    )
+
+
 def main() -> None:
     rows, snapshot = build_rows()
     snap_iso = snapshot[:10] if snapshot else ""
@@ -1119,6 +1147,7 @@ def main() -> None:
                 .replace("__FAVICON__", quote(FAVICON_SVG))
                 .replace("__SITE__", SITE_URL))
     OUT.write_text(html, encoding="utf-8")
+    _write_seo_files(snap_iso)
     geo = sum(1 for r in rows if r["lat"] is not None)
     stale = sum(1 for r in rows if r["fresh"]["stale"])
     print(f"Собрано web/index.html: {len(rows)} объектов ({geo} на карте, {stale} неактуальных). "

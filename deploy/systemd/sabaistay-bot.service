@@ -1,0 +1,18 @@
+[Unit]
+Description=SabaiStay — Telegram-бот: подписки на фильтр и приём объявлений от владельцев
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=rw
+Environment=HOME=/home/rw
+Environment=SABAI_DATA_DIR=/home/rw/sabaistay/data
+WorkingDirectory=/home/rw/sabaistay
+EnvironmentFile=/home/rw/sabaistay-secrets/.env
+ExecStart=/home/rw/sabaistay/venv/bin/python bot/subscribe_bot.py
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target

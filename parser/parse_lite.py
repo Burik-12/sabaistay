@@ -16,6 +16,7 @@ import argparse
 import json
 import re
 import sys
+from difflib import SequenceMatcher
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -182,10 +183,75 @@ def _parse_amenities(text: str) -> dict:
 
 
 # ── район ────────────────────────────────────────────────────────────────────
+_DISTRICT_WORD = re.compile(r"[a-zA-Zа-яёА-ЯЁ]+")
+
+# Слова, которые сами по себе слишком похожи на топонимы и дают ложные срабатывания
+# на fuzzy (например, «дом» ↔ «Дом Сила»). Проверено на выборке из sample_listings.
+_DISTRICT_STOP = {
+    "дом", "дома", "тай", "тая", "бан", "баан", "хаус", "вилла", "виллы",
+    "house", "villa", "home", "room", "pool", "koh", "ko", "phangan", "пханган",
+    "пхангане", "остров", "море", "sea", "beach", "пляж", "аренда", "rent",
+}
+
+
+_ALIAS_MAP = dict(_dn._alias_to_canon)          # окно → канон, точное совпадение за O(1)
+_ALIAS_BY_HEAD: dict[str, list[str]] = {}       # первые 2 буквы → алиасы, для дешёвого fuzzy
+for _a in _ALIAS_MAP:
+    _ALIAS_BY_HEAD.setdefault(_a[:2], []).append(_a)
+_DISTRICT_CACHE: dict[str, str | None] = {}     # окна повторяются от объявления к объявлению
+
+
+def _probe_district(probe: str) -> str | None:
+    """Одно окно текста → канон района. Точное совпадение, затем осторожный fuzzy.
+
+    Fuzzy сравниваем только с алиасами на те же две первые буквы: полный перебор
+    всех алиасов на каждое окно делал разбор витрины непрактично медленным
+    (секунды на объявление), а качество от этого не менялось.
+    """
+    if probe in _DISTRICT_CACHE:
+        return _DISTRICT_CACHE[probe]
+    hit = _ALIAS_MAP.get(probe)
+    if hit is None and len(probe) >= 5:
+        best, best_score = None, 0.0
+        for alias in _ALIAS_BY_HEAD.get(probe[:2], ()):
+            if abs(len(alias) - len(probe)) > 3:
+                continue
+            score = SequenceMatcher(None, probe, alias).ratio()
+            if score > best_score:
+                best, best_score = alias, score
+        if best and best_score >= 0.82:         # 0.82 ловит падежи: «тонг салы» → «тонг сала»
+            hit = _ALIAS_MAP[best]
+    _DISTRICT_CACHE[probe] = hit
+    return hit
+
+
 def _parse_district(text: str) -> tuple[str | None, str | None]:
+    """Ищем район не во всём тексте разом, а по окнам из 1–3 слов.
+
+    Нормализатор умеет fuzzy, но только на короткой строке: на полном объявлении
+    он молчал, из-за чего район не определялся почти нигде («тонг салы», «бантае»,
+    «шри тану» — падежи и написания, которых нет в алиасах дословно).
+    Окна идут от длинных к коротким, чтобы «тонг най пан ной» не схлопнулся в «тонг».
+    """
+    if not text:
+        return None, None
+
+    # 1) Дословное вхождение алиаса в текст — самый надёжный и дешёвый путь.
     res = _dn.normalize(text)
     if res:
         return res["canonical"], res["canonical"]
+
+    # 2) Окна слов. Район почти всегда в начале объявления — дальше 60 слов не идём.
+    words = [w for w in _DISTRICT_WORD.findall(text.lower())[:60] if len(w) > 2]
+    for size in (3, 2, 1):
+        for i in range(len(words) - size + 1):
+            chunk = words[i:i + size]
+            if size == 1 and chunk[0] in _DISTRICT_STOP:
+                continue
+            probe = " ".join(chunk)
+            canon = _probe_district(probe)
+            if canon:
+                return probe, canon
     return None, None
 
 

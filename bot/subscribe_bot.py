@@ -26,6 +26,7 @@ import json
 import os
 import re
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -34,6 +35,12 @@ from filter_match import matches, match_listings, describe  # noqa: E402
 
 DISTRICTS_PATH = ROOT / "data" / "districts.json"
 SUBS_PATH = ROOT / "data" / "subscriptions.ndjson"   # MVP-хранилище подписок (в .gitignore)
+
+# Объявления от владельцев (/add) кладём в общие dumps — дальше их подхватывает
+# scripts/update_site.py тем же путём, что посты из Telegram и Facebook.
+_DATA_DIR = Path(os.getenv("SABAI_DATA_DIR") or (ROOT / "data"))
+OWNER_DUMP = _DATA_DIR / "dumps" / "owner.ndjson"
+MIN_LISTING_LEN = 40                                 # короче — почти наверняка не объявление
 
 # ────────────────────────── разбор запроса ──────────────────────────
 _NUM = r"(\d[\d\s.,]*)"                                # число с пробелами/разделителями тысяч
@@ -169,6 +176,37 @@ def user_subs(user_id: int) -> list[dict]:
     return [s for s in load_subs() if s["user_id"] == user_id and s.get("active", True)]
 
 
+# ────────────────────────── объявления от владельцев ──────────────────────────
+def save_owner_listing(user, text: str) -> dict:
+    """Объявление от владельца → тот же raw_post, что у Telegram/Facebook-сборщиков.
+
+    Кладём прямо в dumps: дальше общий путь (парсер → нормализация → витрина),
+    отдельной ветки для «своих» не заводим. Контакт автора храним как ссылку
+    на его Telegram — это то, что владелец сам просит показать, а не собранные
+    нами персданные (см. docs/legal-pdpa.md).
+    """
+    ts = datetime.now(timezone.utc)
+    handle = getattr(user, "username", None)
+    post = {
+        "source": "owner",
+        "source_url": f"https://t.me/{handle}" if handle else "",
+        "external_id": f"owner/{user.id}-{int(ts.timestamp())}",
+        "posted_at": ts.isoformat(),
+        "raw_text": text.strip(),
+        "owner_name": getattr(user, "first_name", "") or "",
+    }
+    OWNER_DUMP.parent.mkdir(parents=True, exist_ok=True)
+    with open(OWNER_DUMP, "a", encoding="utf-8") as f:
+        f.write(json.dumps(post, ensure_ascii=False) + "\n")
+        f.flush()  # пайплайн сборки читает конкурентно
+    return post
+
+
+def admin_ids() -> list[int]:
+    raw = os.getenv("SABAISTAY_ADMIN_IDS", "")
+    return [int(x) for x in re.findall(r"\d+", raw)]
+
+
 # ────────────────────────── рассылка новинок ──────────────────────────
 async def notify_new_listings(bot, new_listings: list[dict]) -> int:
     """Пайплайн зовёт это на свежей пачке объявлений. instant-подписки — пуш сразу; digest — в очередь."""
@@ -286,7 +324,8 @@ def run() -> None:
         sys.exit("Нет SABAISTAY_BOT_TOKEN. Создай бота у @BotFather. Офлайн-проверка: --demo")
     try:
         from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-        from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+        from telegram.ext import (Application, CallbackQueryHandler, CommandHandler,
+                                  ContextTypes, MessageHandler, filters)
     except ImportError:
         sys.exit("Нужен пакет: pip install python-telegram-bot")
 
@@ -391,14 +430,87 @@ def run() -> None:
         save_subs(subs)
         await update.message.reply_text("Подписка убрана.")
 
+    async def add_cmd(update: "Update", ctx: "ContextTypes.DEFAULT_TYPE"):
+        """Владелец сдаёт жильё. Текст может прийти сразу («/add дом ...») или следующим
+        сообщением — второй путь удобнее с телефона, туда обычно вставляют готовый текст."""
+        text = " ".join(ctx.args).strip() if ctx.args else ""
+        if text:
+            await _store_and_ack(update, ctx, text)
+            return
+        ctx.user_data["awaiting_listing"] = True
+        await update.message.reply_text(
+            "Пришли объявление одним сообщением — как пишешь его в группе.\n\n"
+            "Чтобы попало в поиск, укажи хотя бы:\n"
+            "• район (Шри Тану, Хаад Рин, Чалоклам…)\n"
+            "• цену и за что — в месяц или за ночь\n"
+            "• сколько спален\n"
+            "• как связаться\n\n"
+            "Фото пока не принимаю — только текст. Отменить: /cancel"
+        )
+
+    async def cancel_cmd(update: "Update", ctx: "ContextTypes.DEFAULT_TYPE"):
+        ctx.user_data.pop("awaiting_listing", None)
+        await update.message.reply_text("Отменил.")
+
+    async def _store_and_ack(update: "Update", ctx: "ContextTypes.DEFAULT_TYPE", text: str):
+        if len(text) < MIN_LISTING_LEN:
+            await update.message.reply_text(
+                "Коротковато для объявления — добавь район, цену и число спален, "
+                "иначе поиск не сможет его правильно разложить."
+            )
+            return
+        post = save_owner_listing(update.effective_user, text)
+        ctx.user_data.pop("awaiting_listing", None)
+        await update.message.reply_text(
+            "✅ Принял, спасибо. Объявление появится на витрине при ближайшем обновлении "
+            "(обычно в течение нескольких часов).\n\n"
+            "Если что-то поменяется — напиши, поправлю."
+        )
+        # Админу — чтобы поймать мусор и вообще видеть, что люди пишут
+        who = update.effective_user
+        handle = f"@{who.username}" if who.username else f"id{who.id}"
+        for aid in admin_ids():
+            try:
+                await ctx.bot.send_message(
+                    aid,
+                    f"📬 Новое объявление от {handle}:\n\n{text[:900]}\n\n"
+                    f"external_id: <code>{post['external_id']}</code>",
+                    parse_mode="HTML",
+                )
+            except Exception:  # noqa: BLE001 — уведомление админа не должно ронять приём
+                pass
+
+    async def on_text(update: "Update", ctx: "ContextTypes.DEFAULT_TYPE"):
+        """Свободный текст: либо объявление после /add, либо запрос на подписку."""
+        text = (update.message.text or "").strip()
+        if ctx.user_data.get("awaiting_listing"):
+            await _store_and_ack(update, ctx, text)
+            return
+        crit = parse_query(text)
+        if crit:
+            add_sub(update.effective_user.id, crit)
+            await update.message.reply_text(
+                f"✅ Подписка создана:\n<b>{describe(crit)}</b>\nНапишу, как появится подходящее.",
+                parse_mode="HTML",
+            )
+        else:
+            await update.message.reply_text(
+                "Не понял. Опиши, что ищешь («сри тану, до 30к, 2 спальни»), "
+                "или /add — если сам сдаёшь жильё."
+            )
+
     app = Application.builder().token(token).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("help", start))
     app.add_handler(CommandHandler("new", new_cmd))
+    app.add_handler(CommandHandler("add", add_cmd))
+    app.add_handler(CommandHandler("cancel", cancel_cmd))
     app.add_handler(CommandHandler("subscribe", subscribe))
     app.add_handler(CommandHandler("myfilters", myfilters))
     app.add_handler(CommandHandler("unsubscribe", unsubscribe))
     app.add_handler(CallbackQueryHandler(on_build, pattern=r"^b\|"))
+    # Свободный текст — последним: команды разбираются выше, сюда падает всё остальное
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, on_text))
     print("Бот запущен (polling).", file=sys.stderr)
     app.run_polling()
 

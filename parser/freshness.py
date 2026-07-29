@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from datetime import date
 
+HOT_DAYS = 1          # ≤ — «сегодня/вчера», самое ценное: такое ещё точно не сдали
 FRESH_DAYS = 7        # ≤ — «свежее»
 RECENT_DAYS = 60      # ≤ — «N дней назад»
 EXPIRE_DAYS = 90      # > — считаем неактуальным (auto-expire)
@@ -50,9 +51,13 @@ def assess(posted_at, status_hint: str | None = None, now=None) -> dict:
     age = max(0, (today - posted).days)
     if age > EXPIRE_DAYS:
         return {"status": "expired", "age_days": age, "label": "🔴 неактуально", "cls": "stale", "stale": True}
+    # Отдельный класс для «сегодня/вчера»: на Пхангане хороший вариант уходит за часы,
+    # и разница между «вчера» и «неделю назад» для ищущего важнее всех остальных полей.
+    if age <= HOT_DAYS:
+        return {"status": "active", "age_days": age, "label": "⚡ сегодня" if age == 0 else "⚡ вчера",
+                "cls": "hot", "stale": False}
     if age <= FRESH_DAYS:
-        label = "сегодня" if age == 0 else ("вчера" if age == 1 else "🟢 свежее")
-        return {"status": "active", "age_days": age, "label": label, "cls": "fresh", "stale": False}
+        return {"status": "active", "age_days": age, "label": f"🟢 {age} дн. назад", "cls": "fresh", "stale": False}
     if age <= RECENT_DAYS:
         return {"status": "active", "age_days": age, "label": f"{age} дн. назад", "cls": "recent", "stale": False}
     weeks = round(age / 7)
@@ -63,8 +68,9 @@ def assess(posted_at, status_hint: str | None = None, now=None) -> dict:
 def _selftest() -> None:
     now = date(2025, 8, 1)
     cases = [
-        ("2025-08-01", None, "active", "fresh"),
-        ("2025-07-31", None, "active", "fresh"),      # вчера
+        ("2025-08-01", None, "active", "hot"),        # сегодня
+        ("2025-07-31", None, "active", "hot"),        # вчера
+        ("2025-07-28", None, "active", "fresh"),      # 4 дня
         ("2025-07-20", None, "active", "recent"),     # 12 дней
         ("2025-07-01", None, "active", "recent"),     # 31 дн. (RECENT_DAYS=60)
         ("2025-05-01", None, "expired", "stale"),     # 92 дня → expired

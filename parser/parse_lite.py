@@ -32,10 +32,25 @@ _SPAM = re.compile(
     re.IGNORECASE,
 )
 
+# Не жильё в аренду, хотя по форме похоже: реклама отелей и хостелов, инвест-предложения,
+# прокат снаряжения. Такие посты идут в каналы по расписанию и в базе оказываются десятками
+# копий — четверть «объявлений» была именно ими. Признаки подобраны так, чтобы не задеть
+# обычные посты: живой человек, сдающий дом, не пишет «12 категорий номеров» и «завтрак
+# по требованию». Слова «отель» и «resort» намеренно НЕ в списке — они часто встречаются
+# в нормальных объявлениях («дом на территории резорта»).
+_NOT_HOUSING = re.compile(
+    r"инвестор|партнерств|партнёрств|под\s+залог\s+документов|"
+    r"\bхостел|\bhostel\b|категори\w*\s+номеров|номер\w*\s+из\s+наших|"
+    r"завтрак\s+по\s+требованию|"
+    r"\bкаяк|\bsup\b|сап[\s-]?серф|байдарк",
+    re.IGNORECASE,
+)
+
 # ── цена ─────────────────────────────────────────────────────────────────────
 # "35000 per month", "35,000/month", "35k/month", "35 000 ฿", "15 per month" (отсекаем < 1000)
 _PRICE = re.compile(
-    r"(\d[\d\s,]*)(?:\s*k)?\s*(?:per\s+month|/month|฿?\s*/\s*month|thb\s*/\s*month|baht\s*/\s*month|в\s+месяц|/\s*мес(?:яц)?|\s+в\s+мес(?:яц)?)",
+    r"(\d[\d\s,]*)(?:\s*k)?\s*(?:฿|thb|baht|бат)?\s*"
+    r"(?:per\s+month|/month|monthly|/\s*month|в\s+месяц|/\s*мес(?:яц)?|\s+в\s+мес(?:яц)?)",
     re.IGNORECASE,
 )
 _PRICE_SHORT = re.compile(
@@ -43,16 +58,105 @@ _PRICE_SHORT = re.compile(
     re.IGNORECASE,
 )
 _PRICE_K = re.compile(r"(\d+(?:\.\d+)?)k\s*(?:/\s*month|per\s+month)?", re.IGNORECASE)
-_NIGHT = re.compile(r"(\d[\d\s,]*)\s*(?:฿|thb|бат)?\s*(?:per\s+night|/night|a\s+night|per\s+day|/day|a\s+day|daily|nightly|в\s+сутки|/\s*сутки|сутки|в\s+день|за\s+ночь|за\s+сутки)", re.IGNORECASE)
+# В списке валют не хватало «baht» (было только thb/฿/бат), из-за чего самая частая
+# английская форма «1500 baht per night» не распознавалась как посуточная вовсе.
+_NIGHT = re.compile(r"(\d[\d\s,]*)\s*(?:฿|thb|baht|бат)?\s*(?:per\s+night|/night|a\s+night|per\s+day|/day|a\s+day|daily|nightly|в\s+сутки|/\s*сутки|сутки|в\s+день|за\s+ночь|за\s+сутки)", re.IGNORECASE)
 # Русские форматы: "25 000бат", "20 000 бат", "18 тыс бат", "18тыс"
 _PRICE_RU_TYS = re.compile(r"(\d+(?:[.,]\d+)?)\s*тыс\.?\s*(?:бат|baht|฿)?", re.IGNORECASE)
 _PRICE_RU_BAT = re.compile(r"(\d[\d\s]{2,})\s*бат\b", re.IGNORECASE)
-# Контекстный: "месяц N бат/тыс" или "N бат ... месяц"
+# Латинская запись валюты вплотную к числу — «45 000thb», «60000 baht». Без периода:
+# он достраивается по величине суммы (_guess_period).
+_PRICE_THB = re.compile(r"(\d[\d\s]{2,})\s*(?:thb|baht|฿)\b", re.IGNORECASE)
+# Контекстный: "месяц N бат/тыс" или "N бат ... месяц".
+# Внутри — [^\S\n] вместо \s: перевод строки склеивал цену одной строки со словом
+# «Месяц» со следующей. Прайс-лист «Неделя - 7000бат ⏎ Месяц - 25 000 бат» из-за
+# этого превращался в «7 000 ฿/мес» — дом показывался втрое дешевле, чем сдаётся.
 _PRICE_RU_MONTH_CTX = re.compile(
-    r"(?:месяц|мес\.?)\s*(?:от\s+)?(\d[\d\s]*(?:тыс\.?)?)\s*(?:бат|baht|฿)?|"
-    r"(\d[\d\s]*)\s*(?:тыс\.?)?\s*(?:бат|baht|฿)\s*/?\s*(?:месяц|мес\.?|month)",
+    # «мес. ⏎ 25 000» — перенос здесь безобиден: метка стоит ПЕРЕД ценой,
+    # и склеить соседнюю строку прайс-листа она не может
+    r"(?:месяц|мес\.?)[^\S\n]*(?:\n[^\S\n]*){0,2}(?:от\s+)?(\d[\d\s]*(?:тыс\.?)?)[^\S\n]*(?:бат|baht|฿)?|"
+    r"(\d[\d\s]*)[^\S\n]*(?:тыс\.?)?[^\S\n]*(?:бат|baht|฿)[^\S\n]*/?[^\S\n]*(?:месяц|мес\.?|month)",
     re.IGNORECASE,
 )
+
+# Прайс-лист с меткой ПЕРЕД ценой — очень частый формат в объявлениях острова:
+#     Сутки - 1000бат
+#     Неделя - 7000бат
+#     Месяц - 25 000 бат
+# Такие метки надёжнее всех прочих признаков: период назван прямым текстом.
+# Когда в посте есть и суточная, и месячная цена, витрина должна брать месячную —
+# она про долгую аренду, а не про отельные сутки.
+_PRICE_LABELED = re.compile(
+    r"\b(месяц|мес|month|monthly|неделя|нед|week|weekly|сутки|день|ночь|night|day|daily)\b"
+    # между меткой и ценой часто стоит уточнение в скобках («Цена за месяц (март) — 80 000»)
+    # или перенос строки («3 мес. ⏎ 25 000»). Метка здесь идёт ПЕРЕД ценой, поэтому
+    # перенос не грозит склейкой соседних строк прайс-листа.
+    r"[^\S\n]*(?:\([^)\n]{0,24}\))?[^\S\n]*(?:от|from)?[^\S\n]*[-–—:.,]{0,2}[^\S\n]*(?:\n[^\S\n]*){0,2}"
+    r"(\d[\d\s]*(?:[.,]\d{3})?)[^\S\n]*(тыс\.?|k\b)?[^\S\n]*(?:฿|thb|baht|бат|б)?",
+    re.IGNORECASE,
+)
+# Признак, что метка периода — хвост предыдущей цены («25 000 per month», «1500 бат в сутки»),
+# а не заголовок следующей. Перевод строки намеренно запрещён: через строку это уже
+# отдельная позиция прайс-листа.
+_PRICE_TAIL_LABEL = re.compile(
+    r"\d[\d\s]*(?:฿|thb|baht|бат|б)?[^\S\n]*(?:per|/|за|в)[^\S\n]*$",
+    re.IGNORECASE,
+)
+_LABEL_PERIOD = {
+    "месяц": "month", "мес": "month", "month": "month", "monthly": "month",
+    "неделя": "week", "нед": "week", "week": "week", "weekly": "week",
+    "сутки": "night", "день": "night", "ночь": "night",
+    "night": "night", "day": "night", "daily": "night",
+}
+
+
+def _labeled_prices(text: str) -> dict[str, float]:
+    """Цены из прайс-листа вида «Месяц - 25 000», сгруппированные по периоду.
+
+    Берём первое вхождение каждого периода: дальше по тексту обычно идут цены
+    на другие объекты («также есть виллы от 30 000») или на технику.
+    """
+    out: dict[str, float] = {}
+    for m in _PRICE_LABELED.finditer(text):
+        label, raw, mult = m.group(1), m.group(2), m.group(3)
+        period = _LABEL_PERIOD.get(label.lower().rstrip("."))
+        if not period or period in out:
+            continue
+        # «25000 per month 6000 security deposit»: метка описывает цену СЛЕВА, а справа
+        # стоит депозит. Отличаем такой хвост по предлогу вплотную к метке (per/в/за//):
+        # в прайс-листе «... 5 500 бат ⏎ Месяц - 20 000» его нет, там метка своя.
+        if _PRICE_TAIL_LABEL.search(text[max(0, m.start() - 16):m.start()]):
+            continue
+        try:
+            value = float(re.sub(r"[\s,.]", "", raw))
+        except ValueError:
+            continue
+        if mult:                       # «Месяц - 38 тыс бат» / «Month - 38k»
+            value *= 1000
+        if value >= 500:
+            out[period] = value
+    return out
+
+
+# Хвост поста, где владелец перечисляет ДРУГИЕ свои объекты: «также доступны виллы
+# от 30 000», «есть ещё домики по 20 000». Их цены к текущему объявлению отношения не
+# имеют, но стоят ближе к явному «/мес» и потому перебивали основную цену — вилла за
+# 45 000 ฿ показывалась на витрине за 30 000 ฿. Для разбора цены хвост отрезаем.
+_OTHER_OFFERS = re.compile(
+    r"(?:^|\n|[.!?]\s*)\s*(?:✅\s*)?(?:а\s+)?"
+    r"(?:так\s*же\s+есть|"
+    r"также\s+(?:доступн|есть|сдаю|имеются)|"
+    r"(?:есть|остал(?:о|и)сь|имеются)\s+(?:ещё|еще|также|другие)|"
+    r"другие\s+(?:виллы|дома|варианты|объекты)|"
+    r"other\s+(?:villas|houses|options)\s+available)",
+    re.IGNORECASE,
+)
+
+
+def _main_offer(text: str) -> str:
+    """Текст без перечисления других объектов владельца."""
+    m = _OTHER_OFFERS.search(text)
+    return text[:m.start()] if m and m.start() > 60 else text
 
 
 # Цена без явного «в месяц»/«за ночь» — половина объявлений. Оставлять их без периода
@@ -69,7 +173,31 @@ def _guess_period(value: float) -> str:
 
 
 def _parse_price(text: str) -> tuple[float | None, str]:
-    """Возвращает (price_amount, price_period)."""
+    """Возвращает (price_amount, price_period).
+
+    Порядок веток задаёт приоритет: сначала явно помеченная месячная цена, затем
+    прочие месячные признаки, и только потом посуточные. Если в посте есть обе
+    цены («сутки 1 500, месяц 25 000»), витрине нужна месячная — она про долгую
+    аренду. Самые «слепые» паттерны (любое число рядом со словом «бат») стоят
+    последними, чтобы не перебивать явные указания периода.
+    """
+    text = _main_offer(text)
+    labeled = _labeled_prices(text)
+    if "month" in labeled:
+        return labeled["month"], "month"
+
+    # помесячно — явный per month / в месяц (выше посуточного: если названы обе цены,
+    # витрине нужна месячная)
+    m = _PRICE.search(text)
+    if m:
+        raw = re.sub(r"[\s,]", "", m.group(1))
+        try:
+            v = float(raw)
+            if v >= 1000:
+                return v, "month"
+        except ValueError:
+            pass
+
     # посуточно
     m = _NIGHT.search(text)
     if m:
@@ -83,17 +211,6 @@ def _parse_price(text: str) -> tuple[float | None, str]:
         v = float(m.group(1)) * 1000
         if v >= 1000:
             return v, "month"
-
-    # помесячно — явный per month / в месяц
-    m = _PRICE.search(text)
-    if m:
-        raw = re.sub(r"[\s,]", "", m.group(1))
-        try:
-            v = float(raw)
-            if v >= 1000:
-                return v, "month"
-        except ValueError:
-            pass
 
     # помесячно — контекст "месяц N бат"
     m = _PRICE_RU_MONTH_CTX.search(text)
@@ -109,6 +226,14 @@ def _parse_price(text: str) -> tuple[float | None, str]:
                     return v, "month"
             except ValueError:
                 pass
+
+    # Прайс-лист без месячной строки — берём суточную/недельную. Стоит выше «слепых»
+    # паттернов ниже: там любое число рядом со словом «бат» уходит в догадку о периоде,
+    # а здесь период назван прямым текстом.
+    if "night" in labeled:
+        return labeled["night"], "night"
+    if "week" in labeled:
+        return labeled["week"], "week"
 
     # помесячно — число с разделителем тысяч
     m = _PRICE_SHORT.search(text)
@@ -133,6 +258,16 @@ def _parse_price(text: str) -> tuple[float | None, str]:
 
     # русская цена "25 000бат" / "25 000 бат"
     m = _PRICE_RU_BAT.search(text)
+    if m:
+        try:
+            v = float(re.sub(r"[\s,]", "", m.group(1)))
+            if v >= 1000:
+                return v, _guess_period(v)
+        except ValueError:
+            pass
+
+    # цена в латинской записи валюты без периода: "45 000thb", "60000 baht"
+    m = _PRICE_THB.search(text)
     if m:
         try:
             v = float(re.sub(r"[\s,]", "", m.group(1)))
@@ -315,13 +450,49 @@ def _parse_language(text: str) -> str:
 
 
 # ── статус (rented/active) ───────────────────────────────────────────────────
+# Пометка «уже сдано» в самом посте. В Telegram такие правки редки (объявление
+# чаще просто удаляют), но в группах Facebook приписка «RENTED»/«сдан» — норма,
+# и без неё карточка живёт на витрине ещё три месяца, до авто-протухания.
+# Формы подобраны узко, чтобы не задеть обычный текст: «сдаётся», «сдам» и ник
+# @arendaphangan под это правило не подпадают.
 _RENTED = re.compile(
-    r"\brented\b|\btaken\b|\bno longer\b|\bunavailable\b|\bсдано\b|\bзанято\b",
+    r"\brented(?:\s*out)?\b|\btaken\b|\bno longer\b|\bunavailable\b|"
+    r"\bсдан[оаы]?\b|\bсдал[иа]\b|уже\s+сдан|больше\s+не\s+сда|"
+    r"\bзанят[оа]\b|не\s?актуальн|\bзабронирован[оа]?\b",
     re.IGNORECASE,
 )
 
 def _parse_status(text: str) -> str:
     return "rented" if _RENTED.search(text) else "active"
+
+
+# ── площадь ──────────────────────────────────────────────────────────────────
+# Поле area_sqm раньше всегда оставалось пустым, хотя витрина умеет по нему
+# фильтровать, сортировать и считать цену за квадрат — три фильтра и три сортировки
+# просто ничего не находили.
+#
+# Главная ловушка — метры расстояния: «до пляжа 300 м» встречается чаще, чем площадь.
+# Поэтому засчитываем только явный квадрат («кв.м», «м²», «sqm») либо число в скобках
+# рядом со словом «метр» — так пишут именно про размер жилья: «Апартаменты (42 метра)».
+_AREA_SQ = re.compile(
+    r"(\d{2,4}(?:[.,]\d)?)\s*(?:кв\.?\s*м|м\s*кв|м²|м2|sq\.?\s*m|sqm|square\s+met)",
+    re.IGNORECASE,
+)
+_AREA_PAREN = re.compile(r"\(\s*(\d{2,4})\s*(?:метр\w*|м)\s*\)", re.IGNORECASE)
+
+_AREA_MIN, _AREA_MAX = 15, 1500  # меньше — комната в тексте про мебель, больше — участок
+
+
+def _parse_area(text: str) -> float | None:
+    for pattern in (_AREA_SQ, _AREA_PAREN):
+        for raw in pattern.findall(text):
+            try:
+                value = float(str(raw).replace(",", "."))
+            except ValueError:
+                continue
+            if _AREA_MIN <= value <= _AREA_MAX:
+                return value
+    return None
 
 
 # ── дата доступности ────────────────────────────────────────────────────────
@@ -488,7 +659,7 @@ _SUPPLY_SIGNAL = re.compile(
 
 
 def _is_listing(text: str, price: float | None, district: str | None) -> bool:
-    if _SPAM.search(text):
+    if _SPAM.search(text) or _NOT_HOUSING.search(text):
         return False
     if len(text.strip()) < 15:
         return False
@@ -527,6 +698,7 @@ def parse_post(post: dict) -> dict:
     district_raw, district_canon = _parse_district(text)
     amenities = _parse_amenities(text)
     status = _parse_status(text)
+    area = _parse_area(text)
     lang = _parse_language(text)
     contact = _parse_contact(text)
     available_from = _parse_available_from(text)
@@ -551,7 +723,7 @@ def parse_post(post: dict) -> dict:
             "bedrooms": beds,
             "bathrooms": None,
             "property_type": ptype,
-            "area_sqm": None,
+            "area_sqm": area,
             "amenities": amenities,
             "available_from": available_from,
             "available_to": None,

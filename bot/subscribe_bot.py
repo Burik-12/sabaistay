@@ -305,6 +305,44 @@ def draft_is_empty(draft: dict) -> bool:
     return list(draft_to_criteria(draft).keys()) == ["period"]
 
 
+# ─────────────── фильтр, пришедший ссылкой с витрины ───────────────
+# Кнопка «следить за поиском» на сайте ведёт сюда: t.me/<bot>?start=f<payload>.
+# Человек уже собрал фильтр на витрине — заставлять его повторять то же самое
+# кнопками в боте значит терять большую часть на ровном месте.
+#
+# Полезная нагрузка Telegram ограничена 64 символами и алфавитом [A-Za-z0-9_-],
+# поэтому поля склеены через «~» и упакованы в base64url:
+#     район ~ цена до ~ спален от ~ тип ~ удобства через точку ~ период
+def decode_web_filter(payload: str) -> dict:
+    """base64url с витрины → критерии подписки. При любой ошибке — пустой словарь."""
+    import base64
+    import binascii
+
+    try:
+        pad = "=" * (-len(payload) % 4)
+        raw = base64.urlsafe_b64decode(payload + pad).decode("utf-8")
+    except (binascii.Error, UnicodeDecodeError, ValueError):
+        return {}
+
+    parts = (raw.split("~") + [""] * 6)[:6]
+    district, price_max, bed_min, ptype, amenities, period = (p.strip() for p in parts)
+
+    crit: dict = {"period": period if period in ("month", "night") else "month"}
+    if district:
+        crit["district"] = district
+    if price_max.isdigit():
+        crit["price_max"] = int(price_max)
+    if bed_min.isdigit():
+        crit["bedrooms_min"] = int(bed_min)
+    if ptype:
+        crit["property_type"] = ptype
+    for amenity in amenities.split("."):
+        if amenity in ("pool", "wifi", "seaview", "kitchen", "aircon"):
+            crit[amenity] = True
+    # Только период — это «фильтр ни о чём»: подписка на весь остров без условий.
+    return crit if len(crit) > 1 else {}
+
+
 # ────────────────────────── Telegram-бот ──────────────────────────
 HELP = (
     "Я слежу за арендой на Пхангане и пишу, когда появляется дом под твой фильтр.\n\n"
@@ -387,6 +425,23 @@ def run() -> None:
         await q.edit_message_text(build_text(draft), parse_mode="HTML", reply_markup=kb_for(draft))
 
     async def start(update: "Update", ctx: "ContextTypes.DEFAULT_TYPE"):
+        # Пришли по кнопке «следить за поиском» с витрины — фильтр уже собран там,
+        # подписываем сразу. Переспрашивать то, что человек только что выбрал, —
+        # верный способ потерять его на первом же шаге.
+        payload = (ctx.args[0] if ctx.args else "")
+        if payload.startswith("f"):
+            crit = decode_web_filter(payload[1:])
+            if crit:
+                add_sub(update.effective_user.id, crit)
+                await update.message.reply_text(
+                    f"✅ Слежу за этим поиском:\n<b>{describe(crit)}</b>\n"
+                    "Напишу, как появится подходящее. /myfilters — список, /unsubscribe — убрать.",
+                    parse_mode="HTML")
+                return
+            await update.message.reply_text(
+                "Не смог разобрать фильтр из ссылки — давай соберём заново.\n" + HELP,
+                parse_mode="HTML")
+            return
         await update.message.reply_text("Привет! " + HELP, parse_mode="HTML")
 
     async def subscribe(update: "Update", ctx: "ContextTypes.DEFAULT_TYPE"):

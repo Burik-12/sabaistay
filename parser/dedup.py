@@ -29,6 +29,14 @@ _WORD = re.compile(r"[a-zа-я0-9]+", re.IGNORECASE)
 _STOP = {"дом", "вилла", "house", "villa", "br", "спальни", "спален", "комнаты", "the", "in", "на", "и"}
 
 
+_NORM_STRIP = re.compile(r"[^a-zа-я0-9]+", re.IGNORECASE)
+
+
+def _norm_text(text: str | None) -> str:
+    """Текст без пробелов, пунктуации и эмодзи — для поиска точных репостов."""
+    return _NORM_STRIP.sub("", (text or "").lower())
+
+
 def _tokens(title: str | None) -> set[str]:
     if not title:
         return set()
@@ -95,6 +103,21 @@ def dedup(rows: list[dict]) -> list[dict]:
     def union(x, y):
         parent[find(x)] = find(y)
 
+    # Слой 0 — точный повтор текста. Владельцы и агенты перепощивают одно объявление
+    # неделями, и без этого шага витрина показывает десяток одинаковых карточек: сравнение
+    # по фактам их не ловит, если у поста не распознан район (тогда сравнивать нечего).
+    # Сравниваем полный нормализованный текст, а не начало: у одного агента объявления
+    # часто начинаются одинаковым шаблоном, и по префиксу слиплись бы разные дома.
+    by_text: dict[str, int] = {}
+    for i, r in enumerate(rows):
+        norm = _norm_text(r.get("raw_text"))
+        if not norm or len(norm) < 40:      # короткие «сдам дом» слишком легко совпадают случайно
+            continue
+        if norm in by_text:
+            union(i, by_text[norm])
+        else:
+            by_text[norm] = i
+
     # блокинг по району: сравниваем только внутри одного канонического района (+ «без района» отдельно),
     # чтобы не гонять O(n²) по всей базе на больших объёмах.
     blocks: dict[str, list[int]] = {}
@@ -114,8 +137,12 @@ def dedup(rows: list[dict]) -> list[dict]:
     out = []
     for gid, members in enumerate(sorted(groups.values(), key=lambda m: -len(m)), 1):
         ms = [rows[i] for i in members]
+        # Представитель: сначала качество разбора, при равенстве — самый свежий пост.
+        # Для повторов это принципиально: объявление, перепощенное вчера, должно
+        # показываться как вчерашнее, а не по дате первой публикации месяц назад.
         rep = max(ms, key=lambda r: (r["parsed"].get("confidence") or 0,
-                                     sum(1 for v in r["parsed"].values() if v not in (None, "", "unknown"))))
+                                     sum(1 for v in r["parsed"].values() if v not in (None, "", "unknown")),
+                                     str(r.get("posted_at") or "")))
         out.append({
             "group_id": gid,
             "size": len(ms),

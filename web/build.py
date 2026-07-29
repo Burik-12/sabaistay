@@ -29,6 +29,10 @@ SITE_URL = os.getenv("SABAI_SITE_URL", "https://sabaistay.vercel.app")
 # Задать: SABAI_CONTACT_TG=nickname (без @) или правкой этой строки.
 CONTACT_TG = os.getenv("SABAI_CONTACT_TG", "").lstrip("@")
 CONTACT_EMAIL = os.getenv("SABAI_CONTACT_EMAIL", "")
+# Бот подписки — отдельно от контакта для связи: контакт может быть личным аккаунтом,
+# а сюда ведёт кнопка «следить за поиском» с полезной нагрузкой фильтра.
+# Пока переменная пуста, кнопка на витрине не рисуется вовсе — мёртвая ссылка хуже её отсутствия.
+BOT_USERNAME = os.getenv("SABAI_BOT_USERNAME", "").lstrip("@")
 
 # Лого-знак «закат над водой» для фавикона (тёмная бирюза — под светлую вкладку браузера). Канон — web/brand.svg.
 FAVICON_SVG = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
@@ -46,6 +50,7 @@ OUT = ROOT / "web" / "index.html"
 sys.path.insert(0, str(ROOT / "parser"))
 from benchmark import MarketBenchmark  # noqa: E402  — сравнение с рынком (Airbnb/Booking + медиана)
 from dedup import dedup               # noqa: E402  — склейка одного дома из FB+TG в одну карточку
+import freshness                     # noqa: E402  — пороги свежести отдаём в JS, чтобы не разъехались
 from freshness import assess         # noqa: E402  — возраст/статус (active/rented/expired)
 
 
@@ -96,6 +101,7 @@ def build_rows() -> tuple[list[dict], str | None]:
             "bedrooms": p["bedrooms"], "type": p["property_type"],
             "amenities": p["amenities"], "confidence": p["confidence"],
             "posted_at": rep.get("posted_at"), "fresh": fresh,
+            "rented": p.get("status_hint") == "rented",
             "lat": lat, "lng": lng,
             "bench": bench.compare(canon, p["price_amount"], p["price_period"], p["bedrooms"]),
             "contact": p.get("contact") or {},
@@ -119,6 +125,7 @@ def build_rows() -> tuple[list[dict], str | None]:
             "bedrooms": p.get("bedrooms"), "type": p.get("property_type"),
             "amenities": p.get("amenities") or {}, "confidence": p.get("confidence"),
             "posted_at": rec.get("posted_at"), "fresh": fresh,
+            "rented": p.get("status_hint") == "rented",
             "lat": lat, "lng": lng,
             "bench": bench.compare(canon, p.get("price_amount"), p.get("price_period"), p.get("bedrooms")),
             "contact": rec.get("contact") or p.get("contact") or {},
@@ -291,6 +298,9 @@ HTML = r"""<!DOCTYPE html>
   .multi{font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;background:var(--sea);border-radius:5px;padding:1px 6px;letter-spacing:.3px;white-space:nowrap}
   .draft{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#fff;background:var(--muted);border-radius:4px;padding:1px 5px;vertical-align:middle}
   .fresh-badge{font-family:var(--mono);font-size:10px;font-weight:700;border-radius:5px;padding:1px 6px;letter-spacing:.2px;white-space:nowrap;margin-left:auto}
+  /* «Сегодня/вчера» — единственное, что читается через всю карточку: на острове хороший
+     вариант уходит за часы, и возраст объявления важнее любого другого поля. */
+  .fb-hot{background:var(--coral);color:#fff;box-shadow:0 0 0 3px rgba(239,108,69,.16)}
   .fb-fresh{background:#dcefe1;color:#2f7d46}
   .fb-recent{background:#e9f0e2;color:#5d7a48}
   .fb-old{background:#f1ecdd;color:#8a763a}
@@ -298,6 +308,15 @@ HTML = r"""<!DOCTYPE html>
   .fb-unknown{background:#eceee7;color:var(--muted)}
   .card.stale{opacity:.58}
   .card.stale:hover,.card.stale.active{opacity:1}
+  /* Свежая карточка выделяется тёплым фоном и подсветкой, но НЕ левой границей —
+     она уже занята цветом типа жилья и потеряла бы своё значение. */
+  .card.hot{background:linear-gradient(100deg,#fff8f3 0%,var(--surface) 46%);box-shadow:0 2px 14px rgba(239,108,69,.13)}
+  .card.hot:hover,.card.hot.active{box-shadow:0 5px 20px rgba(239,108,69,.22)}
+  html[data-theme="dark"] .card.hot{background:linear-gradient(100deg,#2a1a12 0%,var(--surface) 46%)}
+  /* Пульс только у самого свежего и только один заход: постоянное мигание на списке
+     превращается в раздражитель и обесценивает сигнал. */
+  .anim .card.hot .fresh-badge{animation:pulse 1.1s ease-out 2}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(239,108,69,.16)}50%{box-shadow:0 0 0 7px rgba(239,108,69,.03)}}
   .sounding.dim{background:var(--muted);box-shadow:0 1px 3px rgba(0,0,0,.25)}
   .contact-btn{font-family:var(--mono);font-size:11px;color:#fff!important;background:var(--sea);border-radius:6px;padding:3px 9px;text-decoration:none!important;white-space:nowrap;letter-spacing:.2px}
   .contact-btn:hover{background:var(--coral)!important}
@@ -310,7 +329,10 @@ HTML = r"""<!DOCTYPE html>
   .empty{padding:42px 22px;text-align:center;color:var(--muted)}
   .empty .big{font-size:30px;display:block;margin-bottom:8px}
   .empty b{display:block;font-family:var(--disp);font-size:16px;color:var(--ink);margin-bottom:4px}
-  .empty .clear{margin-top:14px;font-family:var(--mono);font-size:12px;color:#fff;background:var(--coral);border:none;border-radius:8px;padding:8px 16px;cursor:pointer}
+  .empty .clear{margin-top:14px;font-family:var(--mono);font-size:12px;color:#fff;background:var(--coral);border:none;border-radius:8px;padding:8px 16px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;min-height:38px}
+  .empty-actions{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
+  .empty .clear.alt{background:var(--sea)}
+  .empty .clear.alt:hover{background:var(--sea-deep)}
 
   /* ── пины-«глубины» на карте ── */
   .sounding{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:11px;color:#fff;background:var(--coral);border:2px solid #fff;border-radius:11px;height:22px;padding:0 7px;box-shadow:0 1px 4px rgba(0,0,0,.3);white-space:nowrap;transition:transform .12s}
@@ -319,6 +341,33 @@ HTML = r"""<!DOCTYPE html>
   /* анимация появления только при первой отрисовке */
   .anim .card{animation:rise .4s ease both;animation-delay:calc(var(--i)*35ms)}
   @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  /* Смена фильтра: короткий проявляющий кадр вместо мгновенной подмены. Без него
+     список меняется рывком и непонятно, сработал ли фильтр вообще. Каскад по карточкам
+     здесь НЕ используем — при каждом нажатии клавиши в поиске это была бы рябь. */
+  #cards.refresh{animation:swap .2s ease}
+  @keyframes swap{from{opacity:.25;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+  /* ── быстрые пресеты над списком ── */
+  .presets{display:flex;gap:7px;padding:0 2px 11px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .presets::-webkit-scrollbar{display:none}
+  .preset{flex:none;font-family:var(--mono);font-size:11.5px;color:var(--sea);background:var(--surface);
+          border:1px solid var(--hair);border-radius:999px;padding:6px 13px;cursor:pointer;white-space:nowrap;
+          letter-spacing:.2px;transition:background .16s,color .16s,border-color .16s}
+  .preset:hover{border-color:var(--sea)}
+  .preset.on{background:var(--sea);border-color:var(--sea);color:#fff}
+  .preset.on:hover{background:var(--sea-deep)}
+  .preset-fresh.on{background:var(--coral);border-color:var(--coral)}
+  .pcount{font-weight:700;margin-left:5px;opacity:.75}
+  /* Ноль свежих — не повод прятать кнопку: это сам по себе честный сигнал о состоянии базы. */
+  .preset.pempty{opacity:.5}
+
+  /* ── «следить за поиском» ── */
+  .watch-btn{display:inline-flex;align-items:center;gap:6px;min-height:34px;margin:0 2px 12px;
+             font-family:var(--mono);font-size:12px;color:var(--sea);background:var(--surface);
+             border:1px dashed var(--sea);border-radius:8px;padding:0 14px;text-decoration:none;
+             letter-spacing:.2px;transition:background .16s,color .16s}
+  .watch-btn:hover{background:var(--sea);color:#fff;border-style:solid}
+  @media (max-width:760px){.presets{padding:0 16px 11px;margin:0 -16px}}
 
   /* ── toggle для мобильного фильтра ── */
   .filter-toggle{display:none;align-items:center;gap:6px;width:100%;padding:10px 18px;background:var(--surface);border:none;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:12px;color:var(--sea);cursor:pointer;letter-spacing:.4px;text-align:left}
@@ -573,6 +622,8 @@ html[data-theme="dark"] .vt-btn.active{background:var(--sea);color:#fff;border-c
   <label class="chk"><input type="checkbox" class="f-am" value="wifi"> 📶 wi-fi</label>
   <!-- Редкие фильтры прячем под «ещё»: на первом экране должен быть путь к жилью,
        а не панель управления. Раскрываются сами, если пришли по ссылке с ними. -->
+  <div class="f adv"><label for="f-age">Опубликовано</label>
+    <select id="f-age"><option value="">когда угодно</option><option value="1">сегодня и вчера</option><option value="3">за 3 дня</option><option value="7">за неделю</option><option value="30">за месяц</option></select></div>
   <div class="f adv"><label for="f-price-min">Цена от, ฿/мес</label>
     <input id="f-price-min" type="number" step="5000" placeholder="от 0"></div>
   <div class="f adv"><label for="f-sqm-min">Площадь от, м²</label>
@@ -610,7 +661,18 @@ html[data-theme="dark"] .vt-btn.active{background:var(--sea);color:#fff;border-c
 </div>
 
 <div class="wrap">
-  <div class="list"><div class="count" id="count"></div><div id="cards"></div>
+  <div class="list">
+    <!-- Пресеты выше счётчика: человек приходит с готовым намерением («что-нибудь свежее»,
+         «подешевле»), и один тап должен закрывать его, не открывая панель фильтров. -->
+    <div class="presets" id="presets" role="group" aria-label="Быстрый выбор">
+      <button class="preset preset-fresh" data-preset="fresh" type="button">⚡ свежие</button>
+      <button class="preset" data-preset="cheap" type="button">💰 до 15 000฿</button>
+      <button class="preset" data-preset="pool" type="button">🏊 бассейн</button>
+      <button class="preset" data-preset="family" type="button">🛏 2+ спальни</button>
+    </div>
+    <div class="count" id="count"></div>
+    __WATCH_BTN__
+    <div id="cards"></div>
     <div class="load-more-wrap" id="load-more-wrap" style="display:none">
       <button class="load-more-btn" id="load-more-btn">показать ещё</button>
     </div>
@@ -627,10 +689,54 @@ const DATA = __DATA__;
 const TYPE={villa:"вилла",house:"дом",room:"комната",studio:"студия",bungalow:"бунгало",apartment:"апартаменты",land:"участок",other:"жильё"};
 const AM={pool:"🏊",wifi:"📶",kitchen:"🍳",aircon:"❄️",seaview:"🌊"};
 const PERIOD={month:"/мес",night:"/ночь",sale:""};
+const AGE_LABELS={1:"сегодня и вчера",3:"за 3 дня",7:"за неделю",30:"за месяц"};
+const BOT_USERNAME='__BOT_USERNAME__';
+// Пресеты — тумблеры поверх обычных полей фильтра, а не отдельное состояние: иначе
+// пресет и панель фильтров начали бы противоречить друг другу и расходиться с URL.
+const PRESETS={
+  fresh: {el:()=>document.getElementById('f-age'),   on:'7'     },
+  cheap: {el:()=>document.getElementById('f-price'), on:'15000' },
+  family:{el:()=>document.getElementById('f-bed'),   on:'2'     },
+  pool:  {chk:()=>document.querySelector('.f-am[value="pool"]') },
+};
+function presetOn(p){return p.chk?p.chk().checked:p.el().value===p.on;}
+function presetSet(p,v){if(p.chk)p.chk().checked=v;else p.el().value=v?p.on:'';}
+function syncPresets(){
+  document.querySelectorAll('.preset').forEach(b=>{
+    const p=PRESETS[b.dataset.preset];if(!p)return;
+    const on=presetOn(p);
+    b.classList.toggle('on',on);
+    b.setAttribute('aria-pressed',String(on));
+  });
+}
 const SRC={telegram:"Telegram",fb_group:"Facebook",fb_marketplace:"Facebook",booking:"Booking",airbnb:"Airbnb",manual:"вручную",own:"SabaiStay"};
 const SRCICON={telegram:"📨",fb_group:"📘",fb_marketplace:"📘",booking:"🏨",airbnb:"🛏",own:"⭐"};
 const SNAP_ISO='__SNAPSHOT_ISO__';
 const SNAP_DATE=SNAP_ISO?new Date(SNAP_ISO):null;
+
+// ── свежесть считается В БРАУЗЕРЕ, а не запекается при сборке ───────────────
+// Страница статическая: она живёт в кэше и на Vercel до следующего успешного сбора.
+// Если зашить бейдж в момент генерации, объявление месячной давности так и будет
+// показывать «сегодня» — ровно та ложь, после которой агрегатору перестают верить.
+// Здесь считаем от реального времени пользователя; логика зеркалит parser/freshness.py,
+// пороги подставляются оттуда при сборке, чтобы они не разъехались между Python и JS.
+const FRESH_T={hot:__HOT_DAYS__,fresh:__FRESH_DAYS__,recent:__RECENT_DAYS__,expire:__EXPIRE_DAYS__};
+function assessFresh(postedAt,rented){
+  if(rented)return{status:'rented',age_days:null,label:'снято',cls:'stale',stale:true};
+  const d=postedAt?new Date(String(postedAt).slice(0,10)):null;
+  if(!d||isNaN(d))return{status:'active',age_days:null,label:'дата неизвестна',cls:'unknown',stale:false};
+  const n=new Date();
+  const age=Math.max(0,Math.floor((Date.UTC(n.getFullYear(),n.getMonth(),n.getDate())-d.getTime())/864e5));
+  if(age>FRESH_T.expire)return{status:'expired',age_days:age,label:'🔴 неактуально',cls:'stale',stale:true};
+  if(age<=FRESH_T.hot)return{status:'active',age_days:age,label:age===0?'⚡ сегодня':'⚡ вчера',cls:'hot',stale:false};
+  if(age<=FRESH_T.fresh)return{status:'active',age_days:age,label:'🟢 '+age+' дн. назад',cls:'fresh',stale:false};
+  if(age<=FRESH_T.recent)return{status:'active',age_days:age,label:age+' дн. назад',cls:'recent',stale:false};
+  return{status:'active',age_days:age,label:Math.round(age/7)+' нед. назад',cls:'old',stale:false};
+}
+DATA.forEach(d=>{d.fresh=assessFresh(d.posted_at,d.rented);});
+// Порядок по умолчанию — свежее сверху (свои featured остаются первыми).
+// Сборка уже отсортировала, но возраст мог поменяться, пока страница лежала.
+DATA.sort((a,b)=>(b.featured?1:0)-(a.featured?1:0)||String(b.posted_at||'').localeCompare(String(a.posted_at||'')));
 // Возраст данных показываем сами, до того как человек наткнётся на протухшее объявление.
 // Порог 3 дня: на Пхангане хороший вариант уходит за часы, неделя — это уже другая выдача.
 (function(){
@@ -700,6 +806,7 @@ function readF(){return{
   type:document.getElementById('f-type').value,
   amenities:Array.from(document.querySelectorAll('.f-am:checked')).map(e=>e.value),
   hideStale:document.getElementById('f-stale').checked,
+  maxAge:+document.getElementById('f-age').value||0,
   onlyAvail:document.getElementById('f-avail').checked,
   hideSeen:document.getElementById('f-hide-seen')?.checked||false,
   period:document.getElementById('f-period').value,
@@ -717,6 +824,9 @@ function passes(d,f){
   if(f.period==='night'&&d.period!=='night')return false;
   for(const a of f.amenities){if(!d.amenities[a])return false;}
   if(f.hideStale&&d.fresh.stale)return false;
+  // Возраст: объявления без даты сюда не проходят — «когда угодно» это допускает,
+  // а вот в срезе «за неделю» показывать неизвестно какой давности пост нечестно.
+  if(f.maxAge&&(d.fresh.age_days==null||d.fresh.age_days>f.maxAge))return false;
   if(f.onlyAvail&&!d.available_from)return false;
   if(f.hideSeen&&getSeen().has(d.id))return false;
   if(f.search){const hay=(d.title+' '+d.text+' '+(d.district||'')).toLowerCase();if(!hay.includes(f.search))return false;}
@@ -725,7 +835,7 @@ const amen=a=>Object.keys(AM).filter(k=>a[k]).map(k=>AM[k]).join(" ");
 const escHtml=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
 function makeCard(d,i,key,target){
-  const card=document.createElement('article'); card.className="card"+(d.fresh.stale?" stale":"")+(d.own?" own":""); card.style.setProperty('--i',i);
+  const card=document.createElement('article'); card.className="card"+(d.fresh.stale?" stale":"")+(d.fresh.cls==='hot'?" hot":"")+(d.own?" own":""); card.style.setProperty('--i',i);
   const fb='<span class="fresh-badge fb-'+d.fresh.cls+'">'+d.fresh.label+'</span>';
   const dtag=d.district?'<span class="dtag">📍 '+d.district+'</span>':'<span class="dtag nogeo">📍 район не указан</span>';
   const draft=d.confidence<0.6?' <span class="draft">черновик</span>':'';
@@ -861,7 +971,17 @@ function render(first){
     _noGeoView.forEach((d,i)=>makeCard(d,_geoView.length+i,null,inner));
     wrap.appendChild(btn); wrap.appendChild(inner); cards.appendChild(wrap);
   }
-  if(!shown)cards.innerHTML='<div class="empty"><span class="big">🧭</span><b>В этих координатах пусто</b>под такой фильтр объявлений нет — ослабь условия<button class="clear" onclick="resetFilters()">сбросить фильтр</button></div>';
+  // Пустая выдача — самый ценный момент для подписки: человек точно знает, чего хочет,
+  // и именно этого сейчас нет. Кнопка ведёт в бота с уже собранным фильтром.
+  if(!shown)cards.innerHTML='<div class="empty"><span class="big">🧭</span><b>В этих координатах пусто</b>'+
+    'под такой фильтр объявлений нет — ослабь условия или подпишись, и пришлём, как появится'+
+    '<div class="empty-actions"><button class="clear" onclick="resetFilters()">сбросить фильтр</button>'+
+    (BOT_USERNAME?'<a class="clear alt" id="empty-watch" target="_blank" rel="noopener">🔔 сообщить о новом</a>':'')+
+    '</div></div>';
+  if(!shown&&BOT_USERNAME){
+    const ew=document.getElementById('empty-watch');
+    if(ew)ew.href=watchHref(f);
+  }
   const word='объявлени'+_pluralObj(shown);
   // Сколько объявлений спрятано именно из-за протухания — человек должен понимать,
   // что «мало результатов» не значит «сайт пустой»: часть просто устарела.
@@ -870,6 +990,7 @@ function render(first){
              (staleHidden?' · <span class="stale-note">'+staleHidden+' устаревших скрыто</span>':'');
   const chips=[];
   if(f.district)chips.push(['district',f.district]);
+  if(f.maxAge)chips.push(['age',AGE_LABELS[f.maxAge]||('за '+f.maxAge+' дн.')]);
   if(f.period)chips.push(['period',f.period==='month'?'помесячно':'посуточно']);
   if(f.price)chips.push(['price','до '+priceFull(f.price)+'฿']);
   if(f.bed)chips.push(['bed','от '+f.bed+' спален']);
@@ -890,8 +1011,10 @@ function render(first){
     chips.map(c=>'<button class="chip" onclick="chipClear(\''+c[0]+'\')">'+c[1]+'<span class="x">✕</span></button>').join('');
   document.getElementById('count2').textContent=shown+'/'+DATA.length;
   writeHash(f);
-  const n=(f.district?1:0)+(f.period?1:0)+(f.sqmMin?1:0)+(f.sqmMax?1:0)+(f.priceMin?1:0)+(f.price?1:0)+(f.bed?1:0)+(f.type?1:0)+f.amenities.length+(f.hideStale?1:0)+(f.onlyAvail?1:0)+(f.search?1:0)+(f.hideSeen?1:0)+(sortV?1:0);
+  const n=(f.district?1:0)+(f.period?1:0)+(f.maxAge?1:0)+(f.sqmMin?1:0)+(f.sqmMax?1:0)+(f.priceMin?1:0)+(f.price?1:0)+(f.bed?1:0)+(f.type?1:0)+f.amenities.length+(f.hideStale?1:0)+(f.onlyAvail?1:0)+(f.search?1:0)+(f.hideSeen?1:0)+(sortV?1:0);
   const fb=document.getElementById('ftbadge');if(fb)fb.textContent=n?' · '+n:'';
+  syncPresets();
+  updateWatchLink(f,shown);
   renderHotOffers();
 }
 function chipClear(k){
@@ -906,6 +1029,7 @@ function chipClear(k){
 function writeHash(f){
   const p=new URLSearchParams();
   if(f.district)p.set('district',f.district);
+  if(f.maxAge)p.set('age',f.maxAge);
   if(f.period)p.set('period',f.period);
   if(f.sqmMin)p.set('sqmMin',f.sqmMin);
   if(f.sqmMax)p.set('sqmMax',f.sqmMax);
@@ -927,20 +1051,30 @@ function applyHash(){
   if(!location.hash)return;
   const p=new URLSearchParams(location.hash.slice(1));
   const set=(id,key)=>{const v=p.get(key);if(v!=null)document.getElementById(id).value=v;};
-  set('f-district','district');set('f-period','period');set('f-sqm-min','sqmMin');set('f-sqm-max','sqmMax');set('f-price-min','priceMin');set('f-price','price');set('f-bed','bed');set('f-type','type');set('f-sort','sort');set('f-search','q');
+  set('f-district','district');set('f-period','period');set('f-age','age');set('f-sqm-min','sqmMin');set('f-sqm-max','sqmMax');set('f-price-min','priceMin');set('f-price','price');set('f-bed','bed');set('f-type','type');set('f-sort','sort');set('f-search','q');
   const am=p.get('am'); if(am)am.split(',').forEach(v=>{const el=document.querySelector('.f-am[value="'+v+'"]');if(el)el.checked=true;});
   document.getElementById('f-stale').checked=p.get('stale')!=='0';  // дефолт — скрывать
   // Пришли по ссылке с редким фильтром — раскрываем «ещё», иначе человек не увидит,
   // почему выдача сужена.
-  if(p.get('priceMin')||p.get('sqmMin')||p.get('sqmMax')||p.get('avail')||p.get('stale')==='0'||
+  if(p.get('priceMin')||p.get('sqmMin')||p.get('sqmMax')||p.get('avail')||p.get('stale')==='0'||p.get('age')||
      (p.get('am')||'').split(',').some(a=>a==='kitchen'||a==='aircon'))
     document.querySelector('.filters').classList.add('adv-open');
   document.getElementById('f-avail').checked=p.get('avail')==='1';
   const _hs=document.getElementById('f-hide-seen');if(_hs)_hs.checked=p.get('seen')==='1';
 }
-function resetFilters(){['f-district','f-period','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=true;document.getElementById('f-avail').checked=false;const hs=document.getElementById('f-hide-seen');if(hs)hs.checked=false;render(false);}
-['f-district','f-period','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).addEventListener('input',()=>render(false)));
-document.querySelectorAll('.f-am, #f-stale, #f-avail, #f-hide-seen').forEach(e=>e.addEventListener('change',()=>render(false)));
+function resetFilters(){['f-district','f-period','f-age','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=true;document.getElementById('f-avail').checked=false;const hs=document.getElementById('f-hide-seen');if(hs)hs.checked=false;render(false);}
+// Изменение фильтра — это новая выдача, а не продолжение прежней: список надо вернуть
+// в начало, иначе человек остаётся в середине чужого скролла и думает, что ничего не нашлось.
+function applyFilter(){
+  const list=document.querySelector('.list');
+  if(list)list.scrollTop=0;
+  if(window.scrollY>0&&matchMedia('(max-width:760px)').matches)window.scrollTo({top:0,behavior:'smooth'});
+  render(false);
+  const cards=document.getElementById('cards');
+  if(cards){cards.classList.remove('refresh');void cards.offsetWidth;cards.classList.add('refresh');}
+}
+['f-district','f-period','f-age','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).addEventListener('input',applyFilter));
+document.querySelectorAll('.f-am, #f-stale, #f-avail, #f-hide-seen').forEach(e=>e.addEventListener('change',applyFilter));
 {const mb=document.getElementById('more-btn');mb.addEventListener('click',()=>{
   const open=document.querySelector('.filters').classList.toggle('adv-open');
   mb.setAttribute('aria-expanded',String(open));
@@ -974,18 +1108,73 @@ render(true);
   if(btn)btn.addEventListener('click',()=>renderPage(document.getElementById('cards')));
 })();
 
+// ── «следить за поиском»: фильтр уезжает в бота ссылкой ──────────────
+// Аренда на острове — не разовый заход: нужного варианта сегодня может не быть, а завтра
+// он появится и уйдёт за часы. Кнопка переносит уже собранный фильтр в подписку, чтобы
+// человеку не пришлось повторять выбор в переписке с ботом.
+// Полезная нагрузка Telegram — 64 символа из [A-Za-z0-9_-], поэтому поля склеиваем
+// через «~» и упаковываем в base64url.
+function watchPayload(f){
+  const parts=[f.district||'',f.price||'',f.bed||'',f.type||'',(f.amenities||[]).join('.'),f.period||'month'];
+  const b=btoa(String.fromCharCode(...new TextEncoder().encode(parts.join('~'))));
+  return b.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+// Текстовый поиск в подписку не переносится (бот сопоставляет поля, а не свободный текст),
+// поэтому «есть фильтр» считаем только по структурным полям.
+function hasWatchableFilter(f){return !!(f.district||f.price||f.bed||f.type||(f.amenities||[]).length);}
+function watchHref(f){
+  const payload=watchPayload(f);
+  // Полезная нагрузка длиннее лимита Telegram молча обрежется и приедет мусором —
+  // в таком случае ведём в бота без фильтра, он переспросит кнопками.
+  const ok=hasWatchableFilter(f)&&payload.length<=63;
+  return 'https://t.me/'+BOT_USERNAME+(ok?'?start=f'+payload:'');
+}
+function updateWatchLink(f,shown){
+  const el=document.getElementById('watch-btn');
+  if(!el)return;
+  el.href=watchHref(f);
+  el.textContent=hasWatchableFilter(f)
+    ? (shown?'🔔 следить за этим поиском':'🔔 сообщить, когда появится')
+    : '🔔 присылать новые объявления';
+}
+document.getElementById('presets')?.addEventListener('click',function(e){
+  const btn=e.target.closest('.preset');if(!btn)return;
+  const p=PRESETS[btn.dataset.preset];if(!p)return;
+  presetSet(p,!presetOn(p));
+  applyFilter();
+});
+// Сколько вообще есть свежего — цифра на кнопке. Если ноль, честнее показать это сразу,
+// чем дать нажать и получить пустой экран: значит сбор данных стоит, а не жильё кончилось.
+(function(){
+  const btn=document.querySelector('.preset-fresh');if(!btn)return;
+  const n=DATA.filter(d=>d.fresh.age_days!=null&&d.fresh.age_days<=FRESH_T.fresh).length;
+  btn.insertAdjacentHTML('beforeend','<span class="pcount">'+n+'</span>');
+  if(!n){btn.classList.add('pempty');btn.title='За неделю новых объявлений не появилось — сбор данных мог остановиться';}
+})();
+
 // ── горячие предложения ───────────────────────────────
 function renderHotOffers(){
   const sec=document.getElementById('hot-section');
   const cont=document.getElementById('hot-cards');
   if(!sec||!cont)return;
+  // Медиану считаем по всем живым объявлениям района — иначе на узкой выборке
+  // «свежих» она пляшет и любая цена оказывается «ниже рынка».
   const active=DATA.filter(d=>!d.fresh.stale&&d.price!=null&&(d.period==='month'||d.period==='unknown')&&d.district&&d.lat!=null);
   // медиана по районам
   const medByDistrict={};
   const byD={};
   active.forEach(d=>{(byD[d.district]=byD[d.district]||[]).push(d.price);});
   Object.entries(byD).forEach(([d,prices])=>{const s=[...prices].sort((a,b)=>a-b);const m=Math.floor(s.length/2);medByDistrict[d]=s.length%2?s[m]:Math.round((s[m-1]+s[m])/2);});
-  const hot=active.filter(d=>medByDistrict[d.district]&&d.price<medByDistrict[d.district]*0.85)
+  // В подборку берём только по-настоящему свежее: объявление трёхмесячной давности
+  // «дешевле рынка» ровно потому, что его давно сдали. Показывать такое под шапкой
+  // «горячие предложения» — обманывать в самом заметном месте страницы.
+  // Нижняя отсечка по цене отбраковывает ошибки разбора (суточная цена, принятая за
+  // месячную): дом за треть медианы района — это почти всегда не находка, а сбой.
+  const HOT_MAX_AGE=14;
+  const hot=active.filter(d=>d.fresh.age_days!=null&&d.fresh.age_days<=HOT_MAX_AGE
+      &&medByDistrict[d.district]
+      &&d.price<medByDistrict[d.district]*0.85
+      &&d.price>medByDistrict[d.district]*0.35)
     .sort((a,b)=>String(b.posted_at||'').localeCompare(String(a.posted_at||''))).slice(0,4);
   if(hot.length<2){sec.style.display='none';return;}
   sec.style.display='';
@@ -1279,6 +1468,12 @@ def _write_seo_files(snap_iso: str) -> None:
 def main() -> None:
     rows, snapshot = build_rows()
     snap_iso = snapshot[:10] if snapshot else ""
+    geo = sum(1 for r in rows if r["lat"] is not None)
+    stale = sum(1 for r in rows if r["fresh"]["stale"])
+    # Свежесть в браузере пересчитывается от реального времени (см. assessFresh), поэтому
+    # запечённые метки в данные не кладём: лишние ~35 КБ и риск, что кто-то станет им верить.
+    for r in rows:
+        r.pop("fresh", None)
     owner_cta = (
         '<div class="owner-cta"><b>Сдаёшь жильё на Пхангане?</b>'
         "<p>Добавим объявление на витрину бесплатно — его увидят те, кто уже ищет "
@@ -1287,17 +1482,25 @@ def main() -> None:
         if CONTACT_TG
         else ""
     )
+    watch_btn = (
+        '<a class="watch-btn" id="watch-btn" target="_blank" rel="noopener">🔔 следить за этим поиском</a>'
+        if BOT_USERNAME else ""
+    )
     html = (HTML.replace("__DATA__", json.dumps(rows, ensure_ascii=False))
                 .replace("__OWNER_CTA__", owner_cta)
+                .replace("__WATCH_BTN__", watch_btn)
+                .replace("__BOT_USERNAME__", BOT_USERNAME)
                 .replace("__SNAPSHOT__", _ru_date(snapshot))
                 .replace("__SNAPSHOT_ISO__", snap_iso)
                 .replace("__FAVICON__", quote(FAVICON_SVG))
+                .replace("__HOT_DAYS__", str(freshness.HOT_DAYS))
+                .replace("__FRESH_DAYS__", str(freshness.FRESH_DAYS))
+                .replace("__RECENT_DAYS__", str(freshness.RECENT_DAYS))
+                .replace("__EXPIRE_DAYS__", str(freshness.EXPIRE_DAYS))
                 .replace("__SITE__", SITE_URL))
     OUT.write_text(html, encoding="utf-8")
     _write_seo_files(snap_iso)
     _write_privacy(snap_iso)
-    geo = sum(1 for r in rows if r["lat"] is not None)
-    stale = sum(1 for r in rows if r["fresh"]["stale"])
     print(f"Собрано web/index.html: {len(rows)} объектов ({geo} на карте, {stale} неактуальных). "
           f"Снимок: {_ru_date(snapshot)}. Стиль: морская карта Пхангана.")
 

@@ -211,11 +211,58 @@ def render_input(template: dict, until_date: str, limit: int) -> dict:
     return walk(template)
 
 
+def probe(urls: list[str], token: str) -> int:
+    """Проверить группы по одной на маленьком лимите: отдаются ли посты вообще.
+
+    Снаружи Facebook закрыт наглухо — даже публичная группа не отдаёт ничего без входа,
+    поэтому «публичная или нет» не проверить ни curl'ом, ни глазами через инкогнито
+    с уверенностью. Единственный честный ответ даёт сам актор. Прогон на 5 постов
+    стоит копейки, а ошибка в конфиге иначе всплывёт через сутки пустых прогонов.
+    """
+    ok = 0
+    for url in urls:
+        clean = url.strip().rstrip("/").split("?")[0]
+        print(f"\n→ {clean}")
+        payload = {"startUrls": [{"url": clean}], "resultsLimit": 5}
+        try:
+            items = run_actor("apify~facebook-groups-scraper", payload, token)
+        except (urllib.error.HTTPError, urllib.error.URLError, RuntimeError, TimeoutError) as e:
+            print(f"   ❌ не отдала данные ({type(e).__name__}: {e})")
+            print("      закрытая группа, опечатка в адресе или актор её не тянет — не годится")
+            continue
+
+        posts = [p for p in (to_raw_post(i, "fb_group") for i in items) if p]
+        if not items:
+            print("   ❌ ноль постов — скорее всего группа закрытая, в сбор не берём")
+            continue
+
+        ok += 1
+        print(f"   ✅ отдала {len(items)} постов, распознано как текст: {len(posts)}")
+        for p in posts[:2]:
+            preview = " ".join((p.get("raw_text") or "").split())[:110]
+            print(f"      «{preview}»")
+        if len(posts) < len(items) * 0.5:
+            print("      ⚠️  много постов без текста — возможно, там одни фото без описания")
+    return ok
+
+
 def main() -> None:
     dry = "--dry-run" in sys.argv
     token = os.getenv("APIFY_TOKEN")
     if not token and not dry:
         sys.exit("Не задан APIFY_TOKEN — положи его в /home/rw/sabaistay-secrets/.env")
+
+    # Проверка групп-кандидатов до правки конфига:
+    #     python3 ingest/fb_apify.py --probe https://facebook.com/groups/xxx https://...
+    if "--probe" in sys.argv:
+        urls = [a for a in sys.argv[sys.argv.index("--probe") + 1:] if a.startswith("http")]
+        if not urls:
+            sys.exit("Укажи хотя бы один адрес группы после --probe")
+        good = probe(urls, token)
+        print(f"\nГодных групп: {good} из {len(urls)}")
+        if good:
+            print("Годные добавь в data/fb_sources.json → tasks[0].input.startUrls")
+        return
 
     cfg = json.loads(CONFIG.read_text(encoding="utf-8"))
     defaults = cfg.get("defaults", {})

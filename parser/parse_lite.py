@@ -55,6 +55,19 @@ _PRICE_RU_MONTH_CTX = re.compile(
 )
 
 
+# Цена без явного «в месяц»/«за ночь» — половина объявлений. Оставлять их без периода
+# плохо: они выпадают из фильтра «помесячно» и из сравнения с медианой района.
+# На Пхангане посуточные ставки почти не поднимаются выше 7–8к (замер по данным:
+# верхняя квартиль ночных — 7 000), а помесячные начинаются от ~10к. Поэтому цену
+# в диапазоне ниже считаем месячной; выше 200к — скорее продажа, туда не лезем.
+_MONTH_GUESS_MIN = 10_000
+_MONTH_GUESS_MAX = 200_000
+
+
+def _guess_period(value: float) -> str:
+    return "month" if _MONTH_GUESS_MIN <= value < _MONTH_GUESS_MAX else "unknown"
+
+
 def _parse_price(text: str) -> tuple[float | None, str]:
     """Возвращает (price_amount, price_period)."""
     # посуточно
@@ -114,7 +127,7 @@ def _parse_price(text: str) -> tuple[float | None, str]:
         try:
             v = float(re.sub(r"[\s,]", "", m.group(1))) * 1000
             if v >= 1000:
-                return v, "unknown"
+                return v, _guess_period(v)
         except ValueError:
             pass
 
@@ -124,7 +137,7 @@ def _parse_price(text: str) -> tuple[float | None, str]:
         try:
             v = float(re.sub(r"[\s,]", "", m.group(1)))
             if v >= 1000:
-                return v, "unknown"
+                return v, _guess_period(v)
         except ValueError:
             pass
 
@@ -132,20 +145,50 @@ def _parse_price(text: str) -> tuple[float | None, str]:
 
 
 # ── спальни ──────────────────────────────────────────────────────────────────
+# Между числом и «спальней» часто стоит прилагательное: «с 1 большой спальней».
+# «комнат» намеренно НЕ включаем: в объявлениях полно ванных, гостиных и игровых комнат.
 _BEDS = re.compile(
-    r"(\d+)\s*(?:bedroom|bed(?:room)?s?|bd|br|спал[еьни]+|комнат[аы]?)\b",
+    r"(\d+)\s*(?:-|х|x)?\s*(?:[а-яё]+\s+)?(?:bedroom|bed(?:room)?s?|bd|br|спал[а-яё]*)\b",
     re.IGNORECASE,
 )
 _STUDIO = re.compile(r"\bstudio\b|\bстудия\b", re.IGNORECASE)
+
+# «с двумя спальнями», «дом с одной спальней» — числительное словом.
+_BEDS_WORD_NUM = {
+    "одно": 1, "одной": 1, "одна": 1, "однa": 1,
+    "двух": 2, "двумя": 2, "две": 2, "два": 2, "дву": 2,
+    "трёх": 3, "трех": 3, "тремя": 3, "три": 3,
+    "четырёх": 4, "четырех": 4, "четырьмя": 4, "четыре": 4,
+    "пяти": 5, "пятью": 5, "пять": 5,
+}
+_BEDS_WORD = re.compile(
+    r"\b(одно|одной|одна|двух|двумя|две|два|дву|трёх|трех|тремя|три|"
+    r"четырёх|четырех|четырьмя|четыре|пяти|пятью|пять)\s*-?\s*(спал[а-яё]*)",
+    re.IGNORECASE,
+)
+
+# «двуспальная КРОВАТЬ» — это про мебель, а не про число спален. Самая частая ловушка
+# в объявлениях отелей и гестхаусов, где таких фраз по три штуки на пост.
+_BED_FURNITURE = re.compile(r"кроват|bed\s*(?:size|linen)|матрас", re.IGNORECASE)
 
 
 def _parse_beds(text: str) -> int | None:
     if _STUDIO.search(text):
         return 0
-    m = _BEDS.search(text)
-    if m:
+
+    # Цифрой. Пропускаем совпадения, за которыми идёт мебель («2х спальную кровать»).
+    for m in _BEDS.finditer(text):
+        if _BED_FURNITURE.search(text[m.end():m.end() + 24]):
+            continue
         v = int(m.group(1))
-        return v if v <= 20 else None
+        if v <= 20:
+            return v
+
+    # Числительным словом — с той же оговоркой про мебель.
+    for m in _BEDS_WORD.finditer(text):
+        if _BED_FURNITURE.search(text[m.end():m.end() + 24]):
+            continue
+        return _BEDS_WORD_NUM[m.group(1).lower()]
     return None
 
 

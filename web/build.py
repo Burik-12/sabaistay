@@ -23,10 +23,12 @@ from urllib.parse import quote
 # (переменной окружения или правкой этой строки).
 SITE_URL = os.getenv("SABAI_SITE_URL", "https://sabaistay.vercel.app")
 
-# Telegram-контакт для приёма объявлений от владельцев («Сдаёшь жильё?»).
-# Пока не задан — блок не рендерится: неработающая кнопка хуже её отсутствия.
+# Telegram-контакт для приёма объявлений от владельцев («Сдаёшь жильё?») и для просьб
+# об удалении. Пока не задан — блок на витрине не рендерится (неработающая кнопка хуже
+# её отсутствия), а на странице приватности остаётся пометка «подставить перед запуском».
 # Задать: SABAI_CONTACT_TG=nickname (без @) или правкой этой строки.
 CONTACT_TG = os.getenv("SABAI_CONTACT_TG", "").lstrip("@")
+CONTACT_EMAIL = os.getenv("SABAI_CONTACT_EMAIL", "")
 
 # Лого-знак «закат над водой» для фавикона (тёмная бирюза — под светлую вкладку браузера). Канон — web/brand.svg.
 FAVICON_SVG = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
@@ -1206,6 +1208,41 @@ def _ru_date(iso: str | None) -> str:
     return f"{int(d)} {months[int(m)]} {y}"
 
 
+def _write_privacy(snap_iso: str) -> None:
+    """web/privacy.src.html → web/privacy.html с подстановкой контактов.
+
+    Контакт задаётся один раз (SABAI_CONTACT_TG) и попадает и на витрину, и сюда —
+    иначе страница удаления живёт своей жизнью и легко остаётся с фиктивным адресом.
+    """
+    src = OUT.parent / "privacy.src.html"
+    if not src.exists():
+        return
+
+    parts = []
+    if CONTACT_TG:
+        parts.append(f'Telegram: <a href="https://t.me/{CONTACT_TG}">@{CONTACT_TG}</a>')
+    if CONTACT_EMAIL:
+        parts.append(f'✉️ <a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a>')
+
+    if parts:
+        block = " &nbsp;·&nbsp; ".join(parts)
+        todo = ""
+        inline = " или ".join(p.split(": ", 1)[-1] for p in parts) + "."
+    else:
+        block = "контакт появится здесь после запуска бота"
+        todo = ('<p class="todo">↑ Задать SABAI_CONTACT_TG (и при желании SABAI_CONTACT_EMAIL) '
+                'и пересобрать — контакт подставится и сюда, и на витрину.</p>')
+        inline = "см. блок выше."
+
+    html = (src.read_text(encoding="utf-8")
+            .replace("__CONTACT_BLOCK__", block)
+            .replace("__CONTACT_TODO__", todo)
+            .replace("__CONTACT_INLINE__", inline)
+            .replace("__UPDATED__", _ru_date(snap_iso) if snap_iso else "")
+            .replace("__SITE__", SITE_URL))
+    (OUT.parent / "privacy.html").write_text(html, encoding="utf-8")
+
+
 def _write_seo_files(snap_iso: str) -> None:
     """robots.txt + sitemap.xml рядом с index.html.
 
@@ -1249,6 +1286,7 @@ def main() -> None:
                 .replace("__SITE__", SITE_URL))
     OUT.write_text(html, encoding="utf-8")
     _write_seo_files(snap_iso)
+    _write_privacy(snap_iso)
     geo = sum(1 for r in rows if r["lat"] is not None)
     stale = sum(1 for r in rows if r["fresh"]["stale"])
     print(f"Собрано web/index.html: {len(rows)} объектов ({geo} на карте, {stale} неактуальных). "

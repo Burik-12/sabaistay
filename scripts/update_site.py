@@ -19,6 +19,9 @@ import json
 import os
 import subprocess
 import sys
+import urllib.error
+import urllib.parse
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -33,6 +36,8 @@ DATA_DIR = Path(os.getenv("SABAI_DATA_DIR") or (ROOT / "data"))
 DUMPS_DIR = DATA_DIR / "dumps"
 LISTINGS = ROOT / "data" / "sample_listings.json"
 NEW_BATCH = Path(os.getenv("SABAI_NEW_BATCH") or "/tmp/sabai_new_batch.json")
+STATE_PATH = DATA_DIR / "collector_state.json"   # сторож тишины: сколько прогонов без новых постов
+SILENCE_RUNS = 8                                 # таймер раз в 3 ч → ≈ сутки молчания
 
 
 def read_dumps() -> list[dict]:
@@ -115,6 +120,65 @@ def commit_push(n_listings: int) -> None:
     print("[push] не удалось после ретрая — оставляю коммит локально", file=sys.stderr)
 
 
+def alert(text: str) -> None:
+    """Пуш в Telegram. Те же переменные, что у FB-сборщика — один канал тревог."""
+    token = os.getenv("SABAI_ALERT_BOT_TOKEN")
+    chat = os.getenv("SABAI_ALERT_CHAT_ID")
+    print(f"ALERT: {text}", file=sys.stderr)
+    if not token or not chat:
+        return
+    try:
+        urllib.request.urlopen(
+            urllib.request.Request(
+                f"https://api.telegram.org/bot{token}/sendMessage",
+                data=urllib.parse.urlencode({"chat_id": chat, "text": f"SabaiStay: {text}"}).encode(),
+            ),
+            timeout=20,
+        )
+    except (urllib.error.URLError, OSError) as e:
+        print(f"[alert] не отправлен: {e}", file=sys.stderr)
+
+
+def check_silence(n_new: int) -> None:
+    """Сторож тишины: сбор, вставший молча, опаснее упавшего.
+
+    Витрина продолжает выглядеть рабочей, а объявления протухают — именно так проект
+    и простоял месяц со снимком от 27 июня. Считаем прогоны подряд без единого нового
+    поста; при достижении порога шлём тревогу и повторяем её не чаще раза в сутки,
+    чтобы не превратить сигнал в фон.
+    """
+    state = {}
+    if STATE_PATH.exists():
+        try:
+            state = json.loads(STATE_PATH.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            pass
+
+    now = datetime.now(timezone.utc)
+    if n_new:
+        state = {"empty_runs": 0, "last_new_at": now.isoformat()}
+    else:
+        state["empty_runs"] = int(state.get("empty_runs", 0)) + 1
+        empty = state["empty_runs"]
+        # Таймер ходит раз в 3 часа: 8 пустых прогонов ≈ сутки без единого объявления.
+        if empty >= SILENCE_RUNS:
+            last_alert = state.get("last_alert_at")
+            stale_alert = True
+            if last_alert:
+                try:
+                    stale_alert = (now - datetime.fromisoformat(last_alert)).total_seconds() > 86_400
+                except ValueError:
+                    pass
+            if stale_alert:
+                since = state.get("last_new_at", "неизвестно когда")
+                alert(f"нет новых объявлений {empty} прогонов подряд (последние были {since[:16]}). "
+                      "Проверь sabaistay-collector — возможно, отвалилась сессия Telegram.")
+                state["last_alert_at"] = now.isoformat()
+
+    STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Обновление витрины SabaiStay из dumps")
     ap.add_argument("--no-git", action="store_true", help="не коммитить/пушить (локальный прогон)")
@@ -124,6 +188,7 @@ def main() -> None:
     print(f"Прочитано {len(posts)} постов из {DUMPS_DIR}")
     n_new, new_listings = merge(posts)
     print(f"Новых записей: {n_new} (из них объявлений: {len(new_listings)})")
+    check_silence(n_new)
 
     build.main()  # → web/index.html
 

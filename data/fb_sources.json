@@ -17,14 +17,23 @@
       "enabled": true,
       "actor": "apify~facebook-groups-scraper",
       "source": "fb_group",
-      "note": "Только ПУБЛИЧНЫЕ группы — закрытые актор не умеет (проверено 29-07-2026).",
+      "note": "Только ПУБЛИЧНЫЕ группы — закрытые актор не умеет (проверено 29-07-2026, рейтинг 4.85).",
+      "note_money": [
+        "onlyPostsNewerThan — ключевая строка для счёта. Актор берёт деньги за КАЖДЫЙ",
+        "обработанный пост (~$2.60–5 за 1000), а не за новые. Без этого фильтра каждый",
+        "прогон перечитывал бы одни и те же 200 постов: 6 прогонов в сутки × 30 дней —",
+        "это 36 000 оплаченных постов в месяц вместо ~2 000. Разница почти в 20 раз.",
+        "URL-заглушки ниже ОБЯЗАТЕЛЬНО заменить на реальные группы (см. --probe)."
+      ],
       "input": {
         "startUrls": [
           { "url": "https://www.facebook.com/groups/phanganhouserent" },
           { "url": "https://www.facebook.com/groups/kohphanganrent" },
           { "url": "https://www.facebook.com/groups/phanganrentals" }
         ],
-        "resultsLimit": "{limit}"
+        "resultsLimit": "{limit}",
+        "onlyPostsNewerThan": "{until_date}",
+        "viewOption": "CHRONOLOGICAL"
       }
     },
     {

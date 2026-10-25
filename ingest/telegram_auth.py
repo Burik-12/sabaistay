@@ -17,10 +17,15 @@ SabaiStay — одноразовая авторизация Telethon-аккау�
     ssh root@rw-vps
     sudo -u rw env $(grep -v '^#' /home/rw/sabaistay-secrets/.env | xargs) \
         /home/rw/sabaistay/venv/bin/python /home/rw/sabaistay/ingest/telegram_auth.py
+
+Без терминала (код диктуют в чат) — в два вызова:
+    ... telegram_auth.py --send-code          # Telegram присылает код
+    ... telegram_auth.py --code 12345 [--password 2fa]
 """
 
 from __future__ import annotations
 
+import argparse
 import asyncio
 import os
 import sys
@@ -34,6 +39,7 @@ try:
         SessionPasswordNeededError,
         UsernameNotOccupiedError,
     )
+    from telethon.tl.functions.channels import JoinChannelRequest
 except ImportError:
     sys.exit("Нет telethon. Установи: venv/bin/pip install telethon")
 
@@ -48,7 +54,7 @@ def _require(name: str) -> str:
     return val
 
 
-async def main() -> None:
+async def main(args: argparse.Namespace) -> None:
     api_id = int(_require("TG_API_ID"))
     api_hash = _require("TG_API_HASH")
     session = _require("TG_SESSION")
@@ -63,6 +69,24 @@ async def main() -> None:
 
     print("→ Подключаюсь к Telegram…")
     await client.connect()
+
+    hash_file = Path(f"{session}.code_hash")
+    if not await client.is_user_authorized() and (args.send_code or args.code):
+        if not phone:
+            sys.exit("Не задан TG_PHONE — добавь его в .env (формат +66…)")
+        if args.send_code:
+            sent = await client.send_code_request(phone)
+            hash_file.write_text(sent.phone_code_hash)
+            print(f"→ Код отправлен на {phone}. Дальше: --code <код>")
+            await client.disconnect()
+            return
+        try:
+            await client.sign_in(phone, args.code, phone_code_hash=hash_file.read_text().strip())
+        except SessionPasswordNeededError:
+            if not args.password:
+                sys.exit("Включена двухфакторка — повтори с --code и --password")
+            await client.sign_in(password=args.password)
+        hash_file.unlink(missing_ok=True)
 
     if not await client.is_user_authorized():
         if not phone:
@@ -90,6 +114,8 @@ async def main() -> None:
             count = 0
             async for _ in client.iter_messages(entity, limit=1):
                 count += 1
+            # realtime-события приходят только из каналов, где аккаунт состоит
+            await client(JoinChannelRequest(entity))
             title = getattr(entity, "title", ch)
             status = "есть посты" if count else "пусто"
             print(f"   ✅ {ch:<20} {title[:34]:<36} {status}")
@@ -120,4 +146,8 @@ async def main() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[1])
+    ap.add_argument("--send-code", action="store_true", help="только запросить код")
+    ap.add_argument("--code", help="код из Telegram (после --send-code)")
+    ap.add_argument("--password", help="пароль двухфакторки, если включена")
+    asyncio.run(main(ap.parse_args()))

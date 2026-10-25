@@ -3,7 +3,7 @@
 SabaiStay — сборка витрины (demo). Визуальный стиль: «морская карта Пхангана».
 
 Читает data/sample_listings.json + data/districts.json и генерирует web/index.html:
-сплит-вид «карточки + карта Leaflet» с рабочим фильтром (район/цена/спальни/тип/бассейн).
+сплит-вид «карточки + карта Leaflet (подложка OpenFreeMap)» с фильтром-чипами и шторками.
 Данные ВШИТЫ в html (открывается из file:// без сервера). Без npm, без сети на сборку
 (Leaflet/тайлы/шрифты тянутся с CDN при открытии). Пересобрать:  python3 build.py
 """
@@ -55,6 +55,12 @@ from freshness import assess         # noqa: E402  — возраст/стату
 
 
 _THONG_SALA = (9.7117, 100.0036)  # пирс Тонгсала — точка отсчёта расстояний
+
+# Силуэт Пхангана для мини-плашки на карточке (вместо фото): viewBox 0..64, проекция
+# x=(lng-99.955)*361.29+5.806, y=(9.822-lat)*361.29+3 — та же формула в JS ставит точку района.
+ISLAND_PATH = ("M38.3 6.1 L44.5 8.8 L50.2 12.0 L53.5 21.2 L52.1 24.9 L54.9 30.5 L51.3 37.8 L49.9 46.0 "
+               "L48.8 53.6 L47.0 59.2 L42.7 57.2 L36.9 49.4 L28.2 46.2 L22.1 44.0 L14.5 40.6 L11.9 35.2 "
+               "L11.6 29.7 L9.1 19.6 L13.4 16.0 L14.5 11.7 L19.9 9.9 L24.2 14.9 L27.8 16.0 L31.5 12.0Z")
 
 
 def _haversine(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
@@ -147,7 +153,7 @@ HTML = r"""<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SabaiStay — аренда жилья на Ко Пхангане с фильтром и картой</title>
 <meta name="description" content="Все объявления об аренде на острове Ко Пханган из Telegram-каналов в одном месте — с нормальным фильтром по району, цене, спальням и удобствам, картой и сравнением с рынком.">
 <meta property="og:type" content="website">
@@ -156,563 +162,598 @@ HTML = r"""<!DOCTYPE html>
 <meta property="og:image" content="__SITE__/og.png">
 <meta property="og:url" content="__SITE__/">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#0d3b3a">
+<meta name="theme-color" content="#0a3742">
 <link rel="canonical" href="__SITE__/">
+<!-- Тема ставится до первой отрисовки: иначе тёмная тема мигает светлой. -->
+<script>
+(function(){var s=null;try{s=localStorage.getItem('sabaistay_theme')}catch(e){}
+var dark=s?s==='dark':matchMedia('(prefers-color-scheme: dark)').matches;
+document.documentElement.setAttribute('data-theme',dark?'dark':'light');})();
+</script>
 <!-- Vercel Web Analytics: без кук и персданных. Работает после включения тумблера
-     Analytics в дашборде проекта; пока он выключен — скрипт просто 404, это безвредно. -->
+     Analytics в дашборде проекта; пока он выключен — скрипт просто 404, это безвредно
+     (defer, ничего от него не зависит). -->
 <script defer src="/_vercel/insights/script.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 <!-- JS карты подключён в конце body: в <head> он блокировал отрисовку списка,
-     хотя список — это то, ради чего человек пришёл. Стили карты оставлены здесь,
-     чтобы она не мигала неоформленной. -->
+     хотя список — это то, ради чего человек пришёл. Подложка (MapLibre + OpenFreeMap)
+     догружается ещё позже — только когда карта реально на экране. -->
 <link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="icon" href="data:image/svg+xml,__FAVICON__">
-<!-- Шрифты не блокируют первый экран: грузим как print и переключаем на all, когда придут.
-     На мобильном интернете острова это разница между «сразу видно объявления» и белым
-     экраном на пару секунд. Пока шрифт не приехал, текст рисуется системным (font-display:swap). -->
+<!-- Шрифты не блокируют первый экран: грузим как print и переключаем на all, когда придут. -->
 <link rel="stylesheet" media="print" onload="this.media='all'"
-      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Space+Mono:wght@400;700&display=swap">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Space+Mono:wght@400;700&display=swap"></noscript>
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap"></noscript>
 <style>
+  /* ── токены (docs/redesign-brief.md, раздел 4) ── */
   :root{
-    --sea-deep:#0a3742; --sea:#0d5563; --paper:#eaeee6; --surface:#f7f9f3;
-    --land:#e4dcc4; --coral:#ef6c45; --coral-d:#d8552f; --ink:#0e2329;
-    --muted:#5d7077; --hair:#cbd4cc;
-    --sand:#e8d9b8;
+    --bg:#eef1ea; --surface:#fafbf7; --surface-2:#e4e9e1; --ink:#0e2329; --muted:#566a71;
+    --hair:#d3dbd3; --sea-deep:#0a3742; --sea:#0d5563; --on-sea:#fff;
+    --coral:#ef6c45; --coral-ink:#b9461f; --cta:#c4502a; --on-cta:#fff;
+    --fresh:#2f8f5b; --fresh-ink:#23774a; --fresh-bg:#e1f0e6;
+    --warn:#8a5a12; --warn-bg:#fbf1dc; --warn-hair:#ecd9ac; --stale:#8a9599;
+    --land:#e6e4d6; --scrim:rgb(6 26 32 / .45);
+    --shadow:0 1px 2px rgb(14 35 41 / .06); --shadow-h:0 4px 14px rgb(14 35 41 / .10);
+    --shadow-sheet:0 -8px 30px rgb(0 0 0 / .18); --shadow-pop:0 10px 34px rgb(14 35 41 / .18);
+    --ease:cubic-bezier(.2,.8,.2,1);
     --disp:"Baloo 2",system-ui,sans-serif;
-    --mono:"Space Mono",ui-monospace,monospace;
-    --body:system-ui,-apple-system,"Segoe UI",sans-serif;
+    --body:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:"Space Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+    --top-h:56px; --bar-h:56px;
+    color-scheme:light;
+  }
+  html[data-theme="dark"]{
+    --bg:#0b1a1f; --surface:#11252b; --surface-2:#173139; --ink:#e6efec; --muted:#9bb0b3;
+    --hair:#244047; --sea-deep:#071820; --sea:#5cc3c9; --on-sea:#06171c;
+    --coral:#ff8a63; --coral-ink:#ff9a76; --cta:#ff8a63; --on-cta:#0b1a1f;
+    --fresh:#5cc98b; --fresh-ink:#5cc98b; --fresh-bg:#15362a;
+    --warn:#e9c27a; --warn-bg:#2a2113; --warn-hair:#4a3a1c; --stale:#6f8186;
+    --land:#13262c; --scrim:rgb(0 0 0 / .55);
+    --shadow:0 1px 2px rgb(0 0 0 / .3); --shadow-h:0 4px 14px rgb(0 0 0 / .4);
+    --shadow-pop:0 10px 34px rgb(0 0 0 / .5);
+    color-scheme:dark;
   }
   *{box-sizing:border-box}
   html,body{margin:0}
-  /* полотно = остаток экрана: без магических чисел, шапка/фильтры любой высоты.
-     На десктопе скроллится список внутри .list, страница стоит; на мобиле (ниже
-     в медиазапросе) наоборот — страница растёт и скроллится целиком. */
-  body{font-family:var(--body);color:var(--ink);background:var(--paper);display:flex;flex-direction:column;height:100dvh;overflow:hidden}
+  body{font:400 14px/1.45 var(--body);color:var(--ink);background:var(--bg);
+       display:flex;flex-direction:column;height:100dvh;overflow:hidden;-webkit-font-smoothing:antialiased}
+  button,input,select{font:inherit;color:inherit}
+  button{cursor:pointer}
+  a{color:var(--sea)}
+  :focus-visible{outline:2px solid var(--sea);outline-offset:2px}
+  .num{font-family:var(--mono)}
+  .ico{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  [hidden]{display:none!important}
+  .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 
-  /* ── шапка: панель глубокого залива ── */
-  .top{background:linear-gradient(150deg,#062b34 0%,var(--sea-deep) 55%,#0d4754 100%);color:#eef4f2;padding:13px 22px 12px;border-bottom:3px solid var(--coral)}
-  .top .brand{display:flex;align-items:center;gap:7px 13px;flex-wrap:wrap}
-  .brandmark{width:30px;height:30px;flex:0 0 auto;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
-  .mark{font-family:var(--disp);font-weight:800;font-size:25px;letter-spacing:-.2px;color:#fff;line-height:1}
+  /* ── шапка: одна строка ── */
+  .top{height:var(--top-h);flex:none;display:flex;align-items:center;gap:12px;padding:0 20px;
+       background:var(--sea-deep);color:#eef4f2;position:relative;z-index:1200}
+  .brand{display:flex;align-items:center;gap:9px;text-decoration:none;color:#fff;flex:none}
+  .brandmark{width:30px;height:30px}
+  .mark{font-family:var(--disp);font-weight:800;font-size:23px;letter-spacing:-.2px;line-height:1}
   .mark .m2{color:var(--coral)}
-  .tagline{font-size:13px;color:#9fc0bd;max-width:none}
-  .coordbar{margin-left:auto;font-family:var(--mono);font-size:11px;color:#7fa6a4;letter-spacing:.5px;display:flex;gap:14px;align-items:center}
-  .compass{font-size:13px;color:var(--coral)}
-  .snap{color:#cfe0dd}
+  html[data-theme="dark"] .mark .m2{color:#ff8a63}
+  .search{flex:1 1 auto;max-width:520px;margin-left:12px;position:relative;display:flex;align-items:center}
+  .search .ico{position:absolute;left:13px;color:#8fb3b1;pointer-events:none}
+  .search input{width:100%;height:38px;border-radius:999px;border:1px solid rgb(255 255 255 / .14);
+       background:rgb(255 255 255 / .08);color:#fff;padding:0 14px 0 38px;font-size:14px}
+  .search input::placeholder{color:#9cbcb9}
+  .search input:focus{outline:none;border-color:#7fd0d3;background:rgb(255 255 255 / .13)}
+  .top-actions{margin-left:auto;display:flex;align-items:center;gap:6px;flex:none}
+  .tbtn{height:36px;min-width:36px;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+        border-radius:999px;border:1px solid rgb(255 255 255 / .18);background:transparent;color:#e7f1ef;
+        padding:0 12px;font-size:13px;font-weight:600;white-space:nowrap}
+  .tbtn:hover{background:rgb(255 255 255 / .1)}
+  .tbtn.icon{padding:0;width:36px}
+  .tbtn .badge{font-family:var(--mono);font-size:12px}
 
-  /* ── фильтр: приборная панель карты ── */
-  .filters{display:flex;flex-wrap:wrap;gap:16px 18px;padding:12px 22px;background:var(--surface);border-bottom:1px solid var(--hair);align-items:flex-end}
-  .filters .f{display:flex;flex-direction:column;gap:4px}
-  .filters label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
-  /* :not([type=checkbox]) обязателен — иначе min-width/width текстовых полей
-     растягивает галочки фильтра (чекбокс раздувался до 130px) */
-  .filters select,.filters input:not([type=checkbox]){font-family:var(--body);font-size:14px;padding:7px 9px;border:1px solid var(--hair);border-radius:9px;background:#fff;color:var(--ink);min-width:130px}
-  .filters select:focus,.filters input:focus{outline:2px solid var(--sea);outline-offset:1px;border-color:var(--sea)}
-  /* НЕ делать flex: текстовый узел стал бы анонимным flex-item и перестал переноситься
-     на узких экранах. Блок + vertical-align даёт и перенос, и выравнивание. */
-  .chk{font-family:var(--body);font-size:14px;text-transform:none;letter-spacing:normal;color:var(--ink);padding-bottom:7px;cursor:pointer}
-  .chk input{width:17px;height:17px;min-width:0;flex:none;margin-right:5px;vertical-align:-3px;accent-color:var(--coral);cursor:pointer}
-  .reset{font-family:var(--mono);font-size:11px;color:var(--sea);background:none;border:none;cursor:pointer;padding-bottom:9px;text-transform:uppercase;letter-spacing:.6px}
-  /* «Ещё фильтры»: редкое прячем, чтобы первый экран вёл к жилью, а не к пульту */
-  .f.adv,.chk.adv{display:none}
-  .filters.adv-open .f.adv{display:flex}
-  .filters.adv-open .chk.adv{display:block}
-  .more-btn{font-family:var(--mono);font-size:11px;color:var(--sea);background:none;border:none;cursor:pointer;padding-bottom:9px;text-transform:uppercase;letter-spacing:.6px;white-space:nowrap}
-  .more-btn:hover{color:var(--coral)}
-  .more-btn .mb-arrow{display:inline-block;transition:transform .2s;font-size:9px}
-  .filters.adv-open .more-btn .mb-arrow{transform:rotate(180deg)}
-  .reset:hover{color:var(--coral)}
+  /* ── ряд фильтров-чипов ── */
+  .fbar{flex:none;min-height:var(--bar-h);display:flex;align-items:center;gap:8px;padding:9px 20px;
+        background:var(--surface);border-bottom:1px solid var(--hair);position:relative;z-index:1100}
+  .chips{display:flex;gap:8px;align-items:center;min-width:0;overflow-x:auto;scrollbar-width:none;flex:1 1 auto}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;height:36px;display:inline-flex;align-items:center;gap:6px;padding:0 14px;border-radius:999px;
+        border:1px solid var(--hair);background:var(--surface);color:var(--ink);font-size:13.5px;font-weight:500;white-space:nowrap;
+        transition:background .16s var(--ease),border-color .16s var(--ease),color .16s var(--ease)}
+  .chip:hover{border-color:var(--sea)}
+  .chip .car{font-size:10px;opacity:.6}
+  .chip.on{background:var(--sea);border-color:var(--sea);color:var(--on-sea)}
+  .chip .cnt{font-family:var(--mono);font-size:11.5px;font-weight:700;min-width:18px;height:18px;border-radius:9px;
+        display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--ink);padding:0 5px}
+  .chip.on .cnt{background:rgb(255 255 255 / .22);color:inherit}
+  .seg{flex:none;display:inline-flex;height:36px;border:1px solid var(--hair);border-radius:999px;padding:2px;background:var(--surface)}
+  .seg button{border:none;background:none;border-radius:999px;padding:0 12px;font-size:13px;font-weight:500;color:var(--muted);white-space:nowrap}
+  .seg button.on{background:var(--sea);color:var(--on-sea)}
+  .watch{flex:none;height:38px;display:inline-flex;align-items:center;gap:7px;padding:0 16px;border-radius:999px;
+         background:var(--cta);color:var(--on-cta);font-weight:600;font-size:14px;text-decoration:none;white-space:nowrap}
+  .watch:hover{filter:brightness(1.06)}
+
+  /* ── плашка возраста данных: только когда снимок старше 3 дней ── */
+  .data-age{flex:none;display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;padding:8px 20px;font-size:13px;
+            background:var(--warn-bg);color:var(--warn);border-bottom:1px solid var(--warn-hair)}
+  .data-age b{font-weight:700}
+  .data-age button{border:1px solid currentColor;background:none;color:inherit;border-radius:999px;height:30px;padding:0 12px;font-size:12.5px;font-weight:600}
 
   /* ── полотно ── */
   .wrap{display:flex;flex:1;min-height:0}
-  .list{width:44%;min-width:330px;overflow-y:auto;padding:14px 14px 40px;background:var(--paper)}
-  #map{flex:1;min-width:0;height:100%;background:var(--land)}
-  .count{font-family:var(--mono);font-size:11px;color:var(--muted);padding:2px 4px 11px;letter-spacing:.4px;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
-  .rcount{font-weight:700;color:var(--sea)}
-  .stale-note{color:var(--muted);opacity:.85}
-  /* Блок для владельцев в конце списка: кто досмотрел до низа, тот либо не нашёл
-     (и тогда ему нечего предложить), либо сам сдаёт. Второй случай — наше наполнение. */
-  .owner-cta{background:var(--surface);border:1px dashed var(--coral);border-radius:12px;
-    padding:15px 17px;margin:14px 0 4px;text-align:center}
-  .owner-cta b{display:block;font-family:var(--disp);font-size:16px;color:var(--ink);margin-bottom:5px}
-  .owner-cta p{margin:0 0 11px;font-size:13px;color:var(--muted);line-height:1.5}
-  .owner-cta a{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:40px;
-    font-family:var(--mono);font-size:12px;color:#fff;background:var(--coral);border-radius:8px;
-    padding:0 18px;text-decoration:none;letter-spacing:.3px}
-  .owner-cta a:hover{background:var(--coral-d)}
-  /* Плашка возраста данных: показывается сама, когда снимок старше 3 дней, и сама
-     исчезает, когда сбор работает. Честность здесь дешевле, чем разочарование
-     от звонка по объявлению месячной давности. */
-  .data-age{display:none;align-items:center;gap:9px;padding:9px 22px;font-size:13px;
-    background:#fdf3e3;color:#7a5a1e;border-bottom:1px solid #e8d5ab}
-  .data-age.vis{display:flex}
-  .data-age b{font-weight:700}
-  html[data-theme="dark"] .data-age{background:#2a2113;color:#e0c88a;border-bottom-color:#4a3a1c}
-  .chip{font-family:var(--mono);font-size:11px;color:var(--ink);background:#fff;border:1px solid var(--hair);border-radius:20px;padding:3px 9px;cursor:pointer;letter-spacing:.2px}
-  .chip:hover{border-color:var(--coral);color:var(--coral)}
-  .chip .x{color:var(--muted);margin-left:3px}
-  .listfoot{font-family:var(--mono);font-size:11px;color:var(--muted);padding:16px 6px 24px;border-top:1px solid var(--hair);margin-top:12px;line-height:1.9}
+  .list{width:46%;min-width:360px;max-width:640px;overflow-y:auto;padding:12px 16px 40px;background:var(--bg)}
+  #map{flex:1;min-width:0;height:100%;background:var(--land);position:relative}
+
+  /* строка результата */
+  .rbar{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;padding:2px 2px 12px;font-size:13px;color:var(--muted)}
+  .rbar .rc{color:var(--ink);font-weight:600;white-space:nowrap}
+  .rbar .info{border:none;background:none;color:var(--muted);padding:0 2px;height:28px;display:inline-flex;align-items:center;gap:5px;font-size:13px}
+  .rbar .info:hover{color:var(--sea)}
+  .rbar .spacer{flex:1}
+  .lbtn{border:1px solid var(--hair);background:var(--surface);border-radius:999px;height:32px;padding:0 12px;
+        display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);white-space:nowrap}
+  .lbtn:hover{border-color:var(--sea)}
+  .lbtn.ok{color:var(--fresh-ink);border-color:var(--fresh)}
+  .sortw{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+  .sortw select{height:32px;border:1px solid var(--hair);border-radius:999px;background:var(--surface);padding:0 10px;font-size:13px;color:var(--ink);max-width:180px}
+  .infopop{position:absolute;z-index:1300;max-width:330px;background:var(--surface);color:var(--ink);border:1px solid var(--hair);
+           border-radius:14px;box-shadow:var(--shadow-pop);padding:14px 16px;font-size:13px;line-height:1.5}
+  .infopop p{margin:0 0 8px}.infopop p:last-child{margin:0}
+
+  /* ── карточка ── */
+  #cards{display:flex;flex-direction:column;gap:12px}
+  .card{position:relative;display:grid;grid-template-columns:64px minmax(0,1fr);column-gap:14px;
+        background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:12px 14px 10px;
+        box-shadow:var(--shadow);cursor:pointer;transition:box-shadow .18s var(--ease),border-color .18s var(--ease)}
+  .card:hover{box-shadow:var(--shadow-h)}
+  .card.active{border-color:var(--sea)}
+  .card.stale{opacity:.6}
+  .card.stale:hover,.card.stale.open{opacity:1}
+  .card.own{border-color:var(--coral)}
+  .c-mark{width:64px;height:64px;border-radius:12px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .c-mark svg{width:64px;height:64px;display:block}
+  .c-mark .isl{fill:var(--land);stroke:var(--sea);stroke-width:1.2;stroke-linejoin:round;opacity:.9}
+  html[data-theme="dark"] .c-mark .isl{fill:#1f3a42}
+  .c-mark .dot{fill:var(--coral)}
+  .c-mark .halo{fill:var(--coral);opacity:.22}
+  .c-mark .isl.unk{stroke-dasharray:2 2;opacity:.55}
+  .c-mark img{width:100%;height:100%;object-fit:cover}
+  .c-body{min-width:0}
+  .c-eye{display:flex;align-items:center;gap:8px;padding-right:30px;min-height:18px}
+  .c-where{font:700 11px/1.3 var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--sea);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .c-where.nogeo{color:var(--muted)}
+  .c-fresh{margin-left:auto;flex:none;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;color:var(--muted);white-space:nowrap}
+  .c-fresh::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--stale)}
+  .c-fresh.f-hot,.c-fresh.f-fresh{color:var(--fresh-ink)}
+  .c-fresh.f-hot::before,.c-fresh.f-fresh::before{background:var(--fresh)}
+  .c-fresh.f-hot::before{box-shadow:0 0 0 3px var(--fresh-bg)}
+  .c-fresh.f-recent::before{background:var(--sea);opacity:.55}
+  .c-price{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin:1px 0 1px}
+  .c-price .p{font:700 26px/1.1 var(--mono);color:var(--coral-ink);letter-spacing:-.04em;word-spacing:-.25em;white-space:nowrap}
+  .c-price .p small{font:500 13px var(--body);color:var(--muted);letter-spacing:0;margin-left:2px}
+  .c-price .p.none{font:500 15px var(--body);color:var(--muted)}
+  .bench{font-size:12px;font-weight:600;border-radius:999px;padding:2px 9px;white-space:nowrap;background:var(--surface-2);color:var(--muted)}
+  .bench.cheap{background:var(--fresh-bg);color:var(--fresh-ink)}
+  .c-facts{font-size:14px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .c-amen{font-size:13px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .c-amen .now{color:var(--fresh-ink);font-weight:600}
+  .sep{opacity:.45;margin:0 5px}
+  .tag{font-size:11.5px;font-weight:600;border-radius:6px;padding:1px 7px;background:var(--surface-2);color:var(--muted);margin-left:6px;white-space:nowrap}
+  .tag.own{background:var(--coral-ink);color:#fff}
+  html[data-theme="dark"] .tag.own{color:var(--on-cta)}
+  .c-foot{grid-column:1/-1;display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid var(--hair)}
+  .c-src{border:none;background:none;padding:0;font-size:13px;color:var(--muted);text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:auto;height:32px}
+  .c-src:hover{color:var(--sea)}
+  .c-src b{font-weight:600;color:var(--sea)}
+  .btn{height:32px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 14px;border-radius:999px;
+       font-size:13.5px;font-weight:600;text-decoration:none;white-space:nowrap;flex:none;border:1px solid transparent}
+  .btn.pri{background:var(--cta);color:var(--on-cta)}
+  .btn.pri:hover{filter:brightness(1.06)}
+  .btn.sec{border-color:var(--hair);color:var(--ink);background:var(--surface)}
+  .btn.sec:hover{border-color:var(--sea);color:var(--sea)}
+  .bm{position:absolute;top:8px;right:8px;width:36px;height:36px;border:none;background:none;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;color:var(--muted)}
+  .bm:hover{color:var(--coral-ink);background:var(--surface-2)}
+  .bm.saved{color:var(--coral-ink)}
+  .bm.saved .ico{fill:currentColor}
+  .stale-note{font-size:12px;color:var(--muted);font-style:italic}
+  /* раскрытие карточки */
+  .c-more{grid-column:1/-1;margin-top:10px;font-size:13px}
+  .c-text{font:13px/1.55 var(--body);white-space:pre-wrap;word-break:break-word;margin:0 0 10px;max-height:300px;overflow-y:auto;color:var(--ink);
+          background:var(--bg);border-radius:10px;padding:10px 12px}
+  .c-text mark{background:#fff0a8;color:inherit;border-radius:2px}
+  .c-srcs{display:flex;flex-wrap:wrap;gap:6px 12px;margin:0 0 8px}
+  .c-srcs a{text-decoration:none;font-size:13px}
+  .c-srcs a:hover{text-decoration:underline}
+  .c-meta{color:var(--muted);margin:0 0 4px}
+  .c-meta a{color:var(--muted)}
+  .own-photo{grid-column:1/-1;width:calc(100% + 28px);margin:-12px -14px 12px;height:160px;object-fit:cover;border-radius:13px 13px 0 0;display:block}
+
+  /* горячие */
+  .hot{background:var(--surface);border:1px solid var(--hair);border-radius:14px;padding:12px 14px}
+  .hot h3{margin:0 0 8px;font:600 14px var(--body);color:var(--ink)}
+  .hot-row{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+  .hot-row::-webkit-scrollbar{display:none}
+  .hot-card{flex:1 0 150px;border:1px solid var(--hair);border-radius:12px;padding:9px 12px;background:var(--bg);cursor:pointer;text-align:left}
+  .hot-card:hover{border-color:var(--sea)}
+  .hot-card .hp{font:700 16px var(--mono);color:var(--coral-ink)}
+  .hot-card .hm{font-size:12px;color:var(--muted)}
+
+  .load-more{display:flex;justify-content:center;padding:6px 0}
+  .owner-cta{background:var(--surface);border:1px dashed var(--coral);border-radius:14px;padding:16px 18px;margin-top:16px;text-align:center}
+  .owner-cta b{display:block;font:700 17px var(--disp);margin-bottom:4px}
+  .owner-cta p{margin:0 0 12px;font-size:13px;color:var(--muted)}
+  .listfoot{font-size:12.5px;color:var(--muted);padding:18px 4px 24px;border-top:1px solid var(--hair);margin-top:18px;line-height:1.7}
+  .listfoot p{margin:0 0 6px}
   .listfoot a{color:var(--sea);text-decoration:none}
-  .listfoot a:hover{color:var(--coral);text-decoration:underline}
-  a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
+  .listfoot a:hover{text-decoration:underline}
+  .listfoot nav{display:flex;flex-wrap:wrap;gap:4px 14px}
+  .listfoot nav button{border:none;background:none;padding:0;color:var(--sea);font-size:12.5px}
 
-  /* ── карточка-«отметка на карте» ── */
-  .card{background:var(--surface);border:1px solid var(--hair);border-radius:13px;padding:13px 15px;margin-bottom:11px;cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .15s}
-  .card:hover,.card.active{border-color:var(--coral);box-shadow:0 4px 16px rgba(14,35,41,.09)}
-  .card.active{transform:translateX(2px)}
-  .card.own{border:1.5px solid var(--coral);box-shadow:0 3px 14px rgba(239,108,69,.16)}
-  .card.own:hover,.card.own.active{box-shadow:0 5px 20px rgba(239,108,69,.26)}
-  .own-badge{font-family:var(--mono);font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#fff;background:var(--coral);border-radius:5px;padding:2px 7px;white-space:nowrap;flex:none}
-  .own-photo{width:calc(100% + 30px);margin:-13px -15px 10px;display:block;height:150px;object-fit:cover;border-radius:12px 12px 0 0}
-  .card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;gap:6px;min-width:0}
-  .dtag{font-family:var(--mono);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--sea);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .dtag.nogeo{color:var(--muted)}
-  .title{font-family:var(--disp);font-weight:700;font-size:18px;line-height:1.2;margin:4px 0 7px}
-  .specs{font-size:13px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  .spec-amen{font-size:14px;letter-spacing:2px}
-  .card[data-type="villa"]{border-left:4px solid #ef6c45}
-  .card[data-type="house"]{border-left:4px solid #3d8b7a}
-  .card[data-type="bungalow"]{border-left:4px solid #c4a35a}
-  .card[data-type="apartment"]{border-left:4px solid #5b8cb8}
-  .card[data-type="studio"]{border-left:4px solid #9b72b0}
-  .card[data-type="room"]{border-left:4px solid #78a87c}
-  .foot{display:flex;justify-content:space-between;align-items:baseline;margin-top:11px;gap:10px}
-  .price{font-family:var(--mono);font-weight:700;font-size:18px;color:var(--coral-d);white-space:nowrap;flex-shrink:0}
-  .price small{font-weight:400;font-size:11px;color:var(--muted)}
-  .price.none{color:var(--muted);font-weight:400;font-size:13px}
-  .priceblock{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-  .bench{font-family:var(--mono);font-size:11px;font-weight:700;border-radius:5px;padding:1px 6px;white-space:nowrap}
-  .bench-cheap{background:#e0efe4;color:#2f7d46}
-  .bench-pricey{background:#fbe4dc;color:var(--coral-d)}
-  .bench-market{background:#eceee7;color:var(--muted)}
-  .ref{margin-top:7px;font-family:var(--mono);font-size:11px;color:var(--muted)}
-  .ref .seed{opacity:.65;font-style:italic}
-  .srcs{display:flex;align-items:center;gap:9px;flex-wrap:wrap;justify-content:flex-end}
-  .src{font-family:var(--mono);font-size:11px;color:var(--sea);text-decoration:none;white-space:nowrap}
-  .src:hover{color:var(--coral);text-decoration:underline}
-  .multi{font-family:var(--mono);font-size:10px;font-weight:700;color:#fff;background:var(--sea);border-radius:5px;padding:1px 6px;letter-spacing:.3px;white-space:nowrap}
-  .draft{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:#fff;background:var(--muted);border-radius:4px;padding:1px 5px;vertical-align:middle}
-  .fresh-badge{font-family:var(--mono);font-size:10px;font-weight:700;border-radius:5px;padding:1px 6px;letter-spacing:.2px;white-space:nowrap;margin-left:auto}
-  /* «Сегодня/вчера» — единственное, что читается через всю карточку: на острове хороший
-     вариант уходит за часы, и возраст объявления важнее любого другого поля. */
-  .fb-hot{background:var(--coral);color:#fff;box-shadow:0 0 0 3px rgba(239,108,69,.16)}
-  .fb-fresh{background:#dcefe1;color:#2f7d46}
-  .fb-recent{background:#e9f0e2;color:#5d7a48}
-  .fb-old{background:#f1ecdd;color:#8a763a}
-  .fb-stale{background:#efe3df;color:#9a6450}
-  .fb-unknown{background:#eceee7;color:var(--muted)}
-  .card.stale{opacity:.58}
-  .card.stale:hover,.card.stale.active{opacity:1}
-  /* Свежая карточка выделяется тёплым фоном и подсветкой, но НЕ левой границей —
-     она уже занята цветом типа жилья и потеряла бы своё значение. */
-  .card.hot{background:linear-gradient(100deg,#fff8f3 0%,var(--surface) 46%);box-shadow:0 2px 14px rgba(239,108,69,.13)}
-  .card.hot:hover,.card.hot.active{box-shadow:0 5px 20px rgba(239,108,69,.22)}
-  html[data-theme="dark"] .card.hot{background:linear-gradient(100deg,#2a1a12 0%,var(--surface) 46%)}
-  /* Пульс только у самого свежего и только один заход: постоянное мигание на списке
-     превращается в раздражитель и обесценивает сигнал. */
-  .anim .card.hot .fresh-badge{animation:pulse 1.1s ease-out 2}
-  @keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(239,108,69,.16)}50%{box-shadow:0 0 0 7px rgba(239,108,69,.03)}}
-  .sounding.dim{background:var(--muted);box-shadow:0 1px 3px rgba(0,0,0,.25)}
-  .contact-btn{font-family:var(--mono);font-size:11px;color:#fff!important;background:var(--sea);border-radius:6px;padding:3px 9px;text-decoration:none!important;white-space:nowrap;letter-spacing:.2px}
-  .contact-btn:hover{background:var(--coral)!important}
-  .nogeo-divider{font-family:var(--mono);font-size:11px;color:var(--muted);padding:10px 6px 6px;border-top:2px dashed var(--hair);margin-top:10px;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
-  .nogeo-divider:hover{color:var(--sea)}
-  .nogeo-divider .nd-arrow{font-size:10px;transition:transform .2s;margin-left:auto}
-  .nogeo-open .nd-arrow{transform:rotate(180deg)}
-  .nogeo-cards{display:none}
-  .nogeo-cards.open{display:block}
-  .empty{padding:42px 22px;text-align:center;color:var(--muted)}
+  /* пустое состояние */
+  .empty{padding:36px 18px;text-align:center;color:var(--muted)}
   .empty .big{font-size:30px;display:block;margin-bottom:8px}
-  .empty b{display:block;font-family:var(--disp);font-size:16px;color:var(--ink);margin-bottom:4px}
-  .empty .clear{margin-top:14px;font-family:var(--mono);font-size:12px;color:#fff;background:var(--coral);border:none;border-radius:8px;padding:8px 16px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;min-height:38px}
-  .empty-actions{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}
-  .empty .clear.alt{background:var(--sea)}
-  .empty .clear.alt:hover{background:var(--sea-deep)}
+  .empty h2{font:700 20px/1.25 var(--disp);color:var(--ink);margin:0 0 6px}
+  .empty p{margin:0 auto 14px;max-width:44ch}
+  .relax{display:flex;flex-direction:column;gap:8px;align-items:center;margin:0 0 16px}
+  .relax button{border:1px solid var(--hair);background:var(--surface);border-radius:999px;height:36px;padding:0 16px;font-size:13.5px;color:var(--ink)}
+  .relax button:hover{border-color:var(--sea);color:var(--sea)}
+  .relax button b{font-family:var(--mono)}
+  .empty-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
 
-  /* ── пины-«глубины» на карте ── */
-  .sounding{display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:11px;color:#fff;background:var(--coral);border:2px solid #fff;border-radius:11px;height:22px;padding:0 7px;box-shadow:0 1px 4px rgba(0,0,0,.3);white-space:nowrap;transition:transform .12s}
-  .sounding.hot{transform:scale(1.22);background:var(--coral-d);z-index:1000}
+  /* ── шторка / поповер / модалка: один компонент ── */
+  .scrim{position:fixed;inset:0;background:transparent;z-index:2000}
+  .scrim.dim{background:var(--scrim)}
+  .sheet{position:fixed;z-index:2001;background:var(--surface);color:var(--ink);border:1px solid var(--hair);border-radius:16px;
+         box-shadow:var(--shadow-pop);display:flex;flex-direction:column;max-height:min(560px,80dvh);width:360px}
+  .sheet.modal{left:50%;top:50%;transform:translate(-50%,-50%);width:min(680px,calc(100vw - 32px));max-height:86dvh;border-radius:20px}
+  .sh-head{display:flex;align-items:center;gap:8px;padding:14px 16px 10px;border-bottom:1px solid var(--hair)}
+  .sh-head h2{margin:0;font:700 18px var(--disp);flex:1}
+  .sh-x{width:36px;height:36px;border:none;background:none;border-radius:50%;font-size:18px;color:var(--muted)}
+  .sh-x:hover{background:var(--surface-2);color:var(--ink)}
+  .sh-handle{display:none}
+  .sh-body{overflow-y:auto;padding:6px 16px 14px;overscroll-behavior:contain}
+  .sh-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-top:1px solid var(--hair)}
+  .sh-foot .clr{border:none;background:none;text-decoration:underline;font-size:14px;font-weight:500;padding:8px 4px}
+  .sh-foot .show{height:44px;padding:0 20px;border:none;border-radius:12px;background:var(--cta);color:var(--on-cta);font-weight:700;font-size:15px}
+  .sec{padding:12px 0;border-bottom:1px solid var(--hair)}
+  .sec:last-child{border-bottom:none}
+  .sec h3{margin:0 0 10px;font:600 15px var(--body)}
+  .sheet.pop .sec > h3{display:none}
+  .sec .hint{font-size:12.5px;color:var(--muted);margin:-6px 0 10px}
+  .pills{display:flex;flex-wrap:wrap;gap:8px}
+  .pill{height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--hair);background:var(--surface);font-size:13.5px;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+  .pill:hover{border-color:var(--sea)}
+  .pill.on{background:var(--sea);border-color:var(--sea);color:var(--on-sea)}
+  .pill small{font-family:var(--mono);font-size:11px;opacity:.7}
+  .segw{display:flex;flex-wrap:wrap;gap:8px}
+  .segw .pill{min-width:56px;justify-content:center}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+  .tile{display:flex;align-items:center;gap:9px;min-height:46px;padding:8px 12px;border:1px solid var(--hair);border-radius:12px;background:var(--surface);font-size:14px;cursor:pointer}
+  .tile:has(input:checked){border-color:var(--sea);box-shadow:inset 0 0 0 1px var(--sea)}
+  .tile input,.chk input{width:18px;height:18px;accent-color:var(--sea);margin:0;flex:none}
+  .chk{display:flex;align-items:center;gap:10px;min-height:40px;font-size:14px;cursor:pointer}
+  .range2{display:flex;gap:10px;align-items:center}
+  .range2 label{flex:1;display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+  .range2 input{height:42px;border:1px solid var(--hair);border-radius:10px;background:var(--bg);padding:0 12px;font:500 14px var(--mono);color:var(--ink);width:100%}
+  .range2 .dash{color:var(--muted);padding-top:18px}
+  .hist{display:flex;align-items:flex-end;gap:2px;height:64px;margin:4px 9px 0}
+  .hist i{flex:1;background:var(--hair);border-radius:2px 2px 0 0;min-height:2px}
+  .hist i.in{background:var(--sea)}
+  .dual{position:relative;height:28px;margin:0 0 12px}
+  .dual .track{position:absolute;left:9px;right:9px;top:13px;height:3px;border-radius:2px;background:var(--hair)}
+  .dual .fill{position:absolute;top:13px;height:3px;background:var(--sea);border-radius:2px}
+  .dual input{position:absolute;inset:0;width:100%;margin:0;background:none;pointer-events:none;-webkit-appearance:none;appearance:none;height:28px}
+  .dual input::-webkit-slider-thumb{-webkit-appearance:none;pointer-events:auto;width:22px;height:22px;border-radius:50%;background:var(--surface);border:2px solid var(--sea);box-shadow:var(--shadow-h);cursor:grab}
+  .dual input::-moz-range-thumb{pointer-events:auto;width:18px;height:18px;border-radius:50%;background:var(--surface);border:2px solid var(--sea);cursor:grab}
+  .dual input::-webkit-slider-runnable-track{background:none}
+  .menu-list{display:flex;flex-direction:column;padding:6px 0}
+  .menu-list button,.menu-list a{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px;padding:0 4px;border:none;background:none;
+        font-size:14.5px;color:var(--ink);text-decoration:none;text-align:left;border-bottom:1px solid var(--hair)}
+  .menu-list > :last-child{border-bottom:none}
+  .menu-list .val{font-size:13px;color:var(--muted);font-weight:500}
+  .menu-list button:hover,.menu-list a:hover{color:var(--sea)}
+  .stats-table{width:100%;border-collapse:collapse;font-size:13.5px}
+  .stats-table th{font-size:12px;font-weight:600;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--hair);text-align:left}
+  .stats-table td{padding:8px 10px;border-bottom:1px solid var(--hair)}
+  .stats-table td.n{font-family:var(--mono);text-align:right}
+  .stats-table th.n{text-align:right}
+  .stats-table .st-price{font-family:var(--mono);font-weight:700;color:var(--coral-ink);text-align:right}
+  kbd{background:var(--bg);border:1px solid var(--hair);border-radius:5px;padding:1px 7px;font-family:var(--mono);font-size:12px}
+  .kbd-row{display:flex;gap:12px;align-items:center;min-height:36px}
 
-  /* анимация появления только при первой отрисовке */
-  .anim .card{animation:rise .4s ease both;animation-delay:calc(var(--i)*35ms)}
-  @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-  /* Смена фильтра: короткий проявляющий кадр вместо мгновенной подмены. Без него
-     список меняется рывком и непонятно, сработал ли фильтр вообще. Каскад по карточкам
-     здесь НЕ используем — при каждом нажатии клавиши в поиске это была бы рябь. */
-  #cards.refresh{animation:swap .2s ease}
-  @keyframes swap{from{opacity:.25;transform:translateY(3px)}to{opacity:1;transform:none}}
+  /* ── карта: пины, кластеры, подписи ── */
+  .pin{display:flex;align-items:center;justify-content:center;font:700 12px var(--mono);color:#0e2329;background:#fff;
+       border:1px solid rgb(14 35 41 / .18);border-radius:999px;height:24px;padding:0 8px;box-shadow:0 1px 4px rgb(0 0 0 / .25);
+       white-space:nowrap;transition:transform .14s var(--ease),background .14s}
+  .pin.dim{color:#7b878b}
+  .pin.on{background:var(--coral);border-color:var(--coral);color:#fff;transform:scale(1.15)}
+  html[data-theme="dark"] .pin.on{color:#0b1a1f}
+  .leaflet-marker-icon:has(.pin.on){z-index:10000!important}
+  .cluster{width:36px;height:36px;border-radius:50%;background:var(--sea-deep);color:#fff;font:700 12.5px var(--mono);display:flex;align-items:center;justify-content:center;
+           border:2px solid #fff;box-shadow:0 2px 6px rgb(0 0 0 / .3)}
+  html[data-theme="dark"] .cluster{background:#2a7d86;border-color:#0b1a1f}
+  .mapnote{background:var(--surface);color:var(--muted);border:1px solid var(--hair);border-radius:999px;padding:5px 12px;font-size:12px;box-shadow:var(--shadow)}
+  .mapnote b{color:var(--ink)}
+  .coords{font:400 11px var(--mono);color:var(--muted);background:color-mix(in srgb,var(--surface) 80%,transparent);border-radius:6px;padding:3px 8px;letter-spacing:.04em}
+  .leaflet-container{font-family:var(--body);background:var(--land)}
+  .leaflet-popup-content-wrapper{border-radius:14px;background:var(--surface);color:var(--ink);box-shadow:var(--shadow-pop)}
+  .leaflet-popup-tip{background:var(--surface)}
+  .leaflet-popup-content{margin:12px 14px;font-size:13px;line-height:1.45;min-width:180px}
+  .mp-price{font:700 18px var(--mono);color:var(--coral-ink)}
+  .mp-price small{font:500 12px var(--body);color:var(--muted)}
+  .mp-where{font:700 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--sea)}
+  .mp-meta{color:var(--muted);margin:2px 0 8px}
+  .mp-acts{display:flex;gap:6px}
+  .mp-acts .btn{height:32px;font-size:13px;padding:0 12px}
+  .leaflet-control-attribution{font-size:10.5px;background:color-mix(in srgb,var(--surface) 85%,transparent)!important;color:var(--muted)}
+  .leaflet-control-attribution a{color:var(--sea)}
+  .leaflet-bar a{background:var(--surface);color:var(--ink);border-color:var(--hair)}
 
-  /* ── быстрые пресеты над списком ── */
-  .presets{display:flex;gap:7px;padding:0 2px 11px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-  .presets::-webkit-scrollbar{display:none}
-  .preset{flex:none;font-family:var(--mono);font-size:11.5px;color:var(--sea);background:var(--surface);
-          border:1px solid var(--hair);border-radius:999px;padding:6px 13px;cursor:pointer;white-space:nowrap;
-          letter-spacing:.2px;transition:background .16s,color .16s,border-color .16s}
-  .preset:hover{border-color:var(--sea)}
-  .preset.on{background:var(--sea);border-color:var(--sea);color:#fff}
-  .preset.on:hover{background:var(--sea-deep)}
-  .preset-fresh.on{background:var(--coral);border-color:var(--coral)}
-  .pcount{font-weight:700;margin-left:5px;opacity:.75}
-  /* Ноль свежих — не повод прятать кнопку: это сам по себе честный сигнал о состоянии базы. */
-  .preset.pempty{opacity:.5}
+  /* ── мобильная пилюля (карта / следить) ── */
+  .fpill{display:none}
+  .scroll-top{position:fixed;bottom:22px;right:18px;width:42px;height:42px;border-radius:50%;border:1px solid var(--hair);background:var(--surface);color:var(--ink);
+              box-shadow:var(--shadow-h);font-size:18px;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;z-index:1150}
+  .scroll-top.vis{opacity:1;pointer-events:auto}
 
-  /* ── «следить за поиском» ── */
-  .watch-btn{display:inline-flex;align-items:center;gap:6px;min-height:34px;margin:0 2px 12px;
-             font-family:var(--mono);font-size:12px;color:var(--sea);background:var(--surface);
-             border:1px dashed var(--sea);border-radius:8px;padding:0 14px;text-decoration:none;
-             letter-spacing:.2px;transition:background .16s,color .16s}
-  .watch-btn:hover{background:var(--sea);color:#fff;border-style:solid}
-  @media (max-width:760px){.presets{padding:0 16px 11px;margin:0 -16px}}
-
-  /* ── toggle для мобильного фильтра ── */
-  .filter-toggle{display:none;align-items:center;gap:6px;width:100%;padding:10px 18px;background:var(--surface);border:none;border-bottom:1px solid var(--hair);font-family:var(--mono);font-size:12px;color:var(--sea);cursor:pointer;letter-spacing:.4px;text-align:left}
-  .filter-toggle:hover{color:var(--coral)}
-  .ftbadge{font-weight:700;color:var(--coral)}
-  .ftarrow{margin-left:auto;display:inline-block;transition:transform .2s;font-size:10px}
-  .filter-toggle[aria-expanded="true"] .ftarrow{transform:rotate(180deg)}
-
+  /* мобила: страница скроллится целиком, шапка и чипы липкие */
   @media (max-width:760px){
-    body{height:auto;min-height:100dvh;overflow:visible}
-    .wrap{flex-direction:column;height:auto;flex:0 0 auto}
-    .list{width:100%;min-width:0;order:2;max-height:none}
-    #map{order:1;height:44dvh;width:100%}
-    .brand{flex-wrap:wrap;gap:6px 12px}
-    .tagline{font-size:12px;flex-basis:100%;order:3}
-    .coordbar{margin-left:auto}
-    .geo,.compass{display:none}
-    .filter-toggle{display:flex}
-    .filters{display:none;flex-wrap:wrap;gap:10px 12px;padding:12px 16px 14px;overflow-x:unset}
-    .filters.open{display:flex}
-    .filters .f{flex:0 0 calc(50% - 6px)}
-    .filters select,.filters input:not([type=checkbox]){width:100%;min-width:unset;box-sizing:border-box}
-    .filters .chk{flex:0 0 auto}
-    .reset{flex:0 0 auto}
-    .f-search-wrap{flex:0 0 100%;max-width:100%}
-    /* На телефоне первый экран должен вести к жилью. Кнопки для десктопной работы
-       (выгрузка, статистика районов, шорткаты) убираем — на ходу ими не пользуются. */
-    .export-btn,.help-btn,#stats-btn{display:none}
-    .tagline{font-size:11.5px;line-height:1.35;opacity:.85}
-    .snap{display:none}          /* дату снимка на мобиле показывает плашка возраста данных */
-    .data-age{padding:8px 16px;font-size:12.5px;line-height:1.4}
-    /* тап-зоны: на тач-экране всё кликаемое ≥40px по высоте */
-    /* .export-btn/.help-btn сюда НЕ включаем — они скрыты выше, а display:inline-flex
-       здесь бы их вернул (одинаковая специфичность, правило ниже побеждает) */
-    .contact-btn,.src,.share-btn,.cur-btn,.theme-btn,.fav-count-btn{
-      min-height:40px;display:inline-flex;align-items:center;justify-content:center;padding:8px 12px}
-    .srcs{gap:10px 12px}
-    .reset{min-height:40px;padding:0 8px}
+    :root{--top-h:52px;--bar-h:52px}
+    body{height:auto;min-height:100dvh;overflow:visible;display:block}
+    .top{position:sticky;top:0;padding:0 12px 0 16px;gap:10px}
+    .mark{display:none}
+    .brandmark{width:28px;height:28px}
+    .search{margin-left:0;max-width:none}
+    .search input{height:36px;font-size:16px}  /* 16px: iOS не зумит поле */
+    .top .hide-m,.menu-list .hide-m{display:none}
+    .fbar{position:sticky;top:var(--top-h);padding:8px 0 8px 16px;z-index:1100}
+    .chips{padding-right:16px}
+    .fbar .watch{display:none}
+    .data-age{padding:8px 16px;font-size:12.5px}
+    .wrap{display:block}
+    .list{width:auto;min-width:0;max-width:none;overflow:visible;padding:10px 16px 110px}
+    #map{display:none;height:calc(100dvh - var(--top-h) - var(--bar-h));position:sticky;top:calc(var(--top-h) + var(--bar-h))}
+    .wrap.mode-map .list{display:none}
+    .wrap.mode-map #map{display:block}
+    /* карта на мобиле — ровно экран под шапкой и чипами, иначе атрибуция уезжает за край */
+    body.mode-map .data-age{display:none!important}
+    #map .leaflet-bottom.leaflet-left{bottom:64px}  /* над плавающей пилюлей */
+    .mapnote{font-size:11.5px}
+    .rbar{flex-wrap:nowrap}
+    .rbar #rupd{display:none}
+    .rbar .sortw .lbl{display:none}
+    .sortw select{max-width:150px}
+    .rbar .share .lbl{display:none}
+    .card{grid-template-columns:52px minmax(0,1fr);column-gap:12px;padding:12px 14px 10px}
+    .c-mark,.c-mark svg{width:52px;height:52px}
+    .c-price .p{font-size:24px}
+    .own-photo{width:calc(100% + 28px);margin:-12px -14px 12px}
+    .btn{height:40px}
+    .c-src{height:40px}
+    .bm{width:44px;height:44px;top:4px;right:4px}
+    .fpill{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:1150;display:flex;
+           background:var(--ink);color:var(--bg);border-radius:999px;box-shadow:0 6px 22px rgb(0 0 0 / .3);overflow:hidden}
+    .fpill button,.fpill a{height:46px;display:inline-flex;align-items:center;gap:7px;padding:0 18px;border:none;background:none;color:inherit;font-weight:600;font-size:14.5px;text-decoration:none;white-space:nowrap}
+    .fpill > * + *{border-left:1px solid color-mix(in srgb,var(--bg) 25%,transparent)}
+    body.sheet-open .fpill{display:none}
+    .scroll-top{bottom:calc(84px + env(safe-area-inset-bottom));right:16px}
+    /* шторки на мобиле — снизу */
+    .sheet,.sheet.modal{left:0;right:0;bottom:0;top:auto;transform:none;width:auto;max-height:88dvh;border-radius:20px 20px 0 0;border-bottom:none;
+           box-shadow:var(--shadow-sheet);padding-bottom:env(safe-area-inset-bottom)}
+    .sheet.modal.full{height:94dvh;max-height:none}
+    .sheet.pop{max-height:62dvh}
+    .sh-handle{display:block;width:40px;height:5px;border-radius:3px;background:var(--hair);margin:8px auto 0}
+    .sh-head{padding-top:6px}
+    .scrim{background:var(--scrim)}
+    .sheet.anim-in{animation:sheetUp .28s var(--ease)}
   }
-  /* ── мобильный переключатель карта/список ── */
-.view-toggle{display:none;gap:0;background:var(--surface);border-bottom:1px solid var(--hair);padding:8px 14px}
-.vt-btn{flex:1;font-family:var(--mono);font-size:12px;padding:8px 0;background:#fff;border:1px solid var(--hair);color:var(--sea);cursor:pointer;letter-spacing:.3px}
-.vt-btn:first-child{border-radius:8px 0 0 8px}
-.vt-btn:last-child{border-radius:0 8px 8px 0;border-left:none}
-.vt-btn.active{background:var(--sea);color:#fff;border-color:var(--sea)}
-@media(max-width:760px){.view-toggle{display:flex}}
-@media(max-width:760px){.wrap.mobile-list #map{display:none}.wrap.mobile-map .list{display:none}.wrap.mobile-map #map{height:80dvh!important}}
-
-/* ── дата доступности ── */
-.avail-now{font-family:var(--mono);font-size:11px;color:#2d9e5f;font-weight:700;letter-spacing:.2px}
-.avail-date{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.2px}
-
-/* ── строка поиска (широкая) ── */
-/* Поиск стоит в общем ряду (раньше занимал отдельную строку целиком — минус ~60px
-   первого экрана). На мобиле ниже возвращается на всю ширину. */
-.f-search-wrap{flex:1 1 240px;max-width:420px}
-.f-search-wrap input{width:100%;min-width:0;box-sizing:border-box}
-
-/* ── закладки ── */
-.bm-btn{position:absolute;top:3px;right:5px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:none;border:none;font-size:16px;cursor:pointer;line-height:1;padding:0;opacity:.5;transition:opacity .15s,transform .15s}
-.bm-btn:hover{opacity:1;transform:scale(1.2)}
-.bm-btn.saved{opacity:1;color:var(--coral)}
-.card{position:relative}
-.fav-section{background:#fff8f6;border-bottom:2px solid var(--coral);padding:10px 22px 14px}
-.fav-section h3{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--coral-d);margin:0 0 8px}
-.fav-section .fav-cards{display:flex;flex-direction:column}
-.fav-clear{font-family:var(--mono);font-size:11px;color:var(--muted);background:none;border:none;cursor:pointer;padding:0;margin-top:6px}
-.fav-clear:hover{color:var(--coral)}
-
-/* ── кнопка поделиться ── */
-.share-btn{font-family:var(--mono);font-size:11px;color:var(--sea);background:none;border:1px solid var(--hair);border-radius:6px;padding:4px 10px;cursor:pointer;letter-spacing:.3px;white-space:nowrap}
-.share-btn:hover{border-color:var(--sea);background:var(--surface)}
-.share-btn.copied{color:#2d9e5f;border-color:#2d9e5f}
-
-/* ── валюта ── */
-.cur-btn{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);background:none;border:1px solid var(--hair);border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap}
-.cur-btn:hover{border-color:var(--sea);color:var(--sea)}
-.cur-btn.usd{color:#2d9e5f;border-color:#2d9e5f}
-
-/* ── кнопки шапки ── */
-.header-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:4px}
-
-/* ── «уже смотрел» ── */
-.seen-badge{font-family:var(--mono);font-size:9px;letter-spacing:.3px;color:var(--muted);border:1px solid var(--hair);border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle}
-
-/* ── кластеры маркеров ── */
-.cluster-icon{width:34px;height:34px;background:var(--coral);color:#fff;font-family:var(--mono);font-size:12px;font-weight:700;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
-
-/* ── модальное окно ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,30,30,.55);z-index:9000;display:flex;align-items:center;justify-content:center;padding:20px}
-.modal-box{background:#fff;border-radius:14px;max-width:680px;width:100%;max-height:80dvh;overflow-y:auto;padding:28px 28px 22px;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.25)}
-.modal-close{position:absolute;top:14px;right:16px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);line-height:1}
-.modal-close:hover{color:var(--ink)}
-.modal-box h2{font-family:var(--disp);font-size:20px;margin:0 0 16px;color:var(--sea-deep)}
-.stats-table{width:100%;border-collapse:collapse;font-size:13px}
-.stats-table th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:6px 10px;border-bottom:2px solid var(--hair);text-align:left}
-.stats-table td{padding:7px 10px;border-bottom:1px solid var(--hair)}
-.stats-table tr:hover td{background:var(--surface)}
-.stats-table .st-district{font-weight:700;color:var(--sea-deep)}
-.stats-table .st-price{font-family:var(--mono);font-weight:700;color:var(--coral-d)}
-
-/* ── CSV кнопка ── */
-.export-btn{font-family:var(--mono);font-size:11px;color:var(--muted);background:none;border:1px solid var(--hair);border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap}
-.export-btn:hover{border-color:var(--sea);color:var(--sea)}
-
-/* ── дней до заезда ── */
-.avail-soon{color:#e07b00;font-weight:700}
-.avail-ready{color:#2d9e5f;font-weight:700}
-
-/* ── пагинация ── */
-.load-more-wrap{text-align:center;padding:18px 0 10px}
-.load-more-btn{font-family:var(--mono);font-size:12px;color:var(--sea);background:none;border:2px solid var(--sea);border-radius:8px;padding:8px 28px;cursor:pointer;letter-spacing:.3px}
-.load-more-btn:hover{background:var(--sea);color:#fff}
-
-/* ── подсветка поиска ── */
-.hl{background:#fff3b0;border-radius:2px;padding:0 1px}
-
-/* ── горячие предложения ── */
-.hot-section{background:linear-gradient(135deg,#fff8f0 0%,#fff2e8 100%);border-bottom:2px solid var(--coral);padding:12px 22px 16px}
-.hot-section h3{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--coral-d);margin:0 0 10px}
-.hot-cards{display:flex;gap:10px;flex-wrap:wrap}
-.hot-card{background:#fff;border:1px solid var(--hair);border-radius:10px;padding:10px 14px;flex:1 1 180px;cursor:pointer;transition:box-shadow .15s;min-width:140px}
-.hot-card:hover{box-shadow:0 3px 12px rgba(0,0,0,.1)}
-.hot-card .hc-title{font-size:12px;font-weight:700;color:var(--sea-deep);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.hot-card .hc-price{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--coral-d)}
-.hot-card .hc-meta{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px}
-/* Мобильные правила для «горячих» держим ЗДЕСЬ, а не в общем медиазапросе выше:
-   базовые .hot-* объявлены после него и перебили бы их (специфичность равная — выигрывает
-   то, что ниже). Лента вбок вместо стопки вниз экономит ~120px первого экрана. */
-@media (max-width:760px){
-  .hot-section{padding:10px 0 12px}
-  .hot-section h3{padding:0 16px}
-  .hot-cards{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;
-    -webkit-overflow-scrolling:touch;padding:0 16px 4px;overscroll-behavior-x:contain}
-  .hot-card{flex:0 0 80%;scroll-snap-align:start}
-}
-
-/* ── качество объявления ── */
-.quality{font-size:11px;letter-spacing:-.5px;margin-left:4px;opacity:.8}
-
-/* ── expand карточки ── */
-.card-raw{margin-top:8px;border-top:1px solid var(--hair);padding-top:2px}
-.card-raw-toggle{font-family:var(--mono);font-size:11px;color:var(--sea);cursor:pointer;padding:6px 0 0;list-style:none;display:block}
-.card-raw-toggle::-webkit-details-marker{display:none}
-.card-raw-toggle::before{content:'▸ '}
-details[open] .card-raw-toggle::before{content:'▾ '}
-.card-raw-toggle:hover{color:var(--coral)}
-.card-raw-text{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:pre-wrap;word-break:break-word;padding:6px 0 0;margin:0;max-height:260px;overflow-y:auto;line-height:1.5}
-
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-
-/* ── цена за м² ── */
-.price-sqm{font-family:var(--mono);font-size:10px;color:var(--muted);margin-left:5px;white-space:nowrap}
-
-/* ── кнопка наверх ── */
-.scroll-top-btn{position:fixed;bottom:24px;right:20px;width:40px;height:40px;background:var(--sea);color:#fff;border:none;border-radius:50%;font-size:20px;line-height:1;cursor:pointer;opacity:0;pointer-events:none;transform:translateY(10px);transition:opacity .2s,transform .2s;z-index:1100;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.25)}
-.scroll-top-btn.vis{opacity:.88;pointer-events:auto;transform:translateY(0)}
-.scroll-top-btn:hover{opacity:1;background:var(--sea-deep)}
-html[data-theme="dark"] .scroll-top-btn{box-shadow:0 2px 10px rgba(0,0,0,.5)}
-
-/* ── кнопка помощи / шорткаты ── */
-.help-btn{font-family:var(--mono);font-size:13px;font-weight:700;background:none;border:1px solid var(--hair);border-radius:6px;padding:4px 8px;cursor:pointer;color:var(--muted);white-space:nowrap}
-.help-btn:hover{border-color:var(--sea);color:var(--sea)}
-.shortcuts-popup{position:fixed;z-index:9999;background:var(--paper);border:1px solid var(--hair);border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,.18);padding:14px 18px;font-size:12px;top:62px;right:14px;min-width:195px}
-.shortcuts-popup h4{margin:0 0 9px;font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
-.shortcuts-popup table{border-collapse:collapse;width:100%}
-.shortcuts-popup td{padding:3px 0;color:var(--muted)}
-.shortcuts-popup td:first-child{padding-right:12px}
-kbd{background:var(--surface);border:1px solid var(--hair);border-radius:4px;padding:1px 6px;font-family:var(--mono);font-size:11px;color:var(--ink);display:inline-block}
-
-/* ── печать ── */
-@media print{
-  .header-actions,.view-toggle,.filter-toggle,.filters,.scroll-top-btn,.load-more-wrap{display:none!important}
-  body{height:auto;overflow:visible;display:block}
-  .wrap{height:auto;display:block;flex:none}
-  #map{display:none!important}
-  .list{width:100%;overflow:visible;max-height:none;height:auto}
-  .card{break-inside:avoid;box-shadow:none}
-  .hot-section,.fav-section{display:none!important}
-}
-
-/* ── тёмная тема ── */
-html[data-theme="dark"] {
-  --paper:#0e1c20; --surface:#152027; --ink:#d4e8e4; --hair:#263c44;
-  --muted:#7aa0a8; --land:#1e3038; --sand:#1c2015;
-  --sea:#2a9bb0; --sea-deep:#061418; --coral:#f07c55; --coral-d:#e05e38;
-}
-html[data-theme="dark"] .top{background:linear-gradient(150deg,#020c0f 0%,#061418 55%,#0a1f28 100%)}
-html[data-theme="dark"] .filters,html[data-theme="dark"] .filters.open{background:var(--surface)}
-html[data-theme="dark"] .filters select,html[data-theme="dark"] .filters input{background:#1a2c34;border-color:var(--hair);color:var(--ink)}
-html[data-theme="dark"] .card{background:var(--surface)}
-html[data-theme="dark"] .modal-box{background:#152027;color:var(--ink)}
-html[data-theme="dark"] .modal-box h2{color:var(--ink)}
-html[data-theme="dark"] .hot-section{background:linear-gradient(135deg,#1a140a 0%,#1c1208 100%)}
-html[data-theme="dark"] .hot-card{background:#1e2e36;border-color:var(--hair)}
-html[data-theme="dark"] .fav-section{background:#1a0f0c}
-html[data-theme="dark"] .vt-btn{background:var(--surface);color:var(--ink);border-color:var(--hair)}
-html[data-theme="dark"] .vt-btn.active{background:var(--sea);color:#fff;border-color:var(--sea)}
-
-/* ── кнопка темы ── */
-.theme-btn{font-family:var(--mono);font-size:13px;background:none;border:1px solid var(--hair);border-radius:6px;padding:4px 8px;cursor:pointer;color:var(--muted);white-space:nowrap}
-.theme-btn:hover{border-color:var(--sea);color:var(--sea)}
-
-/* ── счётчик избранного ── */
-.fav-count-btn{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--coral-d);background:none;border:1px solid var(--coral);border-radius:6px;padding:4px 10px;cursor:pointer;white-space:nowrap;display:none}
-.fav-count-btn:hover{background:var(--coral);color:#fff}
+  @keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1}}
+  @media (min-width:761px){.sheet.pop.anim-in{animation:fadeIn .16s var(--ease)}}
+  #cards.refresh{animation:swap .2s ease}
+  @keyframes swap{from{opacity:.3}to{opacity:1}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media print{
+    .top-actions,.fbar,.fpill,.scroll-top,#map,.load-more,.data-age{display:none!important}
+    body{height:auto;overflow:visible;display:block}
+    .wrap{display:block}.list{width:100%;max-width:none;overflow:visible}
+    .card{break-inside:avoid;box-shadow:none}
+  }
 </style>
 </head>
 <body>
 <header class="top">
-  <div class="brand">
+  <a class="brand" href="./" aria-label="SabaiStay">
     <svg class="brandmark" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="26" r="12" fill="#ef6c45"/><g stroke="#bfe0db" stroke-linecap="round" fill="none"><line x1="8" y1="40" x2="56" y2="40" stroke-width="3.4"/><line x1="14" y1="47" x2="50" y2="47" stroke-width="2.8" opacity=".55"/><line x1="21" y1="53" x2="43" y2="53" stroke-width="2.8" opacity=".3"/></g></svg>
     <span class="mark">Sabai<span class="m2">Stay</span></span>
-    <span class="tagline">все объявления Пхангана из Telegram-каналов аренды — с фильтром, картой и ценой к рынку</span>
-    <span class="coordbar"><span class="compass">✦&nbsp;N</span><span class="geo">9.74°N · 100.01°E</span><span class="snap">снимок __SNAPSHOT__</span><span id="count2"></span></span>
-    <span class="header-actions">
-      <button class="share-btn" id="share-btn" title="Скопировать ссылку с фильтрами">🔗 поделиться</button>
-      <button class="cur-btn" id="cur-btn" title="Переключить валюту THB / USD">฿ THB</button>
-      <button class="export-btn" id="export-btn" title="Скачать список в CSV">⬇ CSV</button>
-      <button class="share-btn" id="stats-btn" title="Статистика по районам">📊 районы</button>
-      <button class="fav-count-btn" id="fav-count-btn" title="Перейти к избранному">🔖 <span id="fav-count-num">0</span></button>
-      <button class="help-btn" id="help-btn" title="Горячие клавиши">?</button>
-      <button class="theme-btn" id="theme-btn" title="Переключить тёмную тему">🌙</button>
-    </span>
+  </a>
+  <div class="search" role="search">
+    <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="f-search" type="search" autocomplete="off" data-i18n-ph="searchPh" data-i18n-aria="searchPh" placeholder="Район, pool, 2br…" aria-label="Поиск">
+  </div>
+  <div class="top-actions">
+    <button class="tbtn hide-m" id="lang-btn" type="button" data-i18n-aria="langAria">EN</button>
+    <button class="tbtn" id="fav-btn" type="button" hidden data-i18n-aria="favs"><svg class="ico" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span class="badge" id="fav-num">0</span></button>
+    <button class="tbtn icon" id="menu-btn" type="button" aria-haspopup="dialog" data-i18n-aria="menu"><svg class="ico" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
   </div>
 </header>
 
-<div class="data-age" id="data-age" role="status"></div>
+<nav class="fbar" data-i18n-aria="filters">
+  <div class="chips" id="chips"></div>
+  <a class="watch js-watch" id="watch-btn" target="_blank" rel="noopener" hidden><svg class="ico" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span data-i18n="watchSearch">Следить за поиском</span></a>
+</nav>
 
-<div class="view-toggle" role="group" aria-label="Режим отображения">
-  <button class="vt-btn active" id="vt-list">📋 Список</button>
-  <button class="vt-btn" id="vt-map">🗺 Карта</button>
-</div>
-<button class="filter-toggle" id="filter-toggle" aria-controls="filter-panel" aria-expanded="false">
-  <span>⚙ Фильтры</span><span id="ftbadge" class="ftbadge"></span><span class="ftarrow">▾</span>
-</button>
-<section class="filters" aria-label="Фильтр" id="filter-panel">
-  <div class="f f-search-wrap"><label for="f-search">Поиск</label>
-    <input id="f-search" type="text" placeholder="pool, sea view, 2br, studio…" autocomplete="off"></div>
-  <div class="f"><label for="f-district">Район</label>
-    <select id="f-district"><option value="">весь остров</option></select></div>
-  <div class="f"><label for="f-period">Аренда</label>
-    <select id="f-period"><option value="">любая</option><option value="month">помесячно</option><option value="night">посуточно</option></select></div>
-  <div class="f"><label for="f-price">Цена до, ฿/мес</label>
-    <input id="f-price" type="number" step="5000" placeholder="без лимита"></div>
-  <div class="f"><label for="f-bed">Спален от</label>
-    <select id="f-bed"><option value="">любое</option><option>1</option><option>2</option><option>3</option></select></div>
-  <div class="f"><label for="f-type">Тип жилья</label>
-    <select id="f-type"><option value="">любой</option><option value="villa">вилла</option><option value="house">дом</option><option value="bungalow">бунгало</option><option value="apartment">апартаменты</option><option value="studio">студия</option><option value="room">комната</option><option value="other">другое</option></select></div>
-  <label class="chk"><input type="checkbox" class="f-am" value="pool"> 🏊 бассейн</label>
-  <label class="chk"><input type="checkbox" class="f-am" value="seaview"> 🌊 море</label>
-  <label class="chk"><input type="checkbox" class="f-am" value="wifi"> 📶 wi-fi</label>
-  <!-- Редкие фильтры прячем под «ещё»: на первом экране должен быть путь к жилью,
-       а не панель управления. Раскрываются сами, если пришли по ссылке с ними. -->
-  <div class="f adv"><label for="f-age">Опубликовано</label>
-    <select id="f-age"><option value="">когда угодно</option><option value="1">сегодня и вчера</option><option value="3">за 3 дня</option><option value="7">за неделю</option><option value="30">за месяц</option></select></div>
-  <div class="f adv"><label for="f-price-min">Цена от, ฿/мес</label>
-    <input id="f-price-min" type="number" step="5000" placeholder="от 0"></div>
-  <div class="f adv"><label for="f-sqm-min">Площадь от, м²</label>
-    <input id="f-sqm-min" type="number" step="10" placeholder="от"></div>
-  <div class="f adv"><label for="f-sqm-max">Площадь до, м²</label>
-    <input id="f-sqm-max" type="number" step="10" placeholder="до"></div>
-  <label class="chk adv"><input type="checkbox" class="f-am" value="kitchen"> 🍳 кухня</label>
-  <label class="chk adv"><input type="checkbox" class="f-am" value="aircon"> ❄️ кондей</label>
-  <label class="chk adv"><input type="checkbox" id="f-stale" checked> скрыть неактуальные</label>
-  <label class="chk adv"><input type="checkbox" id="f-avail"> только с датой заезда</label>
-  <label class="chk adv"><input type="checkbox" id="f-hide-seen"> скрыть просмотренные</label>
-  <div class="f"><label for="f-sort">Сортировка</label>
-    <select id="f-sort"><option value="">сначала свежие</option><option value="cheap">сначала дешёвые</option><option value="pricey">сначала дорогие</option><option value="sqm_desc">площадь: больше</option><option value="sqm_asc">площадь: меньше</option><option value="price_sqm_asc">цена/м²: дешевле</option><option value="dist_asc">ближе к Тонгсале</option></select></div>
-  <button class="more-btn" id="more-btn" type="button" aria-expanded="false">ещё фильтры <span class="mb-arrow">▾</span></button>
-  <button class="reset" id="reset">сбросить</button>
-</section>
+<div class="data-age" id="data-age" role="status" hidden></div>
 
-<div id="stats-modal" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeStats()">
-  <div class="modal-box">
-    <button class="modal-close" onclick="closeStats()">✕</button>
-    <h2>Статистика по районам</h2>
-    <div id="stats-table-wrap"></div>
-  </div>
-</div>
-
-<div id="hot-section" class="hot-section" style="display:none">
-  <h3>🔥 Горячие предложения</h3>
-  <div class="hot-cards" id="hot-cards"></div>
-</div>
-
-<div id="fav-section" class="fav-section" style="display:none">
-  <h3>🔖 Избранное</h3>
-  <div class="fav-cards" id="fav-cards"></div>
-  <button class="fav-clear" onclick="clearFav()">очистить избранное</button>
-</div>
-
-<div class="wrap">
-  <div class="list">
-    <!-- Пресеты выше счётчика: человек приходит с готовым намерением («что-нибудь свежее»,
-         «подешевле»), и один тап должен закрывать его, не открывая панель фильтров. -->
-    <div class="presets" id="presets" role="group" aria-label="Быстрый выбор">
-      <button class="preset preset-fresh" data-preset="fresh" type="button">⚡ свежие</button>
-      <button class="preset" data-preset="cheap" type="button">💰 до 15 000฿</button>
-      <button class="preset" data-preset="pool" type="button">🏊 бассейн</button>
-      <button class="preset" data-preset="family" type="button">🛏 2+ спальни</button>
+<div class="wrap" id="wrap">
+  <main class="list" id="list">
+    <h1 class="vh" data-i18n="h1">Аренда жилья на Ко Пхангане</h1>
+    <div class="rbar" id="rbar">
+      <span class="rc" id="rcount"></span>
+      <button class="info" id="info-btn" type="button" aria-haspopup="dialog"><span id="rupd"></span><svg class="ico" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></button>
+      <span class="spacer"></span>
+      <button class="lbtn share" id="share-btn" type="button"><svg class="ico" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg><span class="lbl" data-i18n="share">поделиться</span></button>
+      <label class="sortw"><span class="lbl" data-i18n="sortBy">Сорт:</span>
+        <select id="f-sort" data-i18n-aria="sortBy">
+          <option value="" data-i18n="sortFresh">сначала свежие</option>
+          <option value="cheap" data-i18n="sortCheap">дешевле</option>
+          <option value="pricey" data-i18n="sortPricey">дороже</option>
+          <option value="below" data-i18n="sortBelow">ниже рынка</option>
+          <option value="sqm_desc" data-i18n="sortSqmDesc">площадь: больше</option>
+          <option value="sqm_asc" data-i18n="sortSqmAsc">площадь: меньше</option>
+          <option value="price_sqm_asc" data-i18n="sortPpsqm">цена/м²: дешевле</option>
+          <option value="dist_asc" data-i18n="sortDist">ближе к пирсу</option>
+        </select></label>
     </div>
-    <div class="count" id="count"></div>
-    __WATCH_BTN__
     <div id="cards"></div>
-    <div class="load-more-wrap" id="load-more-wrap" style="display:none">
-      <button class="load-more-btn" id="load-more-btn">показать ещё</button>
-    </div>
+    <div class="load-more" id="load-more" hidden><button class="lbtn" id="load-more-btn" type="button"></button></div>
     __OWNER_CTA__
-    <footer class="listfoot">Источник: Telegram-каналы аренды Пхангана · каждое объявление ведёт в оригинал · снимок __SNAPSHOT__<br><a href="privacy.html">Приватность</a> · <a href="privacy.html#remove">Убрать объявление</a></footer>
-  </div>
-  <div id="map"></div>
+    <footer class="listfoot">
+      <p data-i18n="footAbout">SabaiStay собирает открытые объявления Telegram-каналов Пхангана. Мы не посредник: связь напрямую с автором, без комиссии. Каждое объявление ведёт в оригинал.</p>
+      <nav>
+        <a href="privacy.html" data-i18n="privacy">Приватность</a>
+        <a href="privacy.html#remove" data-i18n="removeListing">Убрать объявление</a>
+        <button type="button" id="foot-stats" data-i18n="districtStats">Статистика районов</button>
+        <button type="button" id="foot-csv" data-i18n="csv">Скачать CSV</button>
+        <span><span data-i18n="snapshot">снимок</span> <span class="num">__SNAPSHOT__</span></span>
+      </nav>
+    </footer>
+  </main>
+  <div id="map" role="region" data-i18n-aria="mapAria"></div>
 </div>
+
+<div class="fpill" id="fpill">
+  <button type="button" id="mode-btn"><svg class="ico" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg><span data-i18n="map">Карта</span></button>
+  <a class="js-watch" id="watch-pill" target="_blank" rel="noopener" hidden><svg class="ico" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg><span data-i18n="watchShort">Следить</span></a>
+</div>
+<button class="scroll-top" id="scroll-top" type="button" data-i18n-aria="toTop">↑</button>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
 const DATA = __DATA__;
-const TYPE={villa:"вилла",house:"дом",room:"комната",studio:"студия",bungalow:"бунгало",apartment:"апартаменты",land:"участок",other:"жильё"};
-const AM={pool:"🏊",wifi:"📶",kitchen:"🍳",aircon:"❄️",seaview:"🌊"};
-const PERIOD={month:"/мес",night:"/ночь",sale:""};
-const AGE_LABELS={1:"сегодня и вчера",3:"за 3 дня",7:"за неделю",30:"за месяц"};
 const BOT_USERNAME='__BOT_USERNAME__';
-// Пресеты — тумблеры поверх обычных полей фильтра, а не отдельное состояние: иначе
-// пресет и панель фильтров начали бы противоречить друг другу и расходиться с URL.
-const PRESETS={
-  fresh: {el:()=>document.getElementById('f-age'),   on:'7'     },
-  cheap: {el:()=>document.getElementById('f-price'), on:'15000' },
-  family:{el:()=>document.getElementById('f-bed'),   on:'2'     },
-  pool:  {chk:()=>document.querySelector('.f-am[value="pool"]') },
-};
-function presetOn(p){return p.chk?p.chk().checked:p.el().value===p.on;}
-function presetSet(p,v){if(p.chk)p.chk().checked=v;else p.el().value=v?p.on:'';}
-function syncPresets(){
-  document.querySelectorAll('.preset').forEach(b=>{
-    const p=PRESETS[b.dataset.preset];if(!p)return;
-    const on=presetOn(p);
-    b.classList.toggle('on',on);
-    b.setAttribute('aria-pressed',String(on));
-  });
-}
-const SRC={telegram:"Telegram",fb_group:"Facebook",fb_marketplace:"Facebook",booking:"Booking",airbnb:"Airbnb",manual:"вручную",own:"SabaiStay"};
-const SRCICON={telegram:"📨",fb_group:"📘",fb_marketplace:"📘",booking:"🏨",airbnb:"🛏",own:"⭐"};
 const SNAP_ISO='__SNAPSHOT_ISO__';
 const SNAP_DATE=SNAP_ISO?new Date(SNAP_ISO):null;
+const ISLAND='__ISLAND_PATH__';
+const HAS_L=typeof L!=='undefined'&&!!L.markerClusterGroup;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+// ── язык: RU/EN. Текст объявлений — как в оригинале, переводим только интерфейс ──
+const I18N={
+ru:{h1:'Аренда жилья на Ко Пхангане',searchPh:'Район, pool, 2br…',langAria:'Switch to English',favs:'Избранное',menu:'Меню',filters:'Фильтры',
+  watchSearch:'Следить за поиском',watchShort:'Следить',watchTip:'Пришлём в Telegram новые объявления под этот фильтр',
+  watchNew:'Присылать новые объявления',notifyMe:'Сообщить, когда появится',
+  share:'поделиться',copied:'скопировано',sortBy:'Сорт:',sortFresh:'сначала свежие',sortCheap:'дешевле',sortPricey:'дороже',sortBelow:'ниже рынка',
+  sortSqmDesc:'площадь: больше',sortSqmAsc:'площадь: меньше',sortPpsqm:'цена/м²: дешевле',sortDist:'ближе к пирсу',
+  footAbout:'SabaiStay собирает открытые объявления Telegram-каналов Пхангана. Мы не посредник: связь напрямую с автором, без комиссии. Каждое объявление ведёт в оригинал.',
+  privacy:'Приватность',removeListing:'Убрать объявление',districtStats:'Статистика районов',csv:'Скачать CSV',snapshot:'снимок',
+  mapAria:'Карта объявлений',map:'Карта',list:'Список',toTop:'Наверх',
+  allFilters:'Фильтры',district:'Район',price:'Цена',beds:'Спальни',type:'Тип',monthly:'Помесячно',nightly:'Посуточно',
+  freshness:'Свежесть',wholeIsland:'Весь остров',any:'Любые',anyType:'Любой',anyTime:'Когда угодно',anyTerm:'Любой срок',
+  term:'Срок аренды',amenities:'Удобства',area:'Площадь, м²',from:'от',to:'до',more:'Ещё',
+  onlyAvail:'Только с датой заезда',hideSeen:'Скрыть просмотренные',showStale:'Показывать устаревшие',
+  clearAll:'Очистить всё',reset:'Сбросить',showN:'Показать {n}',priceHint:'Распределение цен в текущей выдаче',
+  age1:'сегодня и вчера',age3:'за 3 дня',age7:'за неделю',age30:'за месяц',
+  updated:'обновлено {ago}',fromChannels:'из {n} Telegram-каналов',
+  infoP1:'Собираем открытые посты {n} Telegram-каналов аренды Пхангана и раскладываем по району, цене и спальням.',
+  infoP2:'Каждая карточка ведёт в оригинальный пост. Мы не посредник: пишешь автору напрямую, без комиссии.',
+  infoP3:'Твоё объявление попало сюда, а ты против? <a href="privacy.html#remove">Убрать объявление</a>.',
+  staleAuto:'Свежих объявлений нет — последнее обновление <b>{ago}</b>. Показываем последние известные: часть могла уйти, пиши сразу нескольким.',
+  staleOld:'Обновлено <b>{ago}</b> — часть вариантов могла уйти, пиши сразу нескольким.',
+  showOldToo:'Показать старые тоже ({n})',
+  emptyTitle:'Под такой фильтр сейчас ничего нет',emptyText:'Ослабь одно условие — вот что сработает лучше всего:',
+  emptyNoRelax:'Попробуй сбросить фильтры или подпишись — пришлём, как появится.',
+  noFreshTitle:'Свежих объявлений нет',noFreshText:'Последнее обновление {ago}. Старые объявления скрыты — часть из них ещё может быть актуальна.',
+  showKnown:'Показать последние известные ({n})',resetFilters:'Сбросить фильтры',
+  relaxDistrict:'Весь остров',relaxPrice:'Без лимита цены',relaxBed:'Любые спальни',relaxType:'Любой тип',relaxAm:'Без «{x}»',
+  relaxAge:'За любое время',relaxPeriod:'Любой срок',relaxSqm:'Любая площадь',relaxAvail:'И без даты заезда',relaxSeen:'Включая просмотренные',relaxSearch:'Без поиска «{x}»',
+  variants:'{n} {w}',
+  listingsN:'{n} {w}',noDistrict:'район не указан',bedShort:'{n} сп',studio:'студия',sqm:'{n} м²',toPier:'{n} км до пирса',
+  availNow:'свободно сейчас',availFrom:'с {d}',fewData:'мало данных',seen:'смотрел',maybeRented:'возможно, уже сдано',
+  write:'Написать',open:'Открыть',openTg:'Открыть в Telegram',fromSrc:'из {s}',andMore:'ещё {n}',
+  allSources:'Источники',airbnbHere:'Airbnb в этом районе ~{p} ฿/ночь',estimate:'оценка',medianTip:'медиана района {p} ฿/мес',
+  report:'Пожаловаться / убрать',belowMkt:'ниже рынка −{n}%',aboveMkt:'выше рынка +{n}%',
+  hotTitle:'Свежее и ниже рынка',loadMore:'Показать ещё {n} из {m}',
+  today:'сегодня',yesterday:'вчера',daysAgo:'{n} дн.',weeksAgo:'{n} нед.',monthsAgo:'{n} мес.',rented:'снято',dateUnknown:'дата неизвестна',
+  agoToday:'сегодня',agoDays:'{n} {w} назад',
+  onMap:'<b>{a}</b> на карте · {b} без точного района — в списке',
+  currency:'Валюта',theme:'Тема',themeAuto:'как в системе',themeLight:'светлая',themeDark:'тёмная',language:'Язык',
+  shortcuts:'Горячие клавиши',kSearch:'поиск',kClear:'очистить поиск / закрыть',kReset:'сбросить фильтры',
+  favsTitle:'Избранное',clearFavs:'Очистить избранное',noFavs:'Пока пусто',
+  stDistrict:'Район',stCount:'Объявл.',stActive:'Актуальных',stMedian:'Медиана, ฿/мес',noDistrictRow:'Без района',
+  perMonth:'/мес',perNight:'/ночь',priceNone:'цена не указана',upTo:'до {p}',fromP:'от {p}',bedsPlus:'{n}+ сп',
+  phoneHidden:'[телефон скрыт — см. оригинал]',ownerTitle:'Сдаёшь жильё на Пхангане?',ownerText:'Добавим объявление на витрину бесплатно — его увидят те, кто уже ищет жильё с фильтром по району и цене.',ownerBtn:'Добавить объявление'},
+en:{h1:'Rentals on Koh Phangan',searchPh:'Area, pool, 2br…',langAria:'Переключить на русский',favs:'Saved',menu:'Menu',filters:'Filters',
+  watchSearch:'Get alerts for this search',watchShort:'Alerts',watchTip:'We will send new listings matching this filter to Telegram',
+  watchNew:'Send me new listings',notifyMe:'Notify me when one appears',
+  share:'share',copied:'copied',sortBy:'Sort:',sortFresh:'newest first',sortCheap:'cheapest',sortPricey:'most expensive',sortBelow:'below market',
+  sortSqmDesc:'area: largest',sortSqmAsc:'area: smallest',sortPpsqm:'price/m²: lowest',sortDist:'closest to pier',
+  footAbout:'SabaiStay collects public rental posts from Koh Phangan Telegram channels. We are not an agent: you contact the author directly, no commission. Every listing links to the original.',
+  privacy:'Privacy',removeListing:'Remove a listing',districtStats:'Area stats',csv:'Download CSV',snapshot:'snapshot',
+  mapAria:'Listings map',map:'Map',list:'List',toTop:'Back to top',
+  allFilters:'Filters',district:'Area',price:'Price',beds:'Bedrooms',type:'Type',monthly:'Monthly',nightly:'Nightly',
+  freshness:'Posted',wholeIsland:'Whole island',any:'Any',anyType:'Any',anyTime:'Any time',anyTerm:'Any term',
+  term:'Rental term',amenities:'Amenities',area:'Area, m²',from:'from',to:'to',more:'More',
+  onlyAvail:'Only with a move-in date',hideSeen:'Hide viewed',showStale:'Show outdated',
+  clearAll:'Clear all',reset:'Reset',showN:'Show {n}',priceHint:'Price distribution in current results',
+  age1:'today & yesterday',age3:'last 3 days',age7:'last week',age30:'last month',
+  updated:'updated {ago}',fromChannels:'from {n} Telegram channels',
+  infoP1:'We collect public posts from {n} Koh Phangan rental Telegram channels and sort them by area, price and bedrooms.',
+  infoP2:'Every card links to the original post. We are not an agent: you message the author directly, no commission.',
+  infoP3:'Your listing is here and you don\'t want it to be? <a href="privacy.html#remove">Remove it</a>.',
+  staleAuto:'No fresh listings — last update <b>{ago}</b>. Showing the last known ones: some may be gone, message several at once.',
+  staleOld:'Updated <b>{ago}</b> — some listings may be gone, message several at once.',
+  showOldToo:'Show older too ({n})',
+  emptyTitle:'Nothing matches this filter right now',emptyText:'Loosen one condition — this would help most:',
+  emptyNoRelax:'Try resetting the filters, or subscribe and we will tell you when something appears.',
+  noFreshTitle:'No fresh listings',noFreshText:'Last update {ago}. Older listings are hidden — some may still be available.',
+  showKnown:'Show last known ({n})',resetFilters:'Reset filters',
+  relaxDistrict:'Whole island',relaxPrice:'No price limit',relaxBed:'Any bedrooms',relaxType:'Any type',relaxAm:'Without “{x}”',
+  relaxAge:'Any time',relaxPeriod:'Any term',relaxSqm:'Any size',relaxAvail:'Also without move-in date',relaxSeen:'Include viewed',relaxSearch:'Without “{x}” search',
+  variants:'{n} {w}',
+  listingsN:'{n} {w}',noDistrict:'area not given',bedShort:'{n} bd',studio:'studio',sqm:'{n} m²',toPier:'{n} km to pier',
+  availNow:'available now',availFrom:'from {d}',fewData:'sparse data',seen:'viewed',maybeRented:'may already be taken',
+  write:'Message',open:'Open',openTg:'Open in Telegram',fromSrc:'from {s}',andMore:'+{n} more',
+  allSources:'Sources',airbnbHere:'Airbnb in this area ~{p} ฿/night',estimate:'estimate',medianTip:'area median {p} ฿/mo',
+  report:'Report / remove',belowMkt:'below market −{n}%',aboveMkt:'above market +{n}%',
+  hotTitle:'Fresh and below market',loadMore:'Show {n} more of {m}',
+  today:'today',yesterday:'yesterday',daysAgo:'{n}d ago',weeksAgo:'{n}w ago',monthsAgo:'{n}mo ago',rented:'taken',dateUnknown:'date unknown',
+  agoToday:'today',agoDays:'{n} {w} ago',
+  onMap:'<b>{a}</b> on map · {b} without exact area are in the list',
+  currency:'Currency',theme:'Theme',themeAuto:'system',themeLight:'light',themeDark:'dark',language:'Language',
+  shortcuts:'Keyboard shortcuts',kSearch:'search',kClear:'clear search / close',kReset:'reset filters',
+  favsTitle:'Saved',clearFavs:'Clear saved',noFavs:'Nothing yet',
+  stDistrict:'Area',stCount:'Listings',stActive:'Active',stMedian:'Median, ฿/mo',noDistrictRow:'No area',
+  perMonth:'/mo',perNight:'/night',priceNone:'price not given',upTo:'up to {p}',fromP:'from {p}',bedsPlus:'{n}+ bd',
+  phoneHidden:'[phone hidden — see original]',ownerTitle:'Renting out a place on Phangan?',ownerText:'We will add your listing for free — people already searching by area and price will see it.',ownerBtn:'Add a listing'}};
+const WORDS={ru:{listing:['объявление','объявления','объявлений'],variant:['вариант','варианта','вариантов'],day:['день','дня','дней']},
+             en:{listing:['listing','listings'],variant:['option','options'],day:['day','days']}};
+let LANG=(LS.get('sabaistay_lang')||((navigator.language||'ru').toLowerCase().startsWith('ru')?'ru':'en'));
+if(!I18N[LANG])LANG='ru';
+function t(k,v){let s=(I18N[LANG][k]??I18N.ru[k]??k);if(v)for(const x in v)s=s.split('{'+x+'}').join(v[x]);return s;}
+function word(n,k){const f=WORDS[LANG][k];if(LANG==='en')return n===1?f[0]:f[1];
+  return n%10===1&&n%100!==11?f[0]:(n%10>=2&&n%10<=4&&(n%100<10||n%100>=20)?f[1]:f[2]);}
+function applyStatic(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-i18n]').forEach(e=>{e.textContent=t(e.dataset.i18n);});
+  document.querySelectorAll('[data-i18n-ph]').forEach(e=>{e.placeholder=t(e.dataset.i18nPh);});
+  document.querySelectorAll('[data-i18n-aria]').forEach(e=>{e.setAttribute('aria-label',t(e.dataset.i18nAria));});
+  $('lang-btn').textContent=LANG==='ru'?'EN':'RU';
+  document.querySelectorAll('.js-watch').forEach(e=>e.title=t('watchTip'));
+}
+const TYPE={ru:{villa:'вилла',house:'дом',room:'комната',studio:'студия',bungalow:'бунгало',apartment:'апартаменты',land:'участок',other:'жильё'},
+            en:{villa:'villa',house:'house',room:'room',studio:'studio',bungalow:'bungalow',apartment:'apartment',land:'land',other:'place'}};
+const AMEN={ru:{pool:'бассейн',seaview:'вид на море',kitchen:'кухня',aircon:'кондиционер',wifi:'Wi-Fi'},
+            en:{pool:'pool',seaview:'sea view',kitchen:'kitchen',aircon:'air con',wifi:'Wi-Fi'}};
+const AM_KEYS=['pool','seaview','kitchen','aircon','wifi'];
+const TYPE_KEYS=['house','villa','apartment','bungalow','studio','room','other'];
+const typeL=k=>TYPE[LANG][k]||k||TYPE[LANG].other;
+const MON={ru:['','янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'],en:['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']};
+function fmtDay(y,m,d){return LANG==='ru'?(d?(+d)+' '+MON.ru[+m]:MON.ru[+m]+' '+y):(d?MON.en[+m]+' '+(+d):MON.en[+m]+' '+y);}
+const SRC={telegram:'Telegram',fb_group:'Facebook',fb_marketplace:'Facebook',booking:'Booking',airbnb:'Airbnb',manual:'SabaiStay',own:'SabaiStay'};
+function srcName(s){const m=/t\.me\/(?:s\/)?([A-Za-z0-9_]+)/.exec(s.source_url||'');return m?'@'+m[1]:(SRC[s.source]||'↗');}
 
 // ── свежесть считается В БРАУЗЕРЕ, а не запекается при сборке ───────────────
 // Страница статическая: она живёт в кэше и на Vercel до следующего успешного сбора.
@@ -735,83 +776,33 @@ function assessFresh(postedAt,rented){
 }
 DATA.forEach(d=>{d.fresh=assessFresh(d.posted_at,d.rented);});
 // Порядок по умолчанию — свежее сверху (свои featured остаются первыми).
-// Сборка уже отсортировала, но возраст мог поменяться, пока страница лежала.
 DATA.sort((a,b)=>(b.featured?1:0)-(a.featured?1:0)||String(b.posted_at||'').localeCompare(String(a.posted_at||'')));
-// Возраст данных показываем сами, до того как человек наткнётся на протухшее объявление.
-// Порог 3 дня: на Пхангане хороший вариант уходит за часы, неделя — это уже другая выдача.
-(function(){
-  if(!SNAP_DATE)return;
-  const days=Math.floor((Date.now()-SNAP_DATE.getTime())/864e5);
-  if(days<3)return;
-  const el=document.getElementById('data-age');
-  const plural=days%10===1&&days%100!==11?'день':(days%10>=2&&days%10<=4&&(days%100<10||days%100>=20)?'дня':'дней');
-  el.innerHTML='<span>🕓</span><span>Обновлено <b>'+days+' '+plural+
-    '</b> назад — часть вариантов могла уйти, пиши сразу нескольким.</span>';
-  el.classList.add('vis');
-})();
-let CUR='thb';
+// Короткая подпись свежести для карточки (сам расчёт — assessFresh выше, не трогаем).
+function freshText(fr){
+  if(fr.status==='rented')return t('rented');
+  const a=fr.age_days; if(a==null)return t('dateUnknown');
+  if(a===0)return t('today'); if(a===1)return t('yesterday');
+  if(a<14)return t('daysAgo',{n:a}); if(a<60)return t('weeksAgo',{n:Math.round(a/7)});
+  return t('monthsAgo',{n:Math.round(a/30)});
+}
+function agoText(days){return days<=0?t('agoToday'):t('agoDays',{n:days,w:word(days,'day')});}
+const SNAP_DAYS=SNAP_DATE?Math.max(0,Math.floor((Date.now()-SNAP_DATE.getTime())/864e5)):null;
+const FRESH_TOTAL=DATA.filter(d=>!d.fresh.stale).length;
+// Если живых объявлений нет вовсе (сбор стоял), прятать устаревшие по умолчанию = пустой
+// сайт. Тогда по умолчанию показываем последние известные с честной пометкой о возрасте.
+const DEFAULT_HIDE_STALE=FRESH_TOTAL>0;
+const CHANNELS=new Set();DATA.forEach(d=>d.sources.forEach(s=>{const n=srcName(s);if(n[0]==='@')CHANNELS.add(n);}));
+
+let CUR=LS.get('sabaistay_cur')==='usd'?'usd':'thb';
 const RATE_USD=35;
-const compact=n=>{if(CUR==='usd'){const u=Math.round(n/RATE_USD);return u>=1000?(u/1000).toFixed(1)+'k$':'$'+u;}return n>=1000?(n/1000)+'k':(''+n);};
-const priceFull=n=>{if(n==null)return null;if(CUR==='usd')return'$'+Math.round(n/RATE_USD).toLocaleString('en');return n.toLocaleString('ru-RU');};
-const firstUrl=d=>d.sources[0].source_url;
-function sourcesHtml(arr){
-  if(arr.length===1){const s=arr[0];return '<a class="src" href="'+s.source_url+'" target="_blank" rel="noopener">↗ '+(SRC[s.source]||"оригинал")+'</a>';}
-  return '<span class="multi">🔗 '+arr.length+' источника</span>'+arr.map(s=>'<a class="src" title="'+(SRC[s.source]||"источник")+'" href="'+s.source_url+'" target="_blank" rel="noopener">'+(SRCICON[s.source]||"↗")+'</a>').join("");
-}
-function contactBtn(contact){
-  if(!contact||!contact.telegram)return '';
-  const u=contact.telegram.replace(/^@/,'');
-  return '<a class="contact-btn" href="https://t.me/'+u+'" target="_blank" rel="noopener">✉ написать</a>';
-}
+const compact=n=>{if(CUR==='usd'){const u=Math.round(n/RATE_USD);return u>=1000?(u/1000).toFixed(1)+'k$':'$'+u;}return n>=1000?(Math.round(n/100)/10)+'k':(''+n);};
+const priceFull=n=>{if(n==null)return null;if(CUR==='usd')return'$'+Math.round(n/RATE_USD).toLocaleString('en');return Math.round(n).toLocaleString('ru-RU')+' ฿';};
+const firstUrl=d=>d.sources[0]?.source_url||'#';
 
-// ── тёмная тема: ранняя инициализация (до map) ──
-(function(){
-  const TKEY='sabaistay_theme';
-  const saved=localStorage.getItem(TKEY);
-  const prefersDark=window.matchMedia('(prefers-color-scheme:dark)').matches;
-  const dark=saved?saved==='dark':prefersDark;
-  document.documentElement.setAttribute('data-theme',dark?'dark':'light');
-  const btn=document.getElementById('theme-btn');
-  if(btn)btn.textContent=dark?'☀️':'🌙';
-})();
-
-// карта — тихие тайлы CartoDB под «бумагу карты»
-const map=L.map('map',{zoomControl:true}).setView([9.745,100.01],12);
-const _dark=document.documentElement.getAttribute('data-theme')==='dark';
-const tileL=L.tileLayer(
-  _dark?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-       :'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-  {attribution:'© OpenStreetMap © CARTO',subdomains:'abcd',maxZoom:19}).addTo(map);
-// поворот экрана / ресайз: Leaflet сам не пересчитывает размер и остаётся серым
-let _rsz;
-addEventListener('resize',()=>{clearTimeout(_rsz);_rsz=setTimeout(()=>map.invalidateSize(),200);});
-addEventListener('orientationchange',()=>setTimeout(()=>map.invalidateSize(),300));
-let markers={};
-const clusterGroup=L.markerClusterGroup({maxClusterRadius:55,showCoverageOnHover:false,iconCreateFunction:function(c){return L.divIcon({className:'',html:'<div class="cluster-icon">'+c.getChildCount()+'</div>',iconSize:[34,34]});}});
-map.addLayer(clusterGroup);
-
-// район-дропдаун из реальных данных
-[...new Set(DATA.filter(d=>d.district).map(d=>d.district))].sort().forEach(d=>{
-  const o=document.createElement('option');o.value=d;o.textContent=d;document.getElementById('f-district').appendChild(o);
-});
-
-const AMLABEL={pool:'🏊 бассейн',seaview:'🌊 море',wifi:'📶 wi-fi',kitchen:'🍳 кухня',aircon:'❄️ кондей'};
-function readF(){return{
-  district:document.getElementById('f-district').value,
-  sqmMin:+document.getElementById('f-sqm-min').value||0,
-  sqmMax:+document.getElementById('f-sqm-max').value||0,
-  priceMin:+document.getElementById('f-price-min').value||0,
-  price:+document.getElementById('f-price').value||0,
-  bed:+document.getElementById('f-bed').value||0,
-  type:document.getElementById('f-type').value,
-  amenities:Array.from(document.querySelectorAll('.f-am:checked')).map(e=>e.value),
-  hideStale:document.getElementById('f-stale').checked,
-  maxAge:+document.getElementById('f-age').value||0,
-  onlyAvail:document.getElementById('f-avail').checked,
-  hideSeen:document.getElementById('f-hide-seen')?.checked||false,
-  period:document.getElementById('f-period').value,
-  search:(document.getElementById('f-search').value||'').trim().toLowerCase()};
-}
+// ── состояние фильтра: один объект, из него рисуются чипы, шторки и URL ──
+const DEF={district:'',period:'',price:0,priceMin:0,bed:0,type:'',amenities:[],maxAge:0,hideStale:DEFAULT_HIDE_STALE,onlyAvail:false,hideSeen:false,sqmMin:0,sqmMax:0,search:'',sort:''};
+let S=JSON.parse(JSON.stringify(DEF));
+function readF(){return{...S,amenities:[...S.amenities]};}
 function passes(d,f){
   if(f.district&&d.district!==f.district)return false;
   if(f.sqmMin&&(d.area_sqm==null||d.area_sqm<f.sqmMin))return false;
@@ -829,203 +820,624 @@ function passes(d,f){
   if(f.maxAge&&(d.fresh.age_days==null||d.fresh.age_days>f.maxAge))return false;
   if(f.onlyAvail&&!d.available_from)return false;
   if(f.hideSeen&&getSeen().has(d.id))return false;
-  if(f.search){const hay=(d.title+' '+d.text+' '+(d.district||'')).toLowerCase();if(!hay.includes(f.search))return false;}
+  if(f.search){const hay=(d.title+' '+d.text+' '+(d.district||'')+' '+(d.type||'')).toLowerCase();if(!hay.includes(f.search))return false;}
   return true;}
-const amen=a=>Object.keys(AM).filter(k=>a[k]).map(k=>AM[k]).join(" ");
-const escHtml=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const countWith=f=>DATA.reduce((n,d)=>n+(passes(d,f)?1:0),0);
 
-function makeCard(d,i,key,target){
-  const card=document.createElement('article'); card.className="card"+(d.fresh.stale?" stale":"")+(d.fresh.cls==='hot'?" hot":"")+(d.own?" own":""); card.style.setProperty('--i',i);
-  const fb='<span class="fresh-badge fb-'+d.fresh.cls+'">'+d.fresh.label+'</span>';
-  const dtag=d.district?'<span class="dtag">📍 '+d.district+'</span>':'<span class="dtag nogeo">📍 район не указан</span>';
-  const draft=d.confidence<0.6?' <span class="draft">черновик</span>':'';
-  const unit=PERIOD[d.period]!=null?PERIOD[d.period]:'';
-  const priceSqmHtml=(d.price&&d.area_sqm)?'<span class="price-sqm">≈'+Math.round(d.price/d.area_sqm).toLocaleString('ru-RU')+'฿/м²</span>':'';
-  const price=d.price!=null
-    ? '<span class="price">'+priceFull(d.price)+' ฿<small>'+unit+'</small></span>'+priceSqmHtml
-    : '<span class="price none">цена не указана</span>';
-  const b=d.bench;
-  const benchBadge=b?'<span class="bench bench-'+b.kind+'" title="медиана района: '+priceFull(b.monthly_median)+' ฿/мес">'+b.label+'</span>':'';
-  const ref=b&&b.airbnb_adr?'<div class="ref">🏨 Airbnb здесь ~'+priceFull(b.airbnb_adr)+'฿/ночь'+(b.seed?' <span class="seed">оценка</span>':'')+'</div>':'';
-  const amenStr=amen(d.amenities);
-  const availHtml=(()=>{
-    if(!d.available_from)return '';
-    if(d.available_from==='now')return '<span class="avail-now">🟢 доступно сейчас</span>';
-    const parts=d.available_from.split('-');
-    const mon=['','янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
-    const label=parts.length===2?mon[+parts[1]]+' '+parts[0]:(parts[2]+' '+mon[+parts[1]]+' '+parts[0]);
-    let daysHtml='';
-    if(SNAP_DATE&&parts.length===3){
-      const avDate=new Date(d.available_from);
-      const diff=Math.round((avDate-SNAP_DATE)/(1000*60*60*24));
-      if(diff<=0)daysHtml=' <span class="avail-ready">✓ уже можно</span>';
-      else if(diff<=14)daysHtml=' <span class="avail-soon">через '+diff+' дн.</span>';
-    }
-    return '<span class="avail-date">📅 с '+label+'</span>'+daysHtml;
-  })();
-  const expandHtml=d.text?'<details class="card-raw"><summary class="card-raw-toggle">читать целиком</summary><pre class="card-raw-text">'+escHtml(d.text)+'</pre></details>':'';
-  const isSaved=getFavs().includes(d.id);
-  const seen=getSeen().has(d.id);
-  const bmBtn='<button class="bm-btn'+(isSaved?' saved':'')+'" data-id="'+escHtml(d.id)+'" title="'+(isSaved?'Убрать из избранного':'В избранное')+'" aria-label="Закладка">🔖</button>';
-  const sqmHtml=d.area_sqm?'<span>📐 '+d.area_sqm+' м²</span>':'';
-  const distHtml=d.dist_km!=null?'<span title="от пирса Тонгсала">🛥 '+d.dist_km+' км</span>':'';
-  const seenHtml=seen?'<span class="seen-badge">уже смотрел</span>':'';
-  // качество объявления
-  const qScore=(d.price!=null?1:0)+(d.district?1:0)+(d.bedrooms!=null?1:0)+(d.type&&d.type!=='other'?1:0);
-  const qHtml='<span class="quality" title="Полнота данных">'+('★'.repeat(qScore)+'☆'.repeat(4-qScore))+'</span>';
-  // подсветка поиска
-  const _srch=readF().search;
-  function hlTitle(t){if(!_srch)return t;const re=new RegExp('('+_srch.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return t.replace(re,'<mark class="hl">$1</mark>');}
-  card.setAttribute('data-type',d.type);
-  if(key!=null)card.setAttribute('data-key',String(key));
-  const ownBadge=d.own?'<span class="own-badge">⭐ SabaiStay</span>':'';
-  const photoHtml=(d.own&&d.photos&&d.photos.length)?'<img class="own-photo" src="'+escHtml(d.photos[0])+'" loading="lazy" alt="">':'';
-  card.innerHTML=bmBtn+photoHtml+'<div class="card-top">'+dtag+ownBadge+fb+'</div>'+
-    '<div class="title">'+hlTitle(escHtml(d.title))+draft+qHtml+seenHtml+'</div>'+
-    '<div class="specs"><span>🛏 '+(d.bedrooms??'—')+'</span><span>🏠 '+(TYPE[d.type]||d.type)+'</span>'+sqmHtml+distHtml+(amenStr?'<span class="spec-amen">'+amenStr+'</span>':'')+(availHtml?availHtml:'')+'</div>'+
-    ref+
-    '<div class="foot"><span class="priceblock">'+price+benchBadge+'</span><span class="srcs">'+contactBtn(d.contact)+sourcesHtml(d.sources)+'</span></div>'+
-    expandHtml;
-  // клик по expand не должен открывать карту / ссылку
-  card.querySelector('details')?.addEventListener('click',e=>e.stopPropagation());
-  // закладка — стопим всплытие, переключаем
-  card.querySelector('.bm-btn')?.addEventListener('click',e=>{e.stopPropagation();toggleFav(d.id);});
-  // история просмотра
-  card.addEventListener('click',()=>{markSeen(d.id);card.querySelector('.seen-badge')||card.querySelector('.title')?.insertAdjacentHTML('beforeend','<span class="seen-badge">уже смотрел</span>');},{once:true,capture:false});
-  if(d.lat!=null&&key!=null){
-    const m=markers[key]; // уже добавлен в render()
-    if(m){
-      const hot=on=>{const el=m.getElement&&m.getElement();if(el){const s=el.querySelector('.sounding');if(s)s.classList.toggle('hot',on);}};
-      card.onmouseenter=()=>{hot(true);m.openPopup()};
-      card.onmouseleave=()=>hot(false);
-      const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
-      card.onclick=()=>{document.querySelectorAll('.card.active').forEach(c=>c.classList.remove('active'));card.classList.add('active');map.flyTo([d.lat,d.lng],14,{duration:rm?0:.5,animate:!rm});m.openPopup()};
-    }
-  } else if(d.lat==null){card.onclick=()=>window.open(firstUrl(d),'_blank');}
-  if(target)target.appendChild(card);
+// ── избранное / просмотренные (localStorage, всё в try) ──
+const FAV_KEY='sabaistay_fav',SEEN_KEY='sabaistay_seen';
+function getFavs(){try{return JSON.parse(LS.get(FAV_KEY)||'[]');}catch(e){return[];}}
+function saveFavs(a){LS.set(FAV_KEY,JSON.stringify(a));}
+function getSeen(){try{return new Set(JSON.parse(LS.get(SEEN_KEY)||'[]'));}catch(e){return new Set();}}
+function markSeen(id){const s=getSeen();s.add(id);LS.set(SEEN_KEY,JSON.stringify([...s]));}
+
+// ── иконки ──
+const IC={
+  bm:'<svg class="ico" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg>',
+  ext:'<svg class="ico" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M7 17 17 7M9 7h8v8"/></svg>',
+  msg:'<svg class="ico" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="m22 3-9.5 18-2.5-8-8-2.5z"/></svg>',
+  sliders:'<svg class="ico" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
+  list:'<svg class="ico" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
+  map:'<svg class="ico" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg>'
+};
+// мини-силуэт острова с точкой района — замена фото-превью: мгновенно «где это»
+function islandMark(d){
+  if(d.own&&d.photos&&d.photos.length)return '<img src="'+esc(d.photos[0])+'" alt="" loading="lazy">';
+  if(d.lat==null)return '<svg viewBox="0 0 64 64" aria-hidden="true"><path class="isl unk" d="'+ISLAND+'"/></svg>';
+  const k=361.29,x=((d.lng-99.955)*k+5.806).toFixed(1),y=((9.822-d.lat)*k+3).toFixed(1);
+  return '<svg viewBox="0 0 64 64" aria-hidden="true"><path class="isl" d="'+ISLAND+'"/><circle class="halo" cx="'+x+'" cy="'+y+'" r="6"/><circle class="dot" cx="'+x+'" cy="'+y+'" r="3"/></svg>';
+}
+// телефоны в тексте чужих объявлений не показываем (PDPA): связь — через оригинал
+function maskPhones(s){return s.replace(/(?:\+\d|\b0)[\d\s().-]{7,}\d/g,m=>{const n=m.replace(/\D/g,'').length;return n>=9&&n<=13?t('phoneHidden'):m;});}
+function benchHtml(d){
+  const b=d.bench;if(!b||b.pct==null||Math.abs(b.pct)<15)return '';
+  const tip=esc(t('medianTip',{p:Math.round(b.monthly_median).toLocaleString('ru-RU')}));
+  return b.pct<0?'<span class="bench cheap" title="'+tip+'">'+t('belowMkt',{n:Math.abs(b.pct)})+'</span>'
+                :'<span class="bench" title="'+tip+'">'+t('aboveMkt',{n:b.pct})+'</span>';
+}
+function availText(d){
+  if(!d.available_from)return '';
+  if(d.available_from==='now')return '<span class="now">'+t('availNow')+'</span>';
+  const p=d.available_from.split('-');
+  return esc(t('availFrom',{d:fmtDay(p[0],p[1],p[2])}));
+}
+const unitOf=d=>d.period==='night'?t('perNight'):(d.period==='sale'?'':t('perMonth'));
+function hl(s,q){if(!q)return s;const re=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return s.replace(re,'<mark>$1</mark>');}
+
+function makeCard(d,key){
+  const card=document.createElement('article');
+  const dim=d.fresh.stale&&FRESH_TOTAL>0;  // когда свежих нет вовсе, о возрасте говорит полоса сверху — не глушим всю ленту
+  card.className='card'+(dim?' stale':'')+(d.own?' own':'');
+  card.tabIndex=0;
+  if(key!=null)card.dataset.key=key;
+  const where=d.district?esc(d.district)+' · '+esc(typeL(d.type)):esc(typeL(d.type));
+  const price=d.price!=null?'<span class="p">'+priceFull(d.price)+'<small>'+unitOf(d)+'</small></span>':'<span class="p none">'+t('priceNone')+'</span>';
+  const facts=[];
+  if(d.bedrooms!=null)facts.push(d.bedrooms===0?t('studio'):t('bedShort',{n:d.bedrooms}));
+  if(!d.district)facts.push(t('noDistrict'));
+  if(d.area_sqm)facts.push(t('sqm',{n:d.area_sqm}));
+  if(d.dist_km!=null)facts.push(t('toPier',{n:String(d.dist_km).replace('.',LANG==='ru'?',':'.')}));
+  if(d.price&&d.area_sqm)facts.push('≈'+Math.round(d.price/d.area_sqm).toLocaleString('ru-RU')+' ฿/м²');
+  const am=AM_KEYS.filter(k=>d.amenities&&d.amenities[k]).map(k=>AMEN[LANG][k]);
+  const av=availText(d); if(av)am.push(av);
+  const seen=getSeen().has(d.id), saved=getFavs().includes(d.id);
+  const tags=(d.own?'<span class="tag own">SabaiStay</span>':'')+(d.confidence!=null&&d.confidence<0.6?'<span class="tag">'+t('fewData')+'</span>':'')+(seen?'<span class="tag">'+t('seen')+'</span>':'');
+  const tg=d.contact&&d.contact.telegram?d.contact.telegram.replace(/^@/,''):'';
+  const isTg=(d.sources[0]?.source||'')==='telegram';
+  const acts=(tg?'<a class="btn pri" href="https://t.me/'+esc(tg)+'" target="_blank" rel="noopener">'+IC.msg+t('write')+'</a>':'')+
+    '<a class="btn '+(tg?'sec':'pri')+'" href="'+esc(firstUrl(d))+'" target="_blank" rel="noopener" title="'+(isTg?t('openTg'):t('open'))+'">'+t('open')+' '+IC.ext+'</a>';
+  const more=d.sources.length>1?' · '+t('andMore',{n:d.sources.length-1}):'';
+  card.innerHTML=
+    ((d.own&&d.photos&&d.photos.length>1)?'<img class="own-photo" src="'+esc(d.photos[1])+'" alt="" loading="lazy">':'')+
+    '<div class="c-mark">'+islandMark(d)+'</div>'+
+    '<div class="c-body">'+
+      '<div class="c-eye"><span class="c-where'+(d.district?'':' nogeo')+'">'+where+'</span><span class="c-fresh f-'+d.fresh.cls+'">'+freshText(d.fresh)+'</span></div>'+
+      '<div class="c-price">'+price+benchHtml(d)+'</div>'+
+      '<div class="c-facts">'+(facts.map(esc).join('<span class="sep">·</span>')||'&nbsp;')+tags+'</div>'+
+      ((am.length||dim)?'<div class="c-amen">'+am.join('<span class="sep">·</span>')+(dim?(am.length?'<span class="sep">·</span>':'')+'<span class="stale-note">'+t('maybeRented')+'</span>':'')+'</div>':'')+
+    '</div>'+
+    '<button class="bm'+(saved?' saved':'')+'" type="button" data-id="'+esc(d.id)+'" aria-pressed="'+saved+'" aria-label="'+t('favs')+'">'+IC.bm+'</button>'+
+    '<div class="c-foot"><button class="c-src" type="button" aria-expanded="false">'+t('fromSrc',{s:'<b>'+esc(srcName(d.sources[0]||{}))+'</b>'})+more+'</button>'+acts+'</div>';
+  const toggle=()=>{
+    const open=!card.classList.contains('open');
+    card.classList.toggle('open',open);
+    card.querySelector('.c-src').setAttribute('aria-expanded',String(open));
+    let m=card.querySelector('.c-more');
+    if(open&&!m){
+      m=document.createElement('div');m.className='c-more';
+      const b=d.bench;
+      const txt=d.text?(d.own?d.text:maskPhones(d.text)):'';
+      m.innerHTML=(txt?'<pre class="c-text">'+hl(esc(txt),S.search?esc(S.search):'')+'</pre>':'')+
+        '<p class="c-meta">'+t('allSources')+':</p><div class="c-srcs">'+d.sources.map(s=>'<a href="'+esc(s.source_url)+'" target="_blank" rel="noopener">'+esc(srcName(s))+' ↗</a>').join('')+'</div>'+
+        (b&&b.airbnb_adr?'<p class="c-meta">'+t('airbnbHere',{p:Math.round(b.airbnb_adr).toLocaleString('ru-RU')})+(b.seed?' ('+t('estimate')+')':'')+'</p>':'')+
+        (b&&b.monthly_median?'<p class="c-meta">'+t('medianTip',{p:Math.round(b.monthly_median).toLocaleString('ru-RU')})+'</p>':'')+
+        '<p class="c-meta"><a href="privacy.html#remove">'+t('report')+'</a></p>';
+      card.appendChild(m);
+    } else if(m) m.hidden=!open;
+    if(open){markSeen(d.id);}
+  };
+  card.addEventListener('click',e=>{
+    if(e.target.closest('a,.bm,.c-more'))return;
+    toggle();
+    if(key!=null&&d.lat!=null)focusMarker(key,true);
+  });
+  card.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target===card){e.preventDefault();card.click();}});
+  card.querySelector('.bm').addEventListener('click',e=>{e.stopPropagation();toggleFav(d.id);});
+  if(key!=null&&d.lat!=null){
+    card.addEventListener('mouseenter',()=>pinOn(key,true));
+    card.addEventListener('mouseleave',()=>pinOn(key,false));
+  }
   return card;
 }
+
+// ── карта: Leaflet для пинов, подложка OpenFreeMap (MapLibre) — без ключей ──
+let map=null,clusterGroup=null,markers={},basemap=null,basemapLoading=false,mapNote=null;
+const STYLE={light:'https://tiles.openfreemap.org/styles/positron',dark:'https://tiles.openfreemap.org/styles/dark'};
+const OFM_ATTR='<a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> <a href="https://www.openmaptiles.org/" target="_blank" rel="noopener">© OpenMapTiles</a> · © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
+const isDark=()=>document.documentElement.getAttribute('data-theme')==='dark';
+const isMobile=()=>matchMedia('(max-width:760px)').matches;
+if(HAS_L){
+  map=L.map('map',{zoomControl:true,attributionControl:true,maxZoom:18,minZoom:10}).setView([9.745,100.025],12);
+  map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
+  clusterGroup=L.markerClusterGroup({maxClusterRadius:50,showCoverageOnHover:false,
+    iconCreateFunction:c=>L.divIcon({className:'',html:'<div class="cluster">'+c.getChildCount()+'</div>',iconSize:[36,36]})});
+  map.addLayer(clusterGroup);
+  const Note=L.Control.extend({onAdd(){const e=L.DomUtil.create('div','mapnote');L.DomEvent.disableClickPropagation(e);return e;}});
+  mapNote=new Note({position:'bottomleft'}).addTo(map);
+  const Coords=L.Control.extend({onAdd(){const e=L.DomUtil.create('div','coords');e.textContent='9.74°N · 100.01°E';return e;}});
+  new Coords({position:'topright'}).addTo(map);
+  let _rsz;
+  addEventListener('resize',()=>{clearTimeout(_rsz);_rsz=setTimeout(()=>map.invalidateSize(),200);});
+  addEventListener('orientationchange',()=>setTimeout(()=>map.invalidateSize(),300));
+}
+function loadScript(src){return new Promise((ok,fail)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=fail;document.head.appendChild(s);});}
+function loadCss(href){const l=document.createElement('link');l.rel='stylesheet';l.href=href;document.head.appendChild(l);}
+function rasterFallback(){
+  // Запасная подложка, если нет WebGL или CDN MapLibre недоступен: тайлы OSM (малый трафик, атрибуция обязательна).
+  basemap=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,
+    attribution:'© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'}).addTo(map);
+  basemap.bringToBack();
+}
+function hasWebGL(){try{const c=document.createElement('canvas');return !!(c.getContext('webgl2')||c.getContext('webgl'));}catch(e){return false;}}
+// Подложку грузим только когда карта на экране: на мобиле список первичен, и ~200 КБ
+// векторного движка не должны съедать трафик тому, кто карту не открывал.
+function ensureBasemap(){
+  if(!map||basemap||basemapLoading)return;
+  basemapLoading=true;
+  if(!hasWebGL()){rasterFallback();return;}
+  loadCss('https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css');
+  loadScript('https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js')
+    .then(()=>loadScript('https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.0/leaflet-maplibre-gl.js'))
+    .then(()=>{
+      basemap=L.maplibreGL({style:isDark()?STYLE.dark:STYLE.light,attribution:OFM_ATTR}).addTo(map);
+      tintBasemap();
+      const gl=basemap.getMaplibreMap&&basemap.getMaplibreMap();
+      if(gl)gl.on('style.load',tintBasemap);
+    })
+    .catch(()=>{rasterFallback();});
+}
+// Палитра подложки под токены страницы: суша — «бумага», вода — тихая бирюза.
+function tintBasemap(){
+  const gl=basemap&&basemap.getMaplibreMap&&basemap.getMaplibreMap();
+  if(!gl||!gl.isStyleLoaded||!gl.getLayer)return;
+  const dark=isDark();
+  try{
+    if(gl.getLayer('background'))gl.setPaintProperty('background','background-color',dark?'#13262c':'#ecebdf');
+    if(gl.getLayer('water'))gl.setPaintProperty('water','fill-color',dark?'#0a1a20':'#cfe3e2');
+  }catch(e){}
+}
+function setBasemapTheme(){
+  if(!basemap)return;
+  if(basemap.getMaplibreMap){basemap.getMaplibreMap().setStyle(isDark()?STYLE.dark:STYLE.light);}
+}
+function pinOn(key,on){const m=markers[key];const el=m&&m.getElement&&m.getElement();const p=el&&el.querySelector('.pin');if(p)p.classList.toggle('on',on);}
+let _activeKey=null;
+function focusMarker(key,fly){
+  const m=markers[key];if(!m||!map)return;
+  if(_activeKey!=null)pinOn(_activeKey,false);
+  _activeKey=key;
+  if(isMobile())return;  // на мобиле карта скрыта под списком — не дёргаем её
+  const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  clusterGroup.zoomToShowLayer(m,()=>{pinOn(key,true);});
+  if(fly)map.flyTo(m.getLatLng(),Math.max(map.getZoom(),14),{duration:rm?0:.5,animate:!rm});
+}
+function popupHtml(d){
+  return '<div class="mp-where">'+esc(d.district||'')+' · '+esc(typeL(d.type))+'</div>'+
+    '<div class="mp-price">'+(d.price!=null?priceFull(d.price)+'<small>'+unitOf(d)+'</small>':t('priceNone'))+'</div>'+
+    '<div class="mp-meta">'+(d.bedrooms!=null?t('bedShort',{n:d.bedrooms})+' · ':'')+freshText(d.fresh)+'</div>'+
+    '<div class="mp-acts"><a class="btn pri" href="'+esc(firstUrl(d))+'" target="_blank" rel="noopener">'+t('open')+' '+IC.ext+'</a></div>';
+}
+
+// ── выдача ──
 const PAGE_SIZE=30;
-let _geoView=[], _noGeoView=[], _geoRendered=0;
-
-function _pluralObj(n){return n%10===1&&n%100!==11?'е':n%10>=2&&n%10<=4&&(n%100<10||n%100>=20)?'я':'й';}
-
-function renderPage(cards){
-  const end=Math.min(_geoRendered+PAGE_SIZE,_geoView.length);
-  for(let i=_geoRendered;i<end;i++) makeCard(_geoView[i],i,i+1,cards);
-  _geoRendered=end;
-  const lmw=document.getElementById('load-more-wrap');
-  const lmb=document.getElementById('load-more-btn');
-  if(lmw&&lmb){
-    const rem=_geoView.length-_geoRendered;
-    if(rem>0){lmw.style.display='';lmb.textContent='показать ещё '+Math.min(rem,PAGE_SIZE)+' из '+rem;}
-    else{lmw.style.display='none';}
-  }
+let _view=[],_rendered=0;
+function sortView(view,s){
+  const P=x=>x==null?Infinity:x;
+  if(s==='cheap')view.sort((a,b)=>P(a.price)-P(b.price));
+  else if(s==='pricey')view.sort((a,b)=>(b.price??-1)-(a.price??-1));
+  else if(s==='below')view.sort((a,b)=>P(a.bench&&a.bench.pct)-P(b.bench&&b.bench.pct));
+  else if(s==='sqm_desc')view.sort((a,b)=>(b.area_sqm??-1)-(a.area_sqm??-1));
+  else if(s==='sqm_asc')view.sort((a,b)=>P(a.area_sqm)-P(b.area_sqm));
+  else if(s==='price_sqm_asc')view.sort((a,b)=>P(a.price&&a.area_sqm?a.price/a.area_sqm:null)-P(b.price&&b.area_sqm?b.price/b.area_sqm:null));
+  else if(s==='dist_asc')view.sort((a,b)=>P(a.dist_km)-P(b.dist_km));
+  return [...view.filter(d=>d.featured),...view.filter(d=>!d.featured)];
 }
-
+function renderPage(){
+  const cards=$('cards');
+  const end=Math.min(_rendered+PAGE_SIZE,_view.length);
+  for(let i=_rendered;i<end;i++){
+    cards.appendChild(makeCard(_view[i],i));
+    if(i===2&&_rendered===0){const h=hotSection();if(h)cards.appendChild(h);}
+  }
+  _rendered=end;
+  const rem=_view.length-_rendered;
+  $('load-more').hidden=rem<=0;
+  if(rem>0)$('load-more-btn').textContent=t('loadMore',{n:Math.min(rem,PAGE_SIZE),m:rem});
+}
 function render(first){
-  const f=readF(), cards=document.getElementById('cards');
-  {const u=f.period==='night'?'฿/ночь':'฿/мес';const l1=document.querySelector('label[for="f-price-min"]');const l2=document.querySelector('label[for="f-price"]');if(l1)l1.textContent='Цена от, '+u;if(l2)l2.textContent='Цена до, '+u;}
-  cards.innerHTML=""; cards.classList.toggle('anim',!!first);
-  clusterGroup.clearLayers(); markers={};
-  let view=DATA.map(d=>d);
-  const sortV=document.getElementById('f-sort').value;
-  if(sortV==='cheap')view.sort((a,b)=>(a.price==null?Infinity:a.price)-(b.price==null?Infinity:b.price));
-  else if(sortV==='pricey')view.sort((a,b)=>(b.price==null?-1:b.price)-(a.price==null?-1:a.price));
-  else if(sortV==='fresh')view.sort((a,b)=>String(b.posted_at||'').localeCompare(String(a.posted_at||'')));
-  else if(sortV==='sqm_desc')view.sort((a,b)=>(b.area_sqm??-1)-(a.area_sqm??-1));
-  else if(sortV==='sqm_asc')view.sort((a,b)=>(a.area_sqm??Infinity)-(b.area_sqm??Infinity));
-  else if(sortV==='price_sqm_asc')view.sort((a,b)=>{const ar=a.price&&a.area_sqm?a.price/a.area_sqm:Infinity;const br=b.price&&b.area_sqm?b.price/b.area_sqm:Infinity;return ar-br;});
-  else if(sortV==='dist_asc')view.sort((a,b)=>(a.dist_km??Infinity)-(b.dist_km??Infinity));
-  view=[...view.filter(d=>d.featured),...view.filter(d=>!d.featured)];
-  _geoView=[]; _noGeoView=[];
-  view.forEach(d=>{if(!passes(d,f))return; (d.lat!=null?_geoView:_noGeoView).push(d);});
-  const shown=_geoView.length+_noGeoView.length;
-  // добавляем все маркеры на карту сразу
-  _geoView.forEach((d,idx)=>{
-    if(d.lat==null)return;
-    const unit=PERIOD[d.period]?' '+PERIOD[d.period]:'';
-    const icon=L.divIcon({className:'',html:'<div class="sounding'+(d.fresh.stale?' dim':'')+'">'+(d.price!=null?compact(d.price):'·')+'</div>',iconSize:null});
-    const m=L.marker([d.lat,d.lng],{icon});
-    const amenStr=amen(d.amenities||{});
-    clusterGroup.addLayer(m);
-    m.bindPopup('<b>'+d.title+'</b><br>'+(TYPE[d.type]||d.type)+(d.bedrooms!=null?' · '+d.bedrooms+' сп.':'')+(amenStr?' '+amenStr:'')+'<br>'+(d.price!=null?priceFull(d.price)+' ฿'+unit:'цена не указана')+(d.sources.length>1?'<br>'+d.sources.length+' источника':'')+'<br><a href="'+(d.sources[0]?.source_url||'#')+'" target="_blank">оригинал ↗</a>');
-    markers[idx+1]=m;
-    (function(key){m.on('click',function(){
-      let card=document.querySelector('.card[data-key="'+key+'"]');
-      const cardsEl=document.getElementById('cards');
-      while(!card&&_geoRendered<_geoView.length){renderPage(cardsEl);card=document.querySelector('.card[data-key="'+key+'"]');}
-      if(card){document.querySelectorAll('.card.active').forEach(c=>c.classList.remove('active'));card.classList.add('active');card.scrollIntoView({behavior:'smooth',block:'nearest'});}
-    });})(idx+1);
-  });
-  // рендерим первую страницу карточек
-  _geoRendered=0;
-  renderPage(cards);
-  // секция "без района"
-  if(_noGeoView.length>0){
-    const wrap=document.createElement('div'); wrap.id='nogeo-wrap';
-    const btn=document.createElement('div'); btn.className='nogeo-divider'; btn.setAttribute('role','button');
-    btn.innerHTML='📍 Без района — '+_noGeoView.length+' объявлени'+_pluralObj(_noGeoView.length)+' (район не указан в тексте) <span class="nd-arrow">▾</span>';
-    const inner=document.createElement('div'); inner.className='nogeo-cards';
-    btn.onclick=()=>{btn.classList.toggle('nogeo-open');inner.classList.toggle('open');};
-    _noGeoView.forEach((d,i)=>makeCard(d,_geoView.length+i,null,inner));
-    wrap.appendChild(btn); wrap.appendChild(inner); cards.appendChild(wrap);
+  const f=readF();
+  const cards=$('cards'); cards.innerHTML='';
+  _view=sortView(DATA.filter(d=>passes(d,f)),f.sort);
+  const shown=_view.length;
+  // маркеры
+  markers={};_activeKey=null;
+  if(clusterGroup){
+    clusterGroup.clearLayers();
+    const ms=[];
+    _view.forEach((d,i)=>{
+      if(d.lat==null)return;
+      const icon=L.divIcon({className:'',html:'<div class="pin'+(d.fresh.stale&&FRESH_TOTAL>0?' dim':'')+'">'+(d.price!=null?compact(d.price):'·')+'</div>',iconSize:null});
+      const m=L.marker([d.lat,d.lng],{icon,keyboard:false});
+      m.bindPopup(()=>popupHtml(d),{closeButton:true,autoPanPadding:[30,30]});
+      m.on('click',()=>{
+        if(_activeKey!=null)pinOn(_activeKey,false);
+        _activeKey=i;pinOn(i,true);
+        if(isMobile())return;
+        let c=cards.querySelector('.card[data-key="'+i+'"]');
+        while(!c&&_rendered<_view.length){renderPage();c=cards.querySelector('.card[data-key="'+i+'"]');}
+        if(c){cards.querySelectorAll('.card.active').forEach(x=>x.classList.remove('active'));c.classList.add('active');c.scrollIntoView({behavior:'smooth',block:'nearest'});}
+      });
+      markers[i]=m;ms.push(m);
+    });
+    clusterGroup.addLayers(ms);
+    const onMap=ms.length;
+    mapNote.getContainer().innerHTML=t('onMap',{a:onMap,b:shown-onMap});
+    mapNote.getContainer().hidden=!shown;
   }
-  // Пустая выдача — самый ценный момент для подписки: человек точно знает, чего хочет,
-  // и именно этого сейчас нет. Кнопка ведёт в бота с уже собранным фильтром.
-  if(!shown)cards.innerHTML='<div class="empty"><span class="big">🧭</span><b>В этих координатах пусто</b>'+
-    'под такой фильтр объявлений нет — ослабь условия или подпишись, и пришлём, как появится'+
-    '<div class="empty-actions"><button class="clear" onclick="resetFilters()">сбросить фильтр</button>'+
-    (BOT_USERNAME?'<a class="clear alt" id="empty-watch" target="_blank" rel="noopener">🔔 сообщить о новом</a>':'')+
-    '</div></div>';
-  if(!shown&&BOT_USERNAME){
-    const ew=document.getElementById('empty-watch');
-    if(ew)ew.href=watchHref(f);
-  }
-  const word='объявлени'+_pluralObj(shown);
-  // Сколько объявлений спрятано именно из-за протухания — человек должен понимать,
-  // что «мало результатов» не значит «сайт пустой»: часть просто устарела.
-  const staleHidden=f.hideStale?DATA.filter(d=>d.fresh.stale&&passes(d,{...f,hideStale:false})).length:0;
-  const tail=(_noGeoView.length?' · '+_noGeoView.length+' без района':'')+
-             (staleHidden?' · <span class="stale-note">'+staleHidden+' устаревших скрыто</span>':'');
-  const chips=[];
-  if(f.district)chips.push(['district',f.district]);
-  if(f.maxAge)chips.push(['age',AGE_LABELS[f.maxAge]||('за '+f.maxAge+' дн.')]);
-  if(f.period)chips.push(['period',f.period==='month'?'помесячно':'посуточно']);
-  if(f.price)chips.push(['price','до '+priceFull(f.price)+'฿']);
-  if(f.bed)chips.push(['bed','от '+f.bed+' спален']);
-  if(f.type)chips.push(['type',TYPE[f.type]||f.type]);
-  f.amenities.forEach(a=>chips.push(['am:'+a,AMLABEL[a]||a]));
-  // скрытие старых — состояние по умолчанию, поэтому чипом отмечаем ОБРАТНОЕ:
-  // человек должен видеть, если ему показывают заведомо протухшее
-  if(!f.hideStale)chips.push(['stale-off','показаны старые']);
-  if(f.onlyAvail)chips.push(['avail','с датой заезда']);
-  if(f.hideSeen)chips.push(['hide-seen','скрыть просмотренные']);
-  if(f.sqmMin)chips.push(['sqm-min','от '+f.sqmMin+' м²']);
-  if(f.sqmMax)chips.push(['sqm-max','до '+f.sqmMax+' м²']);
-  if(f.priceMin)chips.push(['price-min','цена от '+priceFull(f.priceMin)+'฿']);
-  if(f.search)chips.push(['search','«'+f.search+'»']);
-  const SORT_LABELS={'cheap':'сначала дешёвые','pricey':'сначала дорогие','fresh':'сначала свежие','sqm_desc':'площадь: больше','sqm_asc':'площадь: меньше','price_sqm_asc':'цена/м²: дешевле','dist_asc':'ближе к пирсу'};
-  if(sortV&&SORT_LABELS[sortV])chips.push(['sort',SORT_LABELS[sortV]]);
-  document.getElementById('count').innerHTML='<span class="rcount">'+shown+' '+word+'</span>'+tail+
-    chips.map(c=>'<button class="chip" onclick="chipClear(\''+c[0]+'\')">'+c[1]+'<span class="x">✕</span></button>').join('');
-  document.getElementById('count2').textContent=shown+'/'+DATA.length;
+  _rendered=0;
+  if(shown)renderPage(); else {cards.appendChild(emptyState(f));$('load-more').hidden=true;}
+  // строка результата
+  $('rcount').textContent=t('listingsN',{n:shown,w:word(shown,'listing')});
+  $('f-sort').value=f.sort;
+  renderDataAge(f);
+  // возраст уже сказан полосой сверху — не повторяем его в строке результата
+  $('rupd').textContent=(SNAP_DAYS!=null&&$('data-age').hidden?t('updated',{ago:agoText(SNAP_DAYS)})+' · ':'')+t('fromChannels',{n:CHANNELS.size});
+  renderChips();
   writeHash(f);
-  const n=(f.district?1:0)+(f.period?1:0)+(f.maxAge?1:0)+(f.sqmMin?1:0)+(f.sqmMax?1:0)+(f.priceMin?1:0)+(f.price?1:0)+(f.bed?1:0)+(f.type?1:0)+f.amenities.length+(f.hideStale?1:0)+(f.onlyAvail?1:0)+(f.search?1:0)+(f.hideSeen?1:0)+(sortV?1:0);
-  const fb=document.getElementById('ftbadge');if(fb)fb.textContent=n?' · '+n:'';
-  syncPresets();
   updateWatchLink(f,shown);
-  renderHotOffers();
+  if(SHEET.kind)refreshSheet(false);
 }
-function chipClear(k){
-  if(k.startsWith('am:')){const el=document.querySelector('.f-am[value="'+k.slice(3)+'"]');if(el)el.checked=false;}
-  else if(k==='stale')document.getElementById('f-stale').checked=false;
-  else if(k==='stale-off')document.getElementById('f-stale').checked=true;
-  else if(k==='avail')document.getElementById('f-avail').checked=false;
-  else if(k==='hide-seen')document.getElementById('f-hide-seen').checked=false;
-  else document.getElementById('f-'+k)&&(document.getElementById('f-'+k).value='');
+// Изменение фильтра — это новая выдача, а не продолжение прежней: список в начало.
+function applyFilter(){
+  const list=$('list'); if(list)list.scrollTop=0;
+  if(window.scrollY>0&&isMobile()&&!SHEET.kind)window.scrollTo({top:0});
   render(false);
+  const c=$('cards');c.classList.remove('refresh');void c.offsetWidth;c.classList.add('refresh');
 }
+function setF(patch){Object.assign(S,patch);applyFilter();}
+
+// ── возраст данных: тихо, пока свежо; полоса — только если снимок старше 3 дней ──
+function renderDataAge(f){
+  const el=$('data-age');
+  if(SNAP_DAYS==null||SNAP_DAYS<3){el.hidden=true;return;}
+  const ago=agoText(SNAP_DAYS);
+  if(!f.hideStale&&FRESH_TOTAL===0){el.innerHTML='<span>'+t('staleAuto',{ago})+'</span>';}
+  else{
+    const hidden=f.hideStale?countWith({...f,hideStale:false})-countWith(f):0;
+    el.innerHTML='<span>'+t('staleOld',{ago})+'</span>'+(hidden?'<button type="button" id="show-old">'+t('showOldToo',{n:hidden})+'</button>':'');
+    const b=$('show-old');if(b)b.onclick=()=>setF({hideStale:false});
+  }
+  el.hidden=false;
+}
+
+// ── пустое состояние: что ослабить, с живыми счётчиками ──
+function relaxOptions(f){
+  const o=[];
+  const add=(label,patch)=>{const n=countWith({...f,...patch});if(n>0)o.push({label,patch,n});};
+  if(f.district)add(t('relaxDistrict'),{district:''});
+  if(f.price||f.priceMin)add(t('relaxPrice'),{price:0,priceMin:0});
+  if(f.bed)add(t('relaxBed'),{bed:0});
+  if(f.type)add(t('relaxType'),{type:''});
+  f.amenities.forEach(a=>add(t('relaxAm',{x:AMEN[LANG][a]||a}),{amenities:f.amenities.filter(x=>x!==a)}));
+  if(f.maxAge)add(t('relaxAge'),{maxAge:0});
+  if(f.period)add(t('relaxPeriod'),{period:''});
+  if(f.sqmMin||f.sqmMax)add(t('relaxSqm'),{sqmMin:0,sqmMax:0});
+  if(f.onlyAvail)add(t('relaxAvail'),{onlyAvail:false});
+  if(f.hideSeen)add(t('relaxSeen'),{hideSeen:false});
+  if(f.search)add(t('relaxSearch',{x:f.search}),{search:''});
+  return o.sort((a,b)=>b.n-a.n).slice(0,3);
+}
+function emptyState(f){
+  const box=document.createElement('div');box.className='empty';
+  const watch=BOT_USERNAME?'<a class="btn pri js-watch" href="'+esc(watchHref(f))+'" target="_blank" rel="noopener">🔔 '+t('notifyMe')+'</a>':'';
+  const withStale=f.hideStale?countWith({...f,hideStale:false}):0;
+  if(withStale>0){
+    // ноль только из-за устаревания: честно говорим и даём показать последние известные
+    box.innerHTML='<span class="big">🧭</span><h2>'+t('noFreshTitle')+'</h2><p>'+t('noFreshText',{ago:SNAP_DAYS!=null?agoText(SNAP_DAYS):'—'})+'</p>'+
+      '<div class="empty-actions"><button class="btn '+(watch?'sec':'pri')+'" type="button" data-act="known">'+t('showKnown',{n:withStale})+'</button>'+watch+'</div>';
+  }else{
+    const rx=relaxOptions(f);
+    box.innerHTML='<span class="big">🧭</span><h2>'+t('emptyTitle')+'</h2><p>'+(rx.length?t('emptyText'):t('emptyNoRelax'))+'</p>'+
+      (rx.length?'<div class="relax">'+rx.map((r,i)=>'<button type="button" data-rx="'+i+'">'+esc(r.label)+' — <b>'+r.n+'</b> '+word(r.n,'variant')+'</button>').join('')+'</div>':'')+
+      '<div class="empty-actions">'+watch+'<button class="btn '+(watch?'sec':'pri')+'" type="button" data-act="reset">'+t('resetFilters')+'</button></div>';
+    box.querySelectorAll('[data-rx]').forEach(b=>b.onclick=()=>setF(rx[+b.dataset.rx].patch));
+  }
+  box.querySelector('[data-act="known"]')?.addEventListener('click',()=>setF({hideStale:false}));
+  box.querySelector('[data-act="reset"]')?.addEventListener('click',resetFilters);
+  return box;
+}
+
+// ── горячие: только по-настоящему свежее и заметно ниже медианы района ──
+function hotSection(){
+  // Медиану считаем по всем живым объявлениям района — иначе на узкой выборке
+  // «свежих» она пляшет и любая цена оказывается «ниже рынка».
+  const active=DATA.filter(d=>!d.fresh.stale&&d.price!=null&&(d.period==='month'||d.period==='unknown')&&d.district&&d.lat!=null);
+  const med={},byD={};
+  active.forEach(d=>{(byD[d.district]=byD[d.district]||[]).push(d.price);});
+  Object.entries(byD).forEach(([k,p])=>{const s=[...p].sort((a,b)=>a-b);const m=Math.floor(s.length/2);med[k]=s.length%2?s[m]:Math.round((s[m-1]+s[m])/2);});
+  // Нижняя отсечка отбраковывает ошибки разбора (суточная цена, принятая за месячную).
+  const HOT_MAX_AGE=14;
+  const hot=active.filter(d=>d.fresh.age_days!=null&&d.fresh.age_days<=HOT_MAX_AGE&&med[d.district]&&d.price<med[d.district]*0.85&&d.price>med[d.district]*0.35)
+    .sort((a,b)=>String(b.posted_at||'').localeCompare(String(a.posted_at||''))).slice(0,4);
+  if(hot.length<2)return null;
+  const sec=document.createElement('section');sec.className='hot';
+  sec.innerHTML='<h3>'+t('hotTitle')+'</h3><div class="hot-row">'+hot.map((d,i)=>{
+    const disc=Math.round((1-d.price/med[d.district])*100);
+    return '<button type="button" class="hot-card" data-i="'+i+'"><div class="hp">'+priceFull(d.price)+'<small style="font:500 12px var(--body);color:var(--muted)">'+t('perMonth')+'</small></div>'+
+      '<div class="hm">'+esc(d.district)+' · −'+disc+'% · '+freshText(d.fresh)+'</div></button>';}).join('')+'</div>';
+  sec.querySelectorAll('.hot-card').forEach(b=>b.onclick=()=>window.open(firstUrl(hot[+b.dataset.i]),'_blank','noopener'));
+  return sec;
+}
+
+// ── ряд чипов ──
+const AGE_KEYS={1:'age1',3:'age3',7:'age7',30:'age30'};
+const kfmt=n=>CUR==='usd'?'$'+Math.round(n/RATE_USD):(n>=1000?(Math.round(n/100)/10)+'k':n+'');
+function activeCount(){
+  return (S.district?1:0)+(S.period?1:0)+(S.maxAge?1:0)+((S.sqmMin||S.sqmMax)?1:0)+((S.price||S.priceMin)?1:0)+(S.bed?1:0)+(S.type?1:0)+
+    S.amenities.length+(S.onlyAvail?1:0)+(S.hideSeen?1:0)+(S.hideStale!==DEFAULT_HIDE_STALE?1:0);
+}
+function renderChips(){
+  const n=activeCount();
+  const priceLbl=S.price&&S.priceMin?kfmt(S.priceMin)+'–'+kfmt(S.price):S.price?t('upTo',{p:kfmt(S.price)}):S.priceMin?t('fromP',{p:kfmt(S.priceMin)}):t('price');
+  const c=(k,label,on)=>'<button type="button" class="chip'+(on?' on':'')+'" data-chip="'+k+'" aria-haspopup="dialog">'+esc(label)+' <span class="car">▾</span></button>';
+  $('chips').innerHTML=
+    '<button type="button" class="chip'+(n?' on':'')+'" data-chip="all" aria-haspopup="dialog">'+IC.sliders+t('allFilters')+(n?' <span class="cnt">'+n+'</span>':'')+'</button>'+
+    c('district',S.district||t('district'),!!S.district)+
+    c('price',priceLbl,!!(S.price||S.priceMin))+
+    c('bed',S.bed?t('bedsPlus',{n:S.bed}):t('beds'),!!S.bed)+
+    c('type',S.type?typeL(S.type):t('type'),!!S.type)+
+    '<span class="seg" role="group" aria-label="'+t('term')+'"><button type="button" data-period="month" class="'+(S.period==='month'?'on':'')+'" aria-pressed="'+(S.period==='month')+'">'+t('monthly')+'</button><button type="button" data-period="night" class="'+(S.period==='night'?'on':'')+'" aria-pressed="'+(S.period==='night')+'">'+t('nightly')+'</button></span>'+
+    c('age',S.maxAge?t(AGE_KEYS[S.maxAge]||'freshness'):t('freshness'),!!S.maxAge);
+}
+$('chips').addEventListener('click',e=>{
+  const p=e.target.closest('[data-period]');
+  if(p){setF({period:S.period===p.dataset.period?'':p.dataset.period});return;}
+  const c=e.target.closest('[data-chip]');if(!c)return;
+  const k=c.dataset.chip;
+  if(SHEET.kind===k){closeSheet();return;}
+  openSheet(k,c);
+});
+
+// ── шторка / поповер / модалка ──
+const SHEET={kind:null,anchor:null,el:null,scrim:null};
+const SHEET_TITLES={all:'allFilters',district:'district',price:'price',bed:'beds',type:'type',age:'freshness',menu:'menu',favs:'favsTitle',stats:'districtStats',keys:'shortcuts',info:'fromChannels'};
+const FILTER_KINDS=['all','district','price','bed','type','age'];
+function openSheet(kind,anchor){
+  closeSheet(true);
+  SHEET.kind=kind;SHEET.anchor=anchor||null;
+  const scrim=document.createElement('div');scrim.className='scrim'+((kind==='all'||['favs','stats','keys'].includes(kind))?' dim':'');
+  scrim.onclick=()=>closeSheet();
+  const el=document.createElement('div');
+  const isModal=!anchor||kind==='all';
+  el.className='sheet anim-in '+(isModal?'modal':'pop')+(kind==='all'?' full':'');
+  el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');
+  const filt=FILTER_KINDS.includes(kind);
+  el.innerHTML='<div class="sh-handle" aria-hidden="true"></div><div class="sh-head"><h2></h2><button class="sh-x" type="button" aria-label="×">✕</button></div>'+
+    '<div class="sh-body"></div>'+(filt?'<div class="sh-foot"><button type="button" class="clr"></button><button type="button" class="show"></button></div>':'');
+  document.body.append(scrim,el);document.body.classList.add('sheet-open');
+  SHEET.el=el;SHEET.scrim=scrim;
+  el.querySelector('.sh-x').onclick=()=>closeSheet();
+  if(filt){
+    el.querySelector('.clr').onclick=()=>{
+      if(kind==='all')resetFilters();
+      else setF(kind==='district'?{district:''}:kind==='price'?{price:0,priceMin:0}:kind==='bed'?{bed:0}:kind==='type'?{type:''}:{maxAge:0});
+    };
+    el.querySelector('.show').onclick=()=>closeSheet();
+  }
+  refreshSheet(true);
+  placeSheet();
+  swipeToClose(el);
+  (el.querySelector('.sh-body button, .sh-body input, .sh-body a')||el.querySelector('.sh-x')).focus({preventScroll:true});
+}
+function placeSheet(){
+  const el=SHEET.el;if(!el)return;
+  if(!el.classList.contains('pop')||isMobile()){el.style.left=el.style.top='';return;}
+  const r=SHEET.anchor.getBoundingClientRect();
+  const w=el.offsetWidth;
+  el.style.top=(r.bottom+8)+'px';
+  el.style.left=Math.max(12,Math.min(r.left,innerWidth-w-12))+'px';
+}
+function closeSheet(silent){
+  if(!SHEET.el)return;
+  SHEET.el.remove();SHEET.scrim.remove();
+  const a=SHEET.anchor;SHEET.kind=null;SHEET.el=null;SHEET.scrim=null;SHEET.anchor=null;
+  document.body.classList.remove('sheet-open');
+  if(!silent&&a&&document.contains(a))a.focus({preventScroll:true});
+}
+// свайп вниз по шапке шторки закрывает её (мобила)
+function swipeToClose(el){
+  let y0=null,dy=0;
+  const head=[el.querySelector('.sh-handle'),el.querySelector('.sh-head')];
+  head.forEach(h=>{
+    h.addEventListener('touchstart',e=>{y0=e.touches[0].clientY;dy=0;el.style.transition='none';},{passive:true});
+    h.addEventListener('touchmove',e=>{if(y0==null)return;dy=Math.max(0,e.touches[0].clientY-y0);el.style.transform='translateY('+dy+'px)';},{passive:true});
+    h.addEventListener('touchend',()=>{if(y0==null)return;el.style.transition='transform .2s var(--ease)';
+      if(dy>80)closeSheet();else el.style.transform='';y0=null;});
+  });
+}
+function refreshSheet(first){
+  const el=SHEET.el;if(!el)return;
+  const k=SHEET.kind;
+  el.querySelector('h2').textContent=k==='info'?'SabaiStay':k==='price'?t('price')+', ฿'+(S.period==='night'?t('perNight'):t('perMonth')):t(SHEET_TITLES[k]||k,{n:CHANNELS.size});
+  const body=el.querySelector('.sh-body');
+  const st=body.scrollTop;
+  const ae=document.activeElement;
+  const typing=ae&&body.contains(ae)&&ae.tagName==='INPUT'&&ae.type!=='checkbox';
+  if(first||!typing){
+    body.innerHTML=sheetBody(k);
+    bindSheet(body,k);
+    body.scrollTop=st;
+  }else updateHist(body);
+  if(FILTER_KINDS.includes(k)){
+    const n=countWith(readF());
+    el.querySelector('.show').textContent=t('showN',{n:n+' '+word(n,'variant')});
+    el.querySelector('.clr').textContent=k==='all'?t('clearAll'):t('reset');
+  }
+}
+function pills(items,cur,attr,cls){return '<div class="'+(cls||'pills')+'">'+items.map(([v,l,n])=>'<button type="button" class="pill'+(String(cur)===String(v)?' on':'')+'" data-'+attr+'="'+esc(v)+'" aria-pressed="'+(String(cur)===String(v))+'">'+esc(l)+(n!=null?' <small>'+n+'</small>':'')+'</button>').join('')+'</div>';}
+function secDistrict(){
+  const f={...readF(),district:''};const cnt={};
+  DATA.forEach(d=>{if(d.district&&passes(d,f))cnt[d.district]=(cnt[d.district]||0)+1;});
+  const ds=[...new Set(DATA.filter(d=>d.district).map(d=>d.district))].sort();
+  return '<div class="sec"><h3>'+t('district')+'</h3>'+pills([['',t('wholeIsland'),countWith(f)],...ds.map(d=>[d,d,cnt[d]||0])],S.district,'district')+'</div>';
+}
+function priceValues(){
+  const f={...readF(),price:0,priceMin:0};
+  const night=S.period==='night';
+  return DATA.filter(d=>d.price!=null&&(night?d.period==='night':(d.period==='month'||d.period==='unknown'))&&passes(d,f)).map(d=>d.price).sort((a,b)=>a-b);
+}
+let _hist=null;
+function secPrice(){
+  const vals=priceValues(),night=S.period==='night',step=night?100:1000;
+  const unit=night?'฿'+t('perNight'):'฿'+t('perMonth');
+  // Шкала по 90-му перцентилю с потолком: пара объявлений «продажа за 1 млн», принятых за аренду,
+  // иначе сплющивает всю гистограмму в один столбик. Всё дороже — в последнем столбике.
+  let max=vals.length?vals[Math.min(vals.length-1,Math.floor(vals.length*0.9))]:(night?5000:100000);
+  max=Math.min(night?20000:200000,Math.max(step*10,Math.ceil(max/step)*step));
+  const B=28,bins=new Array(B).fill(0);
+  vals.forEach(v=>{bins[Math.min(B-1,Math.floor(v/max*B))]++;});
+  _hist={max,step,B,bins:Math.max(...bins,1)};
+  const lo=Math.min(S.priceMin||0,max),hi=S.price?Math.min(S.price,max):max;
+  return '<div class="sec"><h3>'+t('price')+', '+unit+'</h3>'+(vals.length>3?'<p class="hint">'+t('priceHint')+'</p>'+
+    '<div class="hist" aria-hidden="true">'+bins.map(b=>'<i style="height:'+Math.max(3,Math.round(b/_hist.bins*100))+'%"></i>').join('')+'</div>'+
+    '<div class="dual"><div class="track"></div><div class="fill"></div>'+
+    '<input type="range" id="pr-lo" min="0" max="'+max+'" step="'+step+'" value="'+lo+'" aria-label="'+t('from')+'">'+
+    '<input type="range" id="pr-hi" min="0" max="'+max+'" step="'+step+'" value="'+hi+'" aria-label="'+t('to')+'"></div>':'')+
+    '<div class="range2"><label>'+t('from')+'<input type="number" inputmode="numeric" id="pr-min" step="'+step+'" min="0" value="'+(S.priceMin||'')+'" placeholder="0"></label><span class="dash">—</span>'+
+    '<label>'+t('to')+'<input type="number" inputmode="numeric" id="pr-max" step="'+step+'" min="0" value="'+(S.price||'')+'" placeholder="'+max.toLocaleString('ru-RU')+'+"></label></div></div>';
+}
+function updateHist(body){
+  if(!_hist)return;
+  const lo=S.priceMin||0,hi=S.price||_hist.max;
+  body.querySelectorAll('.hist i').forEach((b,i)=>{const a=i*_hist.max/_hist.B,z=(i+1)*_hist.max/_hist.B;b.classList.toggle('in',z>lo&&a<hi);});
+  const fill=body.querySelector('.dual .fill');
+  if(fill){const L0=Math.min(lo,_hist.max)/_hist.max,H0=Math.min(hi,_hist.max)/_hist.max;
+    fill.style.left='calc(9px + '+L0+' * (100% - 18px))';fill.style.width='calc('+(H0-L0)+' * (100% - 18px))';}
+}
+function secBed(){return '<div class="sec"><h3>'+t('beds')+'</h3>'+pills([[0,t('any')],[1,'1+'],[2,'2+'],[3,'3+'],[4,'4+']],S.bed,'bed','segw')+'</div>';}
+function secType(){
+  const f={...readF(),type:''};const cnt={};DATA.forEach(d=>{if(passes(d,f))cnt[d.type||'other']=(cnt[d.type||'other']||0)+1;});
+  return '<div class="sec"><h3>'+t('type')+'</h3>'+pills([['',t('anyType')],...TYPE_KEYS.filter(k=>cnt[k]).map(k=>[k,typeL(k),cnt[k]])],S.type,'type')+'</div>';
+}
+function secAge(){return '<div class="sec"><h3>'+t('freshness')+'</h3>'+pills([[0,t('anyTime')],[1,t('age1')],[3,t('age3')],[7,t('age7')],[30,t('age30')]],S.maxAge,'age')+'</div>';}
+function secPeriod(){return '<div class="sec"><h3>'+t('term')+'</h3>'+pills([['',t('anyTerm')],['month',t('monthly')],['night',t('nightly')]],S.period,'period2')+'</div>';}
+function secAmen(){return '<div class="sec"><h3>'+t('amenities')+'</h3><div class="tiles">'+AM_KEYS.map(k=>'<label class="tile"><input type="checkbox" data-am="'+k+'"'+(S.amenities.includes(k)?' checked':'')+'>'+AMEN[LANG][k]+'</label>').join('')+'</div></div>';}
+function secArea(){return '<div class="sec"><h3>'+t('area')+'</h3><div class="range2"><label>'+t('from')+'<input type="number" inputmode="numeric" id="sq-min" step="10" min="0" value="'+(S.sqmMin||'')+'"></label><span class="dash">—</span><label>'+t('to')+'<input type="number" inputmode="numeric" id="sq-max" step="10" min="0" value="'+(S.sqmMax||'')+'"></label></div></div>';}
+function secMore(){
+  const ck=(id,on,l)=>'<label class="chk"><input type="checkbox" data-flag="'+id+'"'+(on?' checked':'')+'>'+l+'</label>';
+  return '<div class="sec"><h3>'+t('more')+'</h3>'+ck('onlyAvail',S.onlyAvail,t('onlyAvail'))+ck('hideSeen',S.hideSeen,t('hideSeen'))+ck('showStale',!S.hideStale,t('showStale'))+'</div>';
+}
+function sheetBody(k){
+  if(k==='district')return secDistrict();
+  if(k==='price')return secPrice();
+  if(k==='bed')return secBed();
+  if(k==='type')return secType();
+  if(k==='age')return secAge();
+  if(k==='all')return secDistrict()+secPrice()+secBed()+secType()+secPeriod()+secAmen()+secAge()+secArea()+secMore();
+  if(k==='menu')return menuBody();
+  if(k==='favs')return favsBody();
+  if(k==='stats')return statsBody();
+  if(k==='info')return '<div class="infopop" style="position:static;box-shadow:none;border:none;padding:6px 0 12px;max-width:none"><p>'+t('infoP1',{n:CHANNELS.size})+'</p><p>'+t('infoP2')+'</p>'+(SNAP_ISO?'<p>'+t('snapshot')+' <span class="num">'+SNAP_ISO+'</span></p>':'')+'<p>'+t('infoP3')+'</p></div>';
+  if(k==='keys')return '<div class="kbd-row"><kbd>/</kbd> '+t('kSearch')+'</div><div class="kbd-row"><kbd>Esc</kbd> '+t('kClear')+'</div><div class="kbd-row"><kbd>r</kbd> '+t('kReset')+'</div>';
+  return '';
+}
+function bindSheet(body,k){
+  body.querySelectorAll('[data-district]').forEach(b=>b.onclick=()=>setF({district:b.dataset.district}));
+  body.querySelectorAll('[data-bed]').forEach(b=>b.onclick=()=>setF({bed:+b.dataset.bed}));
+  body.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>setF({type:b.dataset.type}));
+  body.querySelectorAll('[data-age]').forEach(b=>b.onclick=()=>setF({maxAge:+b.dataset.age}));
+  body.querySelectorAll('[data-period2]').forEach(b=>b.onclick=()=>setF({period:b.dataset.period2,price:0,priceMin:0}));
+  body.querySelectorAll('[data-am]').forEach(c=>c.onchange=()=>setF({amenities:AM_KEYS.filter(a=>body.querySelector('[data-am="'+a+'"]').checked)}));
+  body.querySelectorAll('[data-flag]').forEach(c=>c.onchange=()=>{const v=c.checked,fl=c.dataset.flag;setF(fl==='showStale'?{hideStale:!v}:{[fl]:v});});
+  const lo=body.querySelector('#pr-lo'),hi=body.querySelector('#pr-hi');
+  if(lo&&hi){
+    const sync=()=>{let a=+lo.value,b=+hi.value;if(a>b){[a,b]=[b,a];}
+      S.priceMin=a||0;S.price=b>=_hist.max?0:b;
+      const mn=body.querySelector('#pr-min'),mx=body.querySelector('#pr-max');mn.value=S.priceMin||'';mx.value=S.price||'';
+      applyFilter();updateHist(body);};
+    lo.oninput=sync;hi.oninput=sync;
+  }
+  const num=(id,key)=>{const e=body.querySelector('#'+id);if(e)e.oninput=()=>{S[key]=+e.value||0;applyFilter();updateHist(body);};};
+  num('pr-min','priceMin');num('pr-max','price');num('sq-min','sqmMin');num('sq-max','sqmMax');
+  updateHist(body);
+  if(k==='menu')bindMenu(body);
+  if(k==='favs')bindFavs(body);
+}
+
+// ── меню ☰: валюта, тема, язык, статистика, CSV, клавиши ──
+function themeMode(){return LS.get('sabaistay_theme')||'auto';}
+function menuBody(){
+  const tm=themeMode();
+  return '<div class="menu-list">'+
+    '<button type="button" data-m="cur">'+t('currency')+'<span class="val">'+(CUR==='usd'?'$ USD':'฿ THB')+'</span></button>'+
+    '<button type="button" data-m="theme">'+t('theme')+'<span class="val">'+t(tm==='dark'?'themeDark':tm==='light'?'themeLight':'themeAuto')+'</span></button>'+
+    '<button type="button" data-m="lang">'+t('language')+'<span class="val">'+(LANG==='ru'?'Русский':'English')+'</span></button>'+
+    '<button type="button" data-m="stats">'+t('districtStats')+'</button>'+
+    '<button type="button" data-m="csv">'+t('csv')+'</button>'+
+    '<button type="button" data-m="keys" class="hide-m">'+t('shortcuts')+'</button>'+
+    '<a href="privacy.html">'+t('privacy')+'</a>'+
+    '<a href="privacy.html#remove">'+t('removeListing')+'</a></div>';
+}
+function bindMenu(body){
+  body.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{
+    const m=b.dataset.m;
+    if(m==='cur'){CUR=CUR==='thb'?'usd':'thb';LS.set('sabaistay_cur',CUR);render(false);refreshSheet(true);}
+    else if(m==='theme'){const order=['auto','light','dark'];setTheme(order[(order.indexOf(themeMode())+1)%3]);refreshSheet(true);}
+    else if(m==='lang'){setLang(LANG==='ru'?'en':'ru');refreshSheet(true);}
+    else if(m==='stats')openSheet('stats');
+    else if(m==='csv'){exportCSV();closeSheet();}
+    else if(m==='keys')openSheet('keys');
+  });
+}
+function setTheme(mode){
+  if(mode==='auto'){try{localStorage.removeItem('sabaistay_theme')}catch(e){}}else LS.set('sabaistay_theme',mode);
+  const dark=mode==='dark'||(mode==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.setAttribute('data-theme',dark?'dark':'light');
+  setBasemapTheme();
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(themeMode()==='auto')setTheme('auto');});
+function setLang(l){LANG=l;LS.set('sabaistay_lang',l);applyStatic();render(false);}
+$('lang-btn').onclick=()=>setLang(LANG==='ru'?'en':'ru');
+$('menu-btn').onclick=e=>{if(SHEET.kind==='menu'){closeSheet();return;}openSheet('menu',isMobile()?null:e.currentTarget);};
+$('info-btn').onclick=e=>{if(SHEET.kind==='info'){closeSheet();return;}openSheet('info',isMobile()?null:e.currentTarget);};
+
+// ── статистика районов ──
+function statsBody(){
+  const by={};
+  DATA.forEach(d=>{const k=d.district||t('noDistrictRow');const v=by[k]=by[k]||{count:0,prices:[],active:0};v.count++;if(!d.fresh.stale)v.active++;
+    if(d.price!=null&&(d.period==='month'||d.period==='unknown'))v.prices.push(d.price);});
+  const median=a=>{if(!a.length)return null;const s=[...a].sort((x,y)=>x-y);const m=Math.floor(s.length/2);return s.length%2?s[m]:Math.round((s[m-1]+s[m])/2);};
+  return '<table class="stats-table"><thead><tr><th>'+t('stDistrict')+'</th><th class="n">'+t('stCount')+'</th><th class="n">'+t('stActive')+'</th><th class="n">'+t('stMedian')+'</th></tr></thead><tbody>'+
+    Object.entries(by).sort((a,b)=>b[1].count-a[1].count).map(([k,v])=>{const m=median(v.prices);
+      return '<tr><td>'+esc(k)+'</td><td class="n">'+v.count+'</td><td class="n">'+v.active+'</td><td class="st-price">'+(m?Math.round(m).toLocaleString('ru-RU')+' ฿':'—')+'</td></tr>';}).join('')+'</tbody></table>';
+}
+
+// ── CSV ──
+function exportCSV(){
+  const f=readF();
+  const view=DATA.filter(d=>passes(d,f));
+  const hdr=['Заголовок','Район','Цена, ฿','Период','Спален','Тип','Площадь, м²','Доступно с','Свежесть','Ссылка'];
+  const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const csv=[hdr,...view.map(d=>[d.title,d.district||'',d.price||'',d.period||'',d.bedrooms??'',d.type||'',d.area_sqm||'',d.available_from||'',d.fresh.label,firstUrl(d)])]
+    .map(r=>r.map(q).join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download='sabaistay_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();a.remove();
+}
+$('foot-csv').onclick=exportCSV;
+$('foot-stats').onclick=()=>openSheet('stats');
+
+// ── избранное ──
+function toggleFav(id){
+  const a=getFavs();const i=a.indexOf(id);if(i>=0)a.splice(i,1);else a.push(id);saveFavs(a);
+  document.querySelectorAll('.bm[data-id="'+CSS.escape(id)+'"]').forEach(b=>{const on=a.includes(id);b.classList.toggle('saved',on);b.setAttribute('aria-pressed',String(on));});
+  updateFavCount();
+  if(SHEET.kind==='favs')refreshSheet(true);
+}
+function updateFavCount(){const n=getFavs().length;$('fav-btn').hidden=!n;$('fav-num').textContent=n;}
+function favsBody(){
+  const favs=getFavs();const all=DATA.filter(d=>favs.includes(d.id));
+  if(!all.length)return '<p style="color:var(--muted)">'+t('noFavs')+'</p>';
+  return '<div id="fav-cards" style="display:flex;flex-direction:column;gap:12px;padding-top:8px"></div><p><button type="button" class="lbtn" id="fav-clear">'+t('clearFavs')+'</button></p>';
+}
+function bindFavs(body){
+  const c=body.querySelector('#fav-cards');if(c){const favs=getFavs();DATA.filter(d=>favs.includes(d.id)).forEach(d=>c.appendChild(makeCard(d,null)));}
+  const b=body.querySelector('#fav-clear');if(b)b.onclick=()=>{saveFavs([]);updateFavCount();document.querySelectorAll('.bm.saved').forEach(x=>x.classList.remove('saved'));closeSheet();};
+}
+$('fav-btn').onclick=()=>openSheet('favs');
+
+// ── URL: состояние фильтра живёт в хэше (ключи прежние — старые ссылки работают) ──
 function writeHash(f){
   const p=new URLSearchParams();
   if(f.district)p.set('district',f.district);
@@ -1038,80 +1450,35 @@ function writeHash(f){
   if(f.bed)p.set('bed',f.bed);
   if(f.type)p.set('type',f.type);
   if(f.amenities.length)p.set('am',f.amenities.join(','));
-  p.set('stale',f.hideStale?'1':'0');  // пишем всегда: скрытие включено по умолчанию,
-                                       // и ссылка с выключенным фильтром должна его выключать
+  // скрытие устаревших пишем, только если оно отличается от умолчания: умолчание само
+  // зависит от того, есть ли свежие данные, и не должно «залипать» в ссылке
+  if(f.hideStale!==DEFAULT_HIDE_STALE)p.set('stale',f.hideStale?'1':'0');
   if(f.onlyAvail)p.set('avail','1');
   if(f.hideSeen)p.set('seen','1');
   if(f.search)p.set('q',f.search);
-  const sort=document.getElementById('f-sort').value; if(sort)p.set('sort',sort);
+  if(f.sort)p.set('sort',f.sort);
   const s=p.toString();
   history.replaceState(null,'',s?('#'+s):location.pathname+location.search);
 }
 function applyHash(){
   if(!location.hash)return;
   const p=new URLSearchParams(location.hash.slice(1));
-  const set=(id,key)=>{const v=p.get(key);if(v!=null)document.getElementById(id).value=v;};
-  set('f-district','district');set('f-period','period');set('f-age','age');set('f-sqm-min','sqmMin');set('f-sqm-max','sqmMax');set('f-price-min','priceMin');set('f-price','price');set('f-bed','bed');set('f-type','type');set('f-sort','sort');set('f-search','q');
-  const am=p.get('am'); if(am)am.split(',').forEach(v=>{const el=document.querySelector('.f-am[value="'+v+'"]');if(el)el.checked=true;});
-  document.getElementById('f-stale').checked=p.get('stale')!=='0';  // дефолт — скрывать
-  // Пришли по ссылке с редким фильтром — раскрываем «ещё», иначе человек не увидит,
-  // почему выдача сужена.
-  if(p.get('priceMin')||p.get('sqmMin')||p.get('sqmMax')||p.get('avail')||p.get('stale')==='0'||p.get('age')||
-     (p.get('am')||'').split(',').some(a=>a==='kitchen'||a==='aircon'))
-    document.querySelector('.filters').classList.add('adv-open');
-  document.getElementById('f-avail').checked=p.get('avail')==='1';
-  const _hs=document.getElementById('f-hide-seen');if(_hs)_hs.checked=p.get('seen')==='1';
+  const g=k=>p.get(k);
+  if(g('district'))S.district=g('district');
+  if(g('period'))S.period=g('period');
+  S.maxAge=+g('age')||0;S.sqmMin=+g('sqmMin')||0;S.sqmMax=+g('sqmMax')||0;S.priceMin=+g('priceMin')||0;S.price=+g('price')||0;S.bed=+g('bed')||0;
+  if(g('type'))S.type=g('type');
+  if(g('am'))S.amenities=g('am').split(',').filter(a=>AM_KEYS.includes(a));
+  if(g('stale')==='0')S.hideStale=false; else if(g('stale')==='1')S.hideStale=FRESH_TOTAL>0;
+  S.onlyAvail=g('avail')==='1';S.hideSeen=g('seen')==='1';
+  if(g('q')){S.search=g('q');$('f-search').value=S.search;}
+  if(g('sort'))S.sort=g('sort');
 }
-function resetFilters(){['f-district','f-period','f-age','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).value='');document.querySelectorAll('.f-am').forEach(e=>e.checked=false);document.getElementById('f-stale').checked=true;document.getElementById('f-avail').checked=false;const hs=document.getElementById('f-hide-seen');if(hs)hs.checked=false;render(false);}
-// Изменение фильтра — это новая выдача, а не продолжение прежней: список надо вернуть
-// в начало, иначе человек остаётся в середине чужого скролла и думает, что ничего не нашлось.
-function applyFilter(){
-  const list=document.querySelector('.list');
-  if(list)list.scrollTop=0;
-  if(window.scrollY>0&&matchMedia('(max-width:760px)').matches)window.scrollTo({top:0,behavior:'smooth'});
-  render(false);
-  const cards=document.getElementById('cards');
-  if(cards){cards.classList.remove('refresh');void cards.offsetWidth;cards.classList.add('refresh');}
-}
-['f-district','f-period','f-age','f-sqm-min','f-sqm-max','f-price-min','f-price','f-bed','f-type','f-sort','f-search'].forEach(id=>document.getElementById(id).addEventListener('input',applyFilter));
-document.querySelectorAll('.f-am, #f-stale, #f-avail, #f-hide-seen').forEach(e=>e.addEventListener('change',applyFilter));
-{const mb=document.getElementById('more-btn');mb.addEventListener('click',()=>{
-  const open=document.querySelector('.filters').classList.toggle('adv-open');
-  mb.setAttribute('aria-expanded',String(open));
-  if(open&&window.map)setTimeout(()=>map.invalidateSize(),220);  // полотно сдвинулось — пересчитать карту
-});}
-document.getElementById('reset').onclick=resetFilters;
-// мобильный toggle фильтра
-(function(){
-  const btn=document.getElementById('filter-toggle'),panel=document.getElementById('filter-panel');
-  if(!btn)return;
-  btn.onclick=function(){const open=panel.classList.toggle('open');btn.setAttribute('aria-expanded',String(open));};
-})();
-applyHash();
-render(true);
-// мобильный переключатель карта/список
-(function(){
-  const wrap=document.querySelector('.wrap');
-  const btnList=document.getElementById('vt-list');
-  const btnMap=document.getElementById('vt-map');
-  if(!btnList||!btnMap||!wrap)return;
-  function showList(){wrap.classList.add('mobile-list');wrap.classList.remove('mobile-map');btnList.classList.add('active');btnMap.classList.remove('active');btnList.setAttribute('aria-pressed','true');btnMap.setAttribute('aria-pressed','false');}
-  function showMap(){wrap.classList.add('mobile-map');wrap.classList.remove('mobile-list');btnMap.classList.add('active');btnList.classList.remove('active');btnMap.setAttribute('aria-pressed','true');btnList.setAttribute('aria-pressed','false');window.dispatchEvent(new Event('resize'));}
-  btnList.addEventListener('click',showList);
-  btnMap.addEventListener('click',showMap);
-  showList();
-})();
-
-// ── кнопка «показать ещё» ────────────────────────────
-(function(){
-  const btn=document.getElementById('load-more-btn');
-  if(btn)btn.addEventListener('click',()=>renderPage(document.getElementById('cards')));
-})();
+// Сброс возвращает к умолчанию — а умолчание при старом снимке уже «показывать последние
+// известные», поэтому сброс больше не прячет всё обратно в ноль.
+function resetFilters(){S=JSON.parse(JSON.stringify(DEF));$('f-search').value='';applyFilter();}
 
 // ── «следить за поиском»: фильтр уезжает в бота ссылкой ──────────────
-// Аренда на острове — не разовый заход: нужного варианта сегодня может не быть, а завтра
-// он появится и уйдёт за часы. Кнопка переносит уже собранный фильтр в подписку, чтобы
-// человеку не пришлось повторять выбор в переписке с ботом.
 // Полезная нагрузка Telegram — 64 символа из [A-Za-z0-9_-], поэтому поля склеиваем
 // через «~» и упаковываем в base64url.
 function watchPayload(f){
@@ -1119,281 +1486,82 @@ function watchPayload(f){
   const b=btoa(String.fromCharCode(...new TextEncoder().encode(parts.join('~'))));
   return b.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
-// Текстовый поиск в подписку не переносится (бот сопоставляет поля, а не свободный текст),
-// поэтому «есть фильтр» считаем только по структурным полям.
+// Текстовый поиск в подписку не переносится (бот сопоставляет поля, а не свободный текст).
 function hasWatchableFilter(f){return !!(f.district||f.price||f.bed||f.type||(f.amenities||[]).length);}
 function watchHref(f){
   const payload=watchPayload(f);
-  // Полезная нагрузка длиннее лимита Telegram молча обрежется и приедет мусором —
-  // в таком случае ведём в бота без фильтра, он переспросит кнопками.
   const ok=hasWatchableFilter(f)&&payload.length<=63;
   return 'https://t.me/'+BOT_USERNAME+(ok?'?start=f'+payload:'');
 }
 function updateWatchLink(f,shown){
-  const el=document.getElementById('watch-btn');
-  if(!el)return;
-  el.href=watchHref(f);
-  el.textContent=hasWatchableFilter(f)
-    ? (shown?'🔔 следить за этим поиском':'🔔 сообщить, когда появится')
-    : '🔔 присылать новые объявления';
-}
-document.getElementById('presets')?.addEventListener('click',function(e){
-  const btn=e.target.closest('.preset');if(!btn)return;
-  const p=PRESETS[btn.dataset.preset];if(!p)return;
-  presetSet(p,!presetOn(p));
-  applyFilter();
-});
-// Сколько вообще есть свежего — цифра на кнопке. Если ноль, честнее показать это сразу,
-// чем дать нажать и получить пустой экран: значит сбор данных стоит, а не жильё кончилось.
-(function(){
-  const btn=document.querySelector('.preset-fresh');if(!btn)return;
-  const n=DATA.filter(d=>d.fresh.age_days!=null&&d.fresh.age_days<=FRESH_T.fresh).length;
-  btn.insertAdjacentHTML('beforeend','<span class="pcount">'+n+'</span>');
-  if(!n){btn.classList.add('pempty');btn.title='За неделю новых объявлений не появилось — сбор данных мог остановиться';}
-})();
-
-// ── горячие предложения ───────────────────────────────
-function renderHotOffers(){
-  const sec=document.getElementById('hot-section');
-  const cont=document.getElementById('hot-cards');
-  if(!sec||!cont)return;
-  // Медиану считаем по всем живым объявлениям района — иначе на узкой выборке
-  // «свежих» она пляшет и любая цена оказывается «ниже рынка».
-  const active=DATA.filter(d=>!d.fresh.stale&&d.price!=null&&(d.period==='month'||d.period==='unknown')&&d.district&&d.lat!=null);
-  // медиана по районам
-  const medByDistrict={};
-  const byD={};
-  active.forEach(d=>{(byD[d.district]=byD[d.district]||[]).push(d.price);});
-  Object.entries(byD).forEach(([d,prices])=>{const s=[...prices].sort((a,b)=>a-b);const m=Math.floor(s.length/2);medByDistrict[d]=s.length%2?s[m]:Math.round((s[m-1]+s[m])/2);});
-  // В подборку берём только по-настоящему свежее: объявление трёхмесячной давности
-  // «дешевле рынка» ровно потому, что его давно сдали. Показывать такое под шапкой
-  // «горячие предложения» — обманывать в самом заметном месте страницы.
-  // Нижняя отсечка по цене отбраковывает ошибки разбора (суточная цена, принятая за
-  // месячную): дом за треть медианы района — это почти всегда не находка, а сбой.
-  const HOT_MAX_AGE=14;
-  const hot=active.filter(d=>d.fresh.age_days!=null&&d.fresh.age_days<=HOT_MAX_AGE
-      &&medByDistrict[d.district]
-      &&d.price<medByDistrict[d.district]*0.85
-      &&d.price>medByDistrict[d.district]*0.35)
-    .sort((a,b)=>String(b.posted_at||'').localeCompare(String(a.posted_at||''))).slice(0,4);
-  if(hot.length<2){sec.style.display='none';return;}
-  sec.style.display='';
-  cont.innerHTML=hot.map(d=>{
-    const url=d.sources[0]?.source_url||'#';
-    const disc=Math.round((1-d.price/medByDistrict[d.district])*100);
-    return'<div class="hot-card" onclick="window.open(\''+url+'\',\'_blank\')">'+
-      '<div class="hc-title">'+escHtml(d.title)+'</div>'+
-      '<div class="hc-price">'+priceFull(d.price)+(CUR==='thb'?' ฿':'')+'<small>/мес</small></div>'+
-      '<div class="hc-meta">'+d.district+' · -'+disc+'% от медианы · '+d.fresh.label+'</div>'+
-      '</div>';
-  }).join('');
+  if(!BOT_USERNAME)return;
+  document.querySelectorAll('.js-watch').forEach(el=>{el.href=watchHref(f);el.hidden=false;});
+  const lbl=$('watch-btn').querySelector('span');
+  lbl.textContent=hasWatchableFilter(f)?(shown?t('watchSearch'):t('notifyMe')):t('watchNew');
 }
 
-// ── валюта THB / USD ─────────────────────────────────
-(function(){
-  const btn=document.getElementById('cur-btn');
-  if(!btn)return;
-  btn.addEventListener('click',()=>{
-    CUR=CUR==='thb'?'usd':'thb';
-    btn.textContent=CUR==='usd'?'$ USD':'฿ THB';
-    btn.classList.toggle('usd',CUR==='usd');
-    render(false);
-  });
-})();
+// ── поиск в шапке ──
+let _st;
+$('f-search').addEventListener('input',e=>{clearTimeout(_st);_st=setTimeout(()=>setF({search:e.target.value.trim().toLowerCase()}),120);});
+$('f-search').addEventListener('keydown',function(e){if(e.key==='Escape'){this.value='';this.blur();setF({search:''});}});
+$('f-sort').addEventListener('change',e=>setF({sort:e.target.value}));
+$('load-more-btn').onclick=renderPage;
 
-// ── история просмотра ────────────────────────────────
-const SEEN_KEY='sabaistay_seen';
-function getSeen(){try{return new Set(JSON.parse(localStorage.getItem(SEEN_KEY)||'[]'));}catch{return new Set();}}
-function markSeen(id){const s=getSeen();s.add(id);localStorage.setItem(SEEN_KEY,JSON.stringify([...s]));}
+// ── поделиться поиском ──
+$('share-btn').onclick=function(){
+  const btn=this,lbl=btn.querySelector('.lbl');
+  const done=()=>{btn.classList.add('ok');lbl.textContent=t('copied');setTimeout(()=>{btn.classList.remove('ok');lbl.textContent=t('share');},2000);};
+  if(navigator.share&&isMobile()){navigator.share({title:'SabaiStay',url:location.href}).catch(()=>{});return;}
+  if(navigator.clipboard)navigator.clipboard.writeText(location.href).then(done,()=>{});
+};
 
-// ── статистика по районам ─────────────────────────────
-function openStats(){
-  const modal=document.getElementById('stats-modal');
-  const wrap=document.getElementById('stats-table-wrap');
-  if(!modal||!wrap)return;
-  const byDistrict={};
-  DATA.forEach(d=>{
-    const k=d.district||'Без района';
-    if(!byDistrict[k])byDistrict[k]={count:0,prices:[],active:0};
-    byDistrict[k].count++;
-    if(!d.fresh.stale)byDistrict[k].active++;
-    if(d.price!=null&&(d.period==='month'||d.period==='unknown'))byDistrict[k].prices.push(d.price);
-  });
-  const rows=Object.entries(byDistrict).sort((a,b)=>b[1].count-a[1].count);
-  const median=arr=>{if(!arr.length)return null;const s=[...arr].sort((a,b)=>a-b);const m=Math.floor(s.length/2);return s.length%2?s[m]:Math.round((s[m-1]+s[m])/2);};
-  wrap.innerHTML='<table class="stats-table"><thead><tr><th>Район</th><th>Объявл.</th><th>Актуальных</th><th>Медиана, ฿/мес</th></tr></thead><tbody>'+
-    rows.map(([d,v])=>{
-      const med=median(v.prices);
-      return'<tr><td class="st-district">'+d+'</td><td>'+v.count+'</td><td>'+v.active+'</td><td class="st-price">'+(med?med.toLocaleString('ru-RU')+' ฿':'—')+'</td></tr>';
-    }).join('')+'</tbody></table>';
-  modal.style.display='flex';
+// ── мобила: список ↔ карта плавающей пилюлей ──
+function setMode(m){
+  const wrap=$('wrap'),btn=$('mode-btn');
+  wrap.classList.toggle('mode-map',m==='map');
+  document.body.classList.toggle('mode-map',m==='map');
+  btn.innerHTML=m==='map'?IC.list+'<span>'+t('list')+'</span>':IC.map+'<span>'+t('map')+'</span>';
+  btn.dataset.mode=m;
+  window.scrollTo({top:0});
+  if(m==='map'&&map){
+    // Сначала размер, потом подложка: созданная в скрытом контейнере, она рисуется 400×300.
+    map.invalidateSize();
+    const b=clusterGroup.getLayers().length?clusterGroup.getBounds():null;
+    if(b&&b.isValid())map.fitBounds(b,{maxZoom:14,animate:false,padding:[24,24]});
+    ensureBasemap();
+  }
 }
-function closeStats(){const m=document.getElementById('stats-modal');if(m)m.style.display='none';}
-(function(){const btn=document.getElementById('stats-btn');if(btn)btn.addEventListener('click',openStats);})();
-document.addEventListener('keydown',e=>{if(e.key==='Escape')closeStats();});
+$('mode-btn').onclick=()=>setMode($('mode-btn').dataset.mode==='map'?'list':'map');
 
-// ── экспорт CSV ──────────────────────────────────────
-function exportCSV(){
-  const f=readF();
-  const view=DATA.filter(d=>passes(d,f));
-  const hdr=['Заголовок','Район','Цена, ฿','Период','Спален','Тип','Площадь, м²','Доступно с','Свежесть','Ссылка'];
-  const esc=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
-  const csv=[hdr,...view.map(d=>[
-    d.title,d.district||'',d.price||'',d.period||'',d.bedrooms??'',d.type||'',
-    d.area_sqm||'',d.available_from||'',d.fresh.label,firstUrl(d)
-  ])].map(r=>r.map(esc).join(',')).join('\r\n');
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));
-  a.download='sabaistay_'+new Date().toISOString().slice(0,10)+'.csv';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-}
-(function(){const btn=document.getElementById('export-btn');if(btn)btn.addEventListener('click',exportCSV);})();
-
-// ── закладки (localStorage) ──────────────────────────
-const FAV_KEY='sabaistay_fav';
-function getFavs(){try{return JSON.parse(localStorage.getItem(FAV_KEY)||'[]');}catch{return[];}}
-function saveFavs(a){localStorage.setItem(FAV_KEY,JSON.stringify(a));}
-function toggleFav(id){
-  let a=getFavs();
-  const i=a.indexOf(id);
-  if(i>=0){a.splice(i,1);}else{a.push(id);}
-  saveFavs(a);
-  renderFavSection();
-  document.querySelectorAll('.bm-btn[data-id="'+id+'"]').forEach(b=>{
-    b.classList.toggle('saved',a.includes(id));
-    b.title=a.includes(id)?'Убрать из избранного':'В избранное';
-  });
-}
-function clearFav(){saveFavs([]);renderFavSection();}
-function updateFavCount(){
-  const n=getFavs().length;
-  const btn=document.getElementById('fav-count-btn');
-  const num=document.getElementById('fav-count-num');
-  if(btn)btn.style.display=n>0?'':'none';
-  if(num)num.textContent=n;
-}
-function renderFavSection(){
-  const favs=getFavs();
-  const sec=document.getElementById('fav-section');
-  const cont=document.getElementById('fav-cards');
-  updateFavCount();
-  if(!sec||!cont)return;
-  if(favs.length===0){sec.style.display='none';cont.innerHTML='';return;}
-  sec.style.display='';
-  cont.innerHTML='';
-  const all=DATA.filter(d=>favs.includes(d.id));
-  all.forEach(d=>{
-    const el=makeCard(d);
-    el.querySelector('.bm-btn')?.classList.add('saved');
-    cont.appendChild(el);
-  });
-  // обновляем звёздочки в основном списке
-  document.querySelectorAll('.bm-btn').forEach(b=>{
-    b.classList.toggle('saved',favs.includes(b.dataset.id));
-    b.title=favs.includes(b.dataset.id)?'Убрать из избранного':'В избранное';
-  });
-}
-renderFavSection();
-
-// ── кнопка «поделиться» ─────────────────────────────
-(function(){
-  const btn=document.getElementById('share-btn');
-  if(!btn)return;
-  btn.addEventListener('click',()=>{
-    const url=location.href;
-    if(navigator.clipboard){
-      navigator.clipboard.writeText(url).then(()=>{
-        btn.textContent='✓ скопировано';btn.classList.add('copied');
-        setTimeout(()=>{btn.textContent='🔗 поделиться';btn.classList.remove('copied');},2000);
-      });
-    }else{
-      const el=document.createElement('textarea');el.value=url;
-      document.body.appendChild(el);el.select();document.execCommand('copy');document.body.removeChild(el);
-      btn.textContent='✓ скопировано';btn.classList.add('copied');
-      setTimeout(()=>{btn.textContent='🔗 поделиться';btn.classList.remove('copied');},2000);
-    }
-  });
-})();
-
-// ── тёмная тема: переключение ──
-(function(){
-  const TKEY='sabaistay_theme';
-  const html=document.documentElement;
-  const btn=document.getElementById('theme-btn');
-  if(btn)btn.addEventListener('click',function(){
-    const nowDark=html.getAttribute('data-theme')==='dark';
-    const next=nowDark?'light':'dark';
-    html.setAttribute('data-theme',next);
-    localStorage.setItem(TKEY,next);
-    btn.textContent=next==='dark'?'☀️':'🌙';
-    tileL.setUrl(next==='dark'
-      ?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      :'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png');
-  });
-  window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',function(e){
-    if(localStorage.getItem(TKEY))return;
-    const next=e.matches?'dark':'light';
-    html.setAttribute('data-theme',next);
-    if(btn)btn.textContent=next==='dark'?'☀️':'🌙';
-    tileL.setUrl(next==='dark'
-      ?'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-      :'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png');
-  });
-})();
-
-// ── клавиатурный шорткат: / → поиск ──
-document.addEventListener('keydown',function(e){
+// ── клавиатура ──
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&SHEET.kind){closeSheet();return;}
   const tag=document.activeElement.tagName;
   const noInput=tag!=='INPUT'&&tag!=='TEXTAREA'&&tag!=='SELECT';
-  if(e.key==='/'&&noInput){e.preventDefault();const s=document.getElementById('f-search');if(s){s.focus();s.select();}}
-  if(e.key==='r'&&noInput){e.preventDefault();resetFilters();}
+  if(e.key==='/'&&noInput){e.preventDefault();$('f-search').focus();$('f-search').select();}
+  if(e.key==='r'&&noInput&&!e.metaKey&&!e.ctrlKey){e.preventDefault();resetFilters();}
 });
-document.getElementById('f-search')?.addEventListener('keydown',function(e){
-  if(e.key==='Escape'){this.value='';this.blur();render(false);}
-});
+addEventListener('resize',()=>{if(SHEET.kind)placeSheet();});
 
-// ── счётчик избранного: клик → скролл к секции ──
-document.getElementById('fav-count-btn')?.addEventListener('click',function(){
-  document.getElementById('fav-section')?.scrollIntoView({behavior:'smooth',block:'start'});
-});
-
-// ── кнопка ? (шорткаты) ──
+// ── наверх ──
 (function(){
-  const btn=document.getElementById('help-btn');
-  if(!btn)return;
-  let popup=null;
-  function closePopup(){if(popup){popup.remove();popup=null;}}
-  btn.addEventListener('click',function(e){
-    e.stopPropagation();
-    if(popup){closePopup();return;}
-    popup=document.createElement('div');
-    popup.className='shortcuts-popup';
-    popup.innerHTML='<h4>Горячие клавиши</h4><table>'+
-      '<tr><td><kbd>/</kbd></td><td>фокус на поиск</td></tr>'+
-      '<tr><td><kbd>Esc</kbd></td><td>очистить поиск</td></tr>'+
-      '<tr><td><kbd>r</kbd></td><td>сбросить все фильтры</td></tr>'+
-      '</table>';
-    document.body.appendChild(popup);
-    setTimeout(function(){document.addEventListener('click',function h(){closePopup();document.removeEventListener('click',h);},{once:true});},0);
-  });
-  document.addEventListener('keydown',function(e){if(e.key==='Escape')closePopup();});
+  const btn=$('scroll-top'),list=$('list');
+  const on=()=>btn.classList.toggle('vis',(isMobile()?window.scrollY:list.scrollTop)>600);
+  list.addEventListener('scroll',on,{passive:true});addEventListener('scroll',on,{passive:true});
+  btn.onclick=()=>{list.scrollTo({top:0,behavior:'smooth'});window.scrollTo({top:0,behavior:'smooth'});};
 })();
 
-// ── кнопка ↑ (scroll-to-top) ──
-(function(){
-  const btn=document.getElementById('scroll-top-btn');
-  if(!btn)return;
-  const listEl=document.querySelector('.list');
-  function onScroll(){btn.classList.toggle('vis',(listEl?listEl.scrollTop:window.scrollY)>300);}
-  if(listEl)listEl.addEventListener('scroll',onScroll,{passive:true});
-  window.addEventListener('scroll',onScroll,{passive:true});
-  btn.addEventListener('click',function(){
-    if(listEl)listEl.scrollTo({top:0,behavior:'smooth'});
-    window.scrollTo({top:0,behavior:'smooth'});
-  });
-})();
+// ссылка с другим фильтром, вставленная в ту же вкладку, меняет только хэш — перечитываем
+addEventListener('hashchange',()=>{S=JSON.parse(JSON.stringify(DEF));$('f-search').value='';applyHash();closeSheet(true);applyFilter();});
+// ── старт ──
+applyStatic();
+applyHash();
+render(true);
+updateFavCount();
+setMode('list');
+// На десктопе карта видна сразу — подложку грузим, когда браузер освободится после списка.
+if(!isMobile())(window.requestIdleCallback||setTimeout)(()=>ensureBasemap(),{timeout:1500});
 </script>
-<button class="scroll-top-btn" id="scroll-top-btn" title="Наверх" aria-label="Наверх">↑</button>
 </body>
 </html>"""
 
@@ -1475,24 +1643,23 @@ def main() -> None:
     for r in rows:
         r.pop("fresh", None)
     owner_cta = (
-        '<div class="owner-cta"><b>Сдаёшь жильё на Пхангане?</b>'
-        "<p>Добавим объявление на витрину бесплатно — его увидят те, кто уже ищет "
+        '<div class="owner-cta"><b data-i18n="ownerTitle">Сдаёшь жильё на Пхангане?</b>'
+        '<p data-i18n="ownerText">Добавим объявление на витрину бесплатно — его увидят те, кто уже ищет '
         "жильё с фильтром по району и цене.</p>"
-        f'<a href="https://t.me/{CONTACT_TG}" target="_blank" rel="noopener">✚ Добавить объявление</a></div>'
+        f'<a class="btn pri" href="https://t.me/{CONTACT_TG}" target="_blank" rel="noopener">'
+        '<span data-i18n="ownerBtn">Добавить объявление</span></a></div>'
         if CONTACT_TG
         else ""
     )
-    watch_btn = (
-        '<a class="watch-btn" id="watch-btn" target="_blank" rel="noopener">🔔 следить за этим поиском</a>'
-        if BOT_USERNAME else ""
-    )
+    # Кнопки «следить за поиском» рисует JS (шапка фильтров, мобильная пилюля, пустое
+    # состояние) и только когда BOT_USERNAME задан — мёртвая ссылка хуже её отсутствия.
     html = (HTML.replace("__DATA__", json.dumps(rows, ensure_ascii=False))
                 .replace("__OWNER_CTA__", owner_cta)
-                .replace("__WATCH_BTN__", watch_btn)
                 .replace("__BOT_USERNAME__", BOT_USERNAME)
                 .replace("__SNAPSHOT__", _ru_date(snapshot))
                 .replace("__SNAPSHOT_ISO__", snap_iso)
                 .replace("__FAVICON__", quote(FAVICON_SVG))
+                .replace("__ISLAND_PATH__", ISLAND_PATH)
                 .replace("__HOT_DAYS__", str(freshness.HOT_DAYS))
                 .replace("__FRESH_DAYS__", str(freshness.FRESH_DAYS))
                 .replace("__RECENT_DAYS__", str(freshness.RECENT_DAYS))

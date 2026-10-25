@@ -49,6 +49,8 @@ CREATE TABLE listing (
     available_from  DATE,
     available_to    DATE,
     min_stay_months SMALLINT,
+    max_stay_months SMALLINT,
+    stay_hint       TEXT,                           -- long / season: срок словами без чисел
     language        TEXT,                           -- ru/en/th/mixed
     image_thumb_url TEXT,                           -- ссылка на превью у источника (НЕ ре-хостим оригиналы)
 

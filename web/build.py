@@ -113,6 +113,8 @@ def build_rows() -> tuple[list[dict], str | None]:
             "contact": p.get("contact") or {},
             "text": (rep.get("raw_text") or "").strip(),
             "available_from": p.get("available_from"),
+            "min_stay": p.get("min_stay_months"), "max_stay": p.get("max_stay_months"),
+            "stay_hint": p.get("stay_hint"),
             "area_sqm": p.get("area_sqm"),
             "dist_km": dist,
             "id": rep.get("external_id") or g["sources"][0]["source_url"],
@@ -137,6 +139,8 @@ def build_rows() -> tuple[list[dict], str | None]:
             "contact": rec.get("contact") or p.get("contact") or {},
             "text": (rec.get("raw_text") or "").strip(),
             "available_from": p.get("available_from"),
+            "min_stay": p.get("min_stay_months"), "max_stay": p.get("max_stay_months"),
+            "stay_hint": p.get("stay_hint"),
             "area_sqm": p.get("area_sqm"),
             "dist_km": dist,
             "id": rec.get("external_id") or src_url or f"own/{i + 1}",
@@ -283,6 +287,12 @@ document.documentElement.setAttribute('data-theme',dark?'dark':'light');})();
   .list{width:46%;min-width:360px;max-width:640px;overflow-y:auto;padding:12px 16px 40px;background:var(--bg)}
   #map{flex:1;min-width:0;height:100%;background:var(--land);position:relative}
 
+  /* строка рынка: сводка по текущей выдаче */
+  .mkt{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 0;padding:2px 2px 6px;font-size:13.5px;color:var(--muted)}
+  .mkt .rc{color:var(--ink);font-weight:700;font-size:15px}
+  .mkt .num{color:var(--ink);font-weight:700}
+  .mkt .nw{color:var(--fresh-ink);font-weight:600}
+  .mkt > span + span::before{content:"·";opacity:.45;margin:0 7px}
   /* строка результата */
   .rbar{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;padding:2px 2px 12px;font-size:13px;color:var(--muted)}
   .rbar .rc{color:var(--ink);font-weight:600;white-space:nowrap}
@@ -336,6 +346,14 @@ document.documentElement.setAttribute('data-theme',dark?'dark':'light');})();
   .c-facts{font-size:14px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .c-amen{font-size:13px;color:var(--muted);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .c-amen .now{color:var(--fresh-ink);font-weight:600}
+  .c-avail{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink);margin-top:2px;min-width:0}
+  .c-avail .ico{width:14px;height:14px;color:var(--sea)}
+  .c-avail span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .c-avail.now{color:var(--fresh-ink);font-weight:600}
+  .c-avail.now .ico{color:var(--fresh-ink)}
+  .c-new{margin-left:auto;flex:none;font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 9px;white-space:nowrap;
+         background:var(--fresh-bg);color:var(--fresh-ink);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--fresh) 40%,transparent)}
+  .similar{margin:4px 0 10px}
   .sep{opacity:.45;margin:0 5px}
   .tag{font-size:11.5px;font-weight:600;border-radius:6px;padding:1px 7px;background:var(--surface-2);color:var(--muted);margin-left:6px;white-space:nowrap}
   .tag.own{background:var(--coral-ink);color:#fff}
@@ -466,6 +484,8 @@ document.documentElement.setAttribute('data-theme',dark?'dark':'light');})();
        border:1px solid rgb(14 35 41 / .18);border-radius:999px;height:24px;padding:0 8px;box-shadow:0 1px 4px rgb(0 0 0 / .25);
        white-space:nowrap;transition:transform .14s var(--ease),background .14s}
   .pin.dim{color:#7b878b}
+  .pin small{font:600 10px var(--body);opacity:.65;margin-left:1px}
+  .pin.new::after{content:"";width:7px;height:7px;border-radius:50%;background:var(--fresh);margin-left:5px;box-shadow:0 0 0 2px #fff}
   .pin.on{background:var(--coral);border-color:var(--coral);color:#fff;transform:scale(1.15)}
   html[data-theme="dark"] .pin.on{color:#0b1a1f}
   .leaflet-marker-icon:has(.pin.on){z-index:10000!important}
@@ -587,8 +607,8 @@ document.documentElement.setAttribute('data-theme',dark?'dark':'light');})();
 <div class="wrap" id="wrap">
   <main class="list" id="list">
     <h1 class="vh" data-i18n="h1">Аренда жилья на Ко Пхангане</h1>
+    <div class="mkt" id="mkt" aria-live="polite"></div>
     <div class="rbar" id="rbar">
-      <span class="rc" id="rcount"></span>
       <button class="info" id="info-btn" type="button" aria-haspopup="dialog"><span id="rupd"></span><svg class="ico" viewBox="0 0 24 24" style="width:15px;height:15px"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg></button>
       <span class="spacer"></span>
       <button class="lbtn share" id="share-btn" type="button"><svg class="ico" viewBox="0 0 24 24"><path d="M7 17 17 7M9 7h8v8"/></svg><span class="lbl" data-i18n="share">поделиться</span></button>
@@ -671,7 +691,11 @@ ru:{h1:'Аренда жилья на Ко Пхангане',searchPh:'Район
   relaxAge:'За любое время',relaxPeriod:'Любой срок',relaxSqm:'Любая площадь',relaxAvail:'И без даты заезда',relaxSeen:'Включая просмотренные',relaxSearch:'Без поиска «{x}»',
   variants:'{n} {w}',
   listingsN:'{n} {w}',noDistrict:'район не указан',bedShort:'{n} сп',studio:'студия',sqm:'{n} м²',toPier:'{n} км до пирса',
-  availNow:'свободно сейчас',availFrom:'с {d}',fewData:'мало данных',seen:'смотрел',maybeRented:'возможно, уже сдано',
+  availNow:'свободно сейчас',availFrom:'свободно с {d}',stayRange:'{a}–{b} мес.',stayExact:'{n} мес.',stayMin:'от {n} мес.',stayMax:'до {n} мес.',
+  stayLong:'долгосрок',staySeason:'на сезон',newBadge:'Новое · {h} ч',
+  moveIn:'Заезд',moveInNow:'сейчас',moveInBy:'заезд {m}',moveInHint:'Объявления, где указано, что жильё свободно к этому месяцу',relaxMoveIn:'Любая дата заезда',
+  mktMedian:'медиана {p}',mktFrom:'от {p}',mktNew:'{n} {w} сегодня',
+  similar:'Сообщать о похожих',similarTip:'Бот пришлёт новые объявления: тот же район, цена ±20%, столько же спален',fewData:'мало данных',seen:'смотрел',maybeRented:'возможно, уже сдано',
   write:'Написать',open:'Открыть',openTg:'Открыть в Telegram',fromSrc:'из {s}',andMore:'ещё {n}',
   allSources:'Источники',airbnbHere:'Airbnb в этом районе ~{p} ฿/ночь',estimate:'оценка',medianTip:'медиана района {p} ฿/мес',
   report:'Пожаловаться / убрать',belowMkt:'ниже рынка −{n}%',aboveMkt:'выше рынка +{n}%',
@@ -714,7 +738,11 @@ en:{h1:'Rentals on Koh Phangan',searchPh:'Area, pool, 2br…',langAria:'Пере
   relaxAge:'Any time',relaxPeriod:'Any term',relaxSqm:'Any size',relaxAvail:'Also without move-in date',relaxSeen:'Include viewed',relaxSearch:'Without “{x}” search',
   variants:'{n} {w}',
   listingsN:'{n} {w}',noDistrict:'area not given',bedShort:'{n} bd',studio:'studio',sqm:'{n} m²',toPier:'{n} km to pier',
-  availNow:'available now',availFrom:'from {d}',fewData:'sparse data',seen:'viewed',maybeRented:'may already be taken',
+  availNow:'available now',availFrom:'available from {d}',stayRange:'{a}–{b} mo',stayExact:'{n} mo',stayMin:'min {n} mo',stayMax:'up to {n} mo',
+  stayLong:'long-term',staySeason:'for the season',newBadge:'New · {h}h',
+  moveIn:'Move-in',moveInNow:'now',moveInBy:'move in {m}',moveInHint:'Listings that say the place is free by this month',relaxMoveIn:'Any move-in date',
+  mktMedian:'median {p}',mktFrom:'from {p}',mktNew:'{n} {w} today',
+  similar:'Alert me about similar',similarTip:'The bot will send new listings: same area, price ±20%, same bedrooms',fewData:'sparse data',seen:'viewed',maybeRented:'may already be taken',
   write:'Message',open:'Open',openTg:'Open in Telegram',fromSrc:'from {s}',andMore:'+{n} more',
   allSources:'Sources',airbnbHere:'Airbnb in this area ~{p} ฿/night',estimate:'estimate',medianTip:'area median {p} ฿/mo',
   report:'Report / remove',belowMkt:'below market −{n}%',aboveMkt:'above market +{n}%',
@@ -728,8 +756,8 @@ en:{h1:'Rentals on Koh Phangan',searchPh:'Area, pool, 2br…',langAria:'Пере
   stDistrict:'Area',stCount:'Listings',stActive:'Active',stMedian:'Median, ฿/mo',noDistrictRow:'No area',
   perMonth:'/mo',perNight:'/night',priceNone:'price not given',upTo:'up to {p}',fromP:'from {p}',bedsPlus:'{n}+ bd',
   phoneHidden:'[phone hidden — see original]',ownerTitle:'Renting out a place on Phangan?',ownerText:'We will add your listing for free — people already searching by area and price will see it.',ownerBtn:'Add a listing'}};
-const WORDS={ru:{listing:['объявление','объявления','объявлений'],variant:['вариант','варианта','вариантов'],day:['день','дня','дней']},
-             en:{listing:['listing','listings'],variant:['option','options'],day:['day','days']}};
+const WORDS={ru:{listing:['объявление','объявления','объявлений'],variant:['вариант','варианта','вариантов'],day:['день','дня','дней'],fresh:['новое','новых','новых']},
+             en:{listing:['listing','listings'],variant:['option','options'],day:['day','days'],fresh:['new','new']}};
 let LANG=(LS.get('sabaistay_lang')||((navigator.language||'ru').toLowerCase().startsWith('ru')?'ru':'en'));
 if(!I18N[LANG])LANG='ru';
 function t(k,v){let s=(I18N[LANG][k]??I18N.ru[k]??k);if(v)for(const x in v)s=s.split('{'+x+'}').join(v[x]);return s;}
@@ -752,6 +780,8 @@ const TYPE_KEYS=['house','villa','apartment','bungalow','studio','room','other']
 const typeL=k=>TYPE[LANG][k]||k||TYPE[LANG].other;
 const MON={ru:['','янв','фев','мар','апр','мая','июн','июл','авг','сен','окт','ноя','дек'],en:['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']};
 function fmtDay(y,m,d){return LANG==='ru'?(d?(+d)+' '+MON.ru[+m]:MON.ru[+m]+' '+y):(d?MON.en[+m]+' '+(+d):MON.en[+m]+' '+y);}
+// дата заезда: год дописываем, только если он не текущий (у старых постов «с 1 мар» без года вводит в заблуждение)
+function fmtAvail(iso){const p=iso.split('-');const s=fmtDay(p[0],p[1],p[2]);return (p[2]&&+p[0]!==new Date().getFullYear())?s+' '+p[0]:s;}
 const SRC={telegram:'Telegram',fb_group:'Facebook',fb_marketplace:'Facebook',booking:'Booking',airbnb:'Airbnb',manual:'SabaiStay',own:'SabaiStay'};
 function srcName(s){const m=/t\.me\/(?:s\/)?([A-Za-z0-9_]+)/.exec(s.source_url||'');return m?'@'+m[1]:(SRC[s.source]||'↗');}
 
@@ -775,6 +805,14 @@ function assessFresh(postedAt,rented){
   return{status:'active',age_days:age,label:Math.round(age/7)+' нед. назад',cls:'old',stale:false};
 }
 DATA.forEach(d=>{d.fresh=assessFresh(d.posted_at,d.rented);});
+// «Новое · 4 ч»: окно = «сегодня и вчера» из freshness.py (HOT_DAYS), т.е. 48 ч — один порог на Python и JS.
+const NEW_H=(FRESH_T.hot+1)*24;
+function newHours(d){
+  if(d.rented||!d.posted_at)return null;
+  const ts=Date.parse(d.posted_at);if(isNaN(ts))return null;
+  const h=(Date.now()-ts)/36e5;
+  return h<NEW_H?Math.max(1,Math.floor(Math.max(0,h))):null;
+}
 // Порядок по умолчанию — свежее сверху (свои featured остаются первыми).
 DATA.sort((a,b)=>(b.featured?1:0)-(a.featured?1:0)||String(b.posted_at||'').localeCompare(String(a.posted_at||'')));
 // Короткая подпись свежести для карточки (сам расчёт — assessFresh выше, не трогаем).
@@ -800,7 +838,14 @@ const priceFull=n=>{if(n==null)return null;if(CUR==='usd')return'$'+Math.round(n
 const firstUrl=d=>d.sources[0]?.source_url||'#';
 
 // ── состояние фильтра: один объект, из него рисуются чипы, шторки и URL ──
-const DEF={district:'',period:'',price:0,priceMin:0,bed:0,type:'',amenities:[],maxAge:0,hideStale:DEFAULT_HIDE_STALE,onlyAvail:false,hideSeen:false,sqmMin:0,sqmMax:0,search:'',sort:''};
+const DEF={district:'',period:'',price:0,priceMin:0,bed:0,type:'',amenities:[],maxAge:0,hideStale:DEFAULT_HIDE_STALE,onlyAvail:false,hideSeen:false,sqmMin:0,sqmMax:0,search:'',sort:'',moveIn:''};
+// Чип «Заезд» показываем, только если дата заезда разобрана хотя бы у 20% объявлений:
+// иначе фильтр прячет почти всю выдачу и выглядит как поломка.
+const AVAIL_COV=DATA.length?DATA.filter(d=>d.available_from).length/DATA.length:0;
+const HAS_MOVEIN=AVAIL_COV>0.2;
+const ymNow=()=>{const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');};
+// свободно к месяцу m ('now' — к текущему): «сейчас» и прошедшие даты тоже подходят
+function availBy(d,m){const a=d.available_from;if(!a)return false;if(a==='now')return true;return a.slice(0,7)<=(m==='now'?ymNow():m);}
 let S=JSON.parse(JSON.stringify(DEF));
 function readF(){return{...S,amenities:[...S.amenities]};}
 function passes(d,f){
@@ -819,6 +864,7 @@ function passes(d,f){
   // а вот в срезе «за неделю» показывать неизвестно какой давности пост нечестно.
   if(f.maxAge&&(d.fresh.age_days==null||d.fresh.age_days>f.maxAge))return false;
   if(f.onlyAvail&&!d.available_from)return false;
+  if(f.moveIn&&!availBy(d,f.moveIn))return false;
   if(f.hideSeen&&getSeen().has(d.id))return false;
   if(f.search){const hay=(d.title+' '+d.text+' '+(d.district||'')+' '+(d.type||'')).toLowerCase();if(!hay.includes(f.search))return false;}
   return true;}
@@ -836,6 +882,8 @@ const IC={
   bm:'<svg class="ico" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4-6 4z"/></svg>',
   ext:'<svg class="ico" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M7 17 17 7M9 7h8v8"/></svg>',
   msg:'<svg class="ico" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="m22 3-9.5 18-2.5-8-8-2.5z"/></svg>',
+  cal:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  bell:'<svg class="ico" viewBox="0 0 24 24" style="width:15px;height:15px"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
   sliders:'<svg class="ico" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>',
   list:'<svg class="ico" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>',
   map:'<svg class="ico" viewBox="0 0 24 24"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2z"/><path d="M9 4v14M15 6v14"/></svg>'
@@ -855,11 +903,19 @@ function benchHtml(d){
   return b.pct<0?'<span class="bench cheap" title="'+tip+'">'+t('belowMkt',{n:Math.abs(b.pct)})+'</span>'
                 :'<span class="bench" title="'+tip+'">'+t('aboveMkt',{n:b.pct})+'</span>';
 }
-function availText(d){
-  if(!d.available_from)return '';
-  if(d.available_from==='now')return '<span class="now">'+t('availNow')+'</span>';
-  const p=d.available_from.split('-');
-  return esc(t('availFrom',{d:fmtDay(p[0],p[1],p[2])}));
+// Окно доступности «свободно с 1 дек · 3–6 мес.»: только то, что явно написано в посте.
+function stayText(d){
+  const a=d.min_stay,b=d.max_stay;
+  if(a&&b)return a===b?t('stayExact',{n:a}):t('stayRange',{a,b});
+  if(a)return t('stayMin',{n:a}); if(b)return t('stayMax',{n:b});
+  return d.stay_hint==='long'?t('stayLong'):d.stay_hint==='season'?t('staySeason'):'';
+}
+function availWindow(d){
+  const parts=[];
+  if(d.available_from)parts.push(d.available_from==='now'?t('availNow'):t('availFrom',{d:fmtAvail(d.available_from)}));
+  const st=stayText(d);if(st)parts.push(st);
+  if(!parts.length)return '';
+  return '<div class="c-avail'+(d.available_from==='now'?' now':'')+'">'+IC.cal+'<span>'+esc(parts.join(' · '))+'</span></div>';
 }
 const unitOf=d=>d.period==='night'?t('perNight'):(d.period==='sale'?'':t('perMonth'));
 function hl(s,q){if(!q)return s;const re=new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi');return s.replace(re,'<mark>$1</mark>');}
@@ -879,8 +935,7 @@ function makeCard(d,key){
   if(d.dist_km!=null)facts.push(t('toPier',{n:String(d.dist_km).replace('.',LANG==='ru'?',':'.')}));
   if(d.price&&d.area_sqm)facts.push('≈'+Math.round(d.price/d.area_sqm).toLocaleString('ru-RU')+' ฿/м²');
   const am=AM_KEYS.filter(k=>d.amenities&&d.amenities[k]).map(k=>AMEN[LANG][k]);
-  const av=availText(d); if(av)am.push(av);
-  const seen=getSeen().has(d.id), saved=getFavs().includes(d.id);
+  const seen=getSeen().has(d.id), saved=getFavs().includes(d.id), nh=newHours(d);
   const tags=(d.own?'<span class="tag own">SabaiStay</span>':'')+(d.confidence!=null&&d.confidence<0.6?'<span class="tag">'+t('fewData')+'</span>':'')+(seen?'<span class="tag">'+t('seen')+'</span>':'');
   const tg=d.contact&&d.contact.telegram?d.contact.telegram.replace(/^@/,''):'';
   const isTg=(d.sources[0]?.source||'')==='telegram';
@@ -891,9 +946,9 @@ function makeCard(d,key){
     ((d.own&&d.photos&&d.photos.length>1)?'<img class="own-photo" src="'+esc(d.photos[1])+'" alt="" loading="lazy">':'')+
     '<div class="c-mark">'+islandMark(d)+'</div>'+
     '<div class="c-body">'+
-      '<div class="c-eye"><span class="c-where'+(d.district?'':' nogeo')+'">'+where+'</span><span class="c-fresh f-'+d.fresh.cls+'">'+freshText(d.fresh)+'</span></div>'+
+      '<div class="c-eye"><span class="c-where'+(d.district?'':' nogeo')+'">'+where+'</span>'+(nh!=null?'<span class="c-new">'+t('newBadge',{h:nh})+'</span>':'<span class="c-fresh f-'+d.fresh.cls+'">'+freshText(d.fresh)+'</span>')+'</div>'+
       '<div class="c-price">'+price+benchHtml(d)+'</div>'+
-      '<div class="c-facts">'+(facts.map(esc).join('<span class="sep">·</span>')||'&nbsp;')+tags+'</div>'+
+      '<div class="c-facts">'+(facts.map(esc).join('<span class="sep">·</span>')||'&nbsp;')+tags+'</div>'+availWindow(d)+
       ((am.length||dim)?'<div class="c-amen">'+am.join('<span class="sep">·</span>')+(dim?(am.length?'<span class="sep">·</span>':'')+'<span class="stale-note">'+t('maybeRented')+'</span>':'')+'</div>':'')+
     '</div>'+
     '<button class="bm'+(saved?' saved':'')+'" type="button" data-id="'+esc(d.id)+'" aria-pressed="'+saved+'" aria-label="'+t('favs')+'">'+IC.bm+'</button>'+
@@ -907,7 +962,9 @@ function makeCard(d,key){
       m=document.createElement('div');m.className='c-more';
       const b=d.bench;
       const txt=d.text?(d.own?d.text:maskPhones(d.text)):'';
+      const sim=similarHref(d);
       m.innerHTML=(txt?'<pre class="c-text">'+hl(esc(txt),S.search?esc(S.search):'')+'</pre>':'')+
+        (sim?'<p class="similar"><a class="btn sec" href="'+esc(sim)+'" target="_blank" rel="noopener" title="'+esc(t('similarTip'))+'">'+IC.bell+t('similar')+'</a></p>':'')+
         '<p class="c-meta">'+t('allSources')+':</p><div class="c-srcs">'+d.sources.map(s=>'<a href="'+esc(s.source_url)+'" target="_blank" rel="noopener">'+esc(srcName(s))+' ↗</a>').join('')+'</div>'+
         (b&&b.airbnb_adr?'<p class="c-meta">'+t('airbnbHere',{p:Math.round(b.airbnb_adr).toLocaleString('ru-RU')})+(b.seed?' ('+t('estimate')+')':'')+'</p>':'')+
         (b&&b.monthly_median?'<p class="c-meta">'+t('medianTip',{p:Math.round(b.monthly_median).toLocaleString('ru-RU')})+'</p>':'')+
@@ -925,7 +982,7 @@ function makeCard(d,key){
   card.querySelector('.bm').addEventListener('click',e=>{e.stopPropagation();toggleFav(d.id);});
   if(key!=null&&d.lat!=null){
     card.addEventListener('mouseenter',()=>pinOn(key,true));
-    card.addEventListener('mouseleave',()=>pinOn(key,false));
+    card.addEventListener('mouseleave',()=>pinOn(key,key===_activeKey));
   }
   return card;
 }
@@ -939,7 +996,8 @@ const isMobile=()=>matchMedia('(max-width:760px)').matches;
 if(HAS_L){
   map=L.map('map',{zoomControl:true,attributionControl:true,maxZoom:18,minZoom:10}).setView([9.745,100.025],12);
   map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
-  clusterGroup=L.markerClusterGroup({maxClusterRadius:50,showCoverageOnHover:false,
+  // Кластеры на дальнем зуме, ближе радиус сжимается — и они распадаются в пилюли с ценой.
+  clusterGroup=L.markerClusterGroup({maxClusterRadius:z=>z>=15?24:z>=14?36:50,showCoverageOnHover:false,spiderfyOnMaxZoom:true,
     iconCreateFunction:c=>L.divIcon({className:'',html:'<div class="cluster">'+c.getChildCount()+'</div>',iconSize:[36,36]})});
   map.addLayer(clusterGroup);
   const Note=L.Control.extend({onAdd(){const e=L.DomUtil.create('div','mapnote');L.DomEvent.disableClickPropagation(e);return e;}});
@@ -1046,8 +1104,11 @@ function render(first){
     const ms=[];
     _view.forEach((d,i)=>{
       if(d.lat==null)return;
-      const icon=L.divIcon({className:'',html:'<div class="pin'+(d.fresh.stale&&FRESH_TOTAL>0?' dim':'')+'">'+(d.price!=null?compact(d.price):'·')+'</div>',iconSize:null});
+      const nightU=d.period==='night'?'<small>'+t('perNight')+'</small>':'';
+      const icon=L.divIcon({className:'',html:'<div class="pin'+(d.fresh.stale&&FRESH_TOTAL>0?' dim':'')+(newHours(d)!=null?' new':'')+'">'+(d.price!=null?compact(d.price)+nightU:'·')+'</div>',iconSize:null});
       const m=L.marker([d.lat,d.lng],{icon,keyboard:false});
+      // кластер пересоздаёт DOM маркера при каждом зуме — активную пилюлю подсвечиваем заново
+      m.on('add',()=>{if(_activeKey===i)pinOn(i,true);});
       m.bindPopup(()=>popupHtml(d),{closeButton:true,autoPanPadding:[30,30]});
       m.on('click',()=>{
         if(_activeKey!=null)pinOn(_activeKey,false);
@@ -1067,7 +1128,7 @@ function render(first){
   _rendered=0;
   if(shown)renderPage(); else {cards.appendChild(emptyState(f));$('load-more').hidden=true;}
   // строка результата
-  $('rcount').textContent=t('listingsN',{n:shown,w:word(shown,'listing')});
+  renderMarket(_view);
   $('f-sort').value=f.sort;
   renderDataAge(f);
   // возраст уже сказан полосой сверху — не повторяем его в строке результата
@@ -1076,6 +1137,26 @@ function render(first){
   writeHash(f);
   updateWatchLink(f,shown);
   if(SHEET.kind)refreshSheet(false);
+}
+// ── строка рынка: «N вариантов · медиана X ฿ · от Y ฿ · K новых сегодня» по текущей выдаче ──
+// Цены разных периодов не смешиваем: берём выбранный период, а без выбора — помесячные
+// (их большинство); если помесячных нет вовсе — посуточные. «От» без явных ошибок разбора
+// (суточная цена, принятая за месячную), медиана к ним и так устойчива.
+function renderMarket(view){
+  const pick=night=>view.filter(d=>d.price!=null&&(night?d.period==='night':(d.period==='month'||d.period==='unknown'))).map(d=>d.price).sort((a,b)=>a-b);
+  let night=S.period==='night',vals=pick(night);
+  if(!vals.length&&!S.period){night=true;vals=pick(true);}
+  const unit=night?t('perNight'):t('perMonth');
+  const parts=['<span><span class="rc">'+esc(t('variants',{n:view.length,w:word(view.length,'variant')}))+'</span></span>'];
+  if(vals.length>=3){
+    const m=Math.floor(vals.length/2),med=vals.length%2?vals[m]:Math.round((vals[m-1]+vals[m])/2);
+    const floor=night?200:3000,lo=vals.find(v=>v>=floor);
+    parts.push('<span>'+t('mktMedian',{p:'<span class="num">'+esc(priceFull(med))+'</span>'+unit})+'</span>');
+    if(lo!=null)parts.push('<span>'+t('mktFrom',{p:'<span class="num">'+esc(priceFull(lo))+'</span>'})+'</span>');
+  }
+  const k=view.filter(d=>{const h=newHours(d);return h!=null&&h<24;}).length;
+  if(k)parts.push('<span class="nw">'+esc(t('mktNew',{n:k,w:word(k,'fresh')}))+'</span>');
+  $('mkt').innerHTML=parts.join('');
 }
 // Изменение фильтра — это новая выдача, а не продолжение прежней: список в начало.
 function applyFilter(){
@@ -1113,6 +1194,7 @@ function relaxOptions(f){
   if(f.period)add(t('relaxPeriod'),{period:''});
   if(f.sqmMin||f.sqmMax)add(t('relaxSqm'),{sqmMin:0,sqmMax:0});
   if(f.onlyAvail)add(t('relaxAvail'),{onlyAvail:false});
+  if(f.moveIn)add(t('relaxMoveIn'),{moveIn:''});
   if(f.hideSeen)add(t('relaxSeen'),{hideSeen:false});
   if(f.search)add(t('relaxSearch',{x:f.search}),{search:''});
   return o.sort((a,b)=>b.n-a.n).slice(0,3);
@@ -1164,7 +1246,7 @@ const AGE_KEYS={1:'age1',3:'age3',7:'age7',30:'age30'};
 const kfmt=n=>CUR==='usd'?'$'+Math.round(n/RATE_USD):(n>=1000?(Math.round(n/100)/10)+'k':n+'');
 function activeCount(){
   return (S.district?1:0)+(S.period?1:0)+(S.maxAge?1:0)+((S.sqmMin||S.sqmMax)?1:0)+((S.price||S.priceMin)?1:0)+(S.bed?1:0)+(S.type?1:0)+
-    S.amenities.length+(S.onlyAvail?1:0)+(S.hideSeen?1:0)+(S.hideStale!==DEFAULT_HIDE_STALE?1:0);
+    S.amenities.length+(S.onlyAvail?1:0)+(S.moveIn?1:0)+(S.hideSeen?1:0)+(S.hideStale!==DEFAULT_HIDE_STALE?1:0);
 }
 function renderChips(){
   const n=activeCount();
@@ -1177,8 +1259,11 @@ function renderChips(){
     c('bed',S.bed?t('bedsPlus',{n:S.bed}):t('beds'),!!S.bed)+
     c('type',S.type?typeL(S.type):t('type'),!!S.type)+
     '<span class="seg" role="group" aria-label="'+t('term')+'"><button type="button" data-period="month" class="'+(S.period==='month'?'on':'')+'" aria-pressed="'+(S.period==='month')+'">'+t('monthly')+'</button><button type="button" data-period="night" class="'+(S.period==='night'?'on':'')+'" aria-pressed="'+(S.period==='night')+'">'+t('nightly')+'</button></span>'+
-    c('age',S.maxAge?t(AGE_KEYS[S.maxAge]||'freshness'):t('freshness'),!!S.maxAge);
+    c('age',S.maxAge?t(AGE_KEYS[S.maxAge]||'freshness'):t('freshness'),!!S.maxAge)+
+    (HAS_MOVEIN?c('movein',S.moveIn?t('moveInBy',{m:moveInLabel(S.moveIn)}):t('moveIn'),!!S.moveIn):'');
 }
+function moveInLabel(m){if(m==='now')return t('moveInNow');const p=m.split('-');return MON[LANG][+p[1]]+(+p[0]!==new Date().getFullYear()?' '+p[0]:'');}
+function moveInOptions(){const o=['now'],n=new Date();for(let i=1;i<=6;i++){const d=new Date(n.getFullYear(),n.getMonth()+i,1);o.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'));}return o;}
 $('chips').addEventListener('click',e=>{
   const p=e.target.closest('[data-period]');
   if(p){setF({period:S.period===p.dataset.period?'':p.dataset.period});return;}
@@ -1190,8 +1275,8 @@ $('chips').addEventListener('click',e=>{
 
 // ── шторка / поповер / модалка ──
 const SHEET={kind:null,anchor:null,el:null,scrim:null};
-const SHEET_TITLES={all:'allFilters',district:'district',price:'price',bed:'beds',type:'type',age:'freshness',menu:'menu',favs:'favsTitle',stats:'districtStats',keys:'shortcuts',info:'fromChannels'};
-const FILTER_KINDS=['all','district','price','bed','type','age'];
+const SHEET_TITLES={all:'allFilters',district:'district',price:'price',bed:'beds',type:'type',age:'freshness',movein:'moveIn',menu:'menu',favs:'favsTitle',stats:'districtStats',keys:'shortcuts',info:'fromChannels'};
+const FILTER_KINDS=['all','district','price','bed','type','age','movein'];
 function openSheet(kind,anchor){
   closeSheet(true);
   SHEET.kind=kind;SHEET.anchor=anchor||null;
@@ -1210,7 +1295,7 @@ function openSheet(kind,anchor){
   if(filt){
     el.querySelector('.clr').onclick=()=>{
       if(kind==='all')resetFilters();
-      else setF(kind==='district'?{district:''}:kind==='price'?{price:0,priceMin:0}:kind==='bed'?{bed:0}:kind==='type'?{type:''}:{maxAge:0});
+      else setF(kind==='district'?{district:''}:kind==='price'?{price:0,priceMin:0}:kind==='bed'?{bed:0}:kind==='type'?{type:''}:kind==='movein'?{moveIn:''}:{maxAge:0});
     };
     el.querySelector('.show').onclick=()=>closeSheet();
   }
@@ -1310,6 +1395,11 @@ function secType(){
   return '<div class="sec"><h3>'+t('type')+'</h3>'+pills([['',t('anyType')],...TYPE_KEYS.filter(k=>cnt[k]).map(k=>[k,typeL(k),cnt[k]])],S.type,'type')+'</div>';
 }
 function secAge(){return '<div class="sec"><h3>'+t('freshness')+'</h3>'+pills([[0,t('anyTime')],[1,t('age1')],[3,t('age3')],[7,t('age7')],[30,t('age30')]],S.maxAge,'age')+'</div>';}
+function secMoveIn(){
+  const f={...readF(),moveIn:''};
+  return '<div class="sec"><h3>'+t('moveIn')+'</h3><p class="hint">'+t('moveInHint')+'</p>'+
+    pills([['',t('any'),countWith(f)],...moveInOptions().map(m=>[m,moveInLabel(m),countWith({...f,moveIn:m})])],S.moveIn,'movein')+'</div>';
+}
 function secPeriod(){return '<div class="sec"><h3>'+t('term')+'</h3>'+pills([['',t('anyTerm')],['month',t('monthly')],['night',t('nightly')]],S.period,'period2')+'</div>';}
 function secAmen(){return '<div class="sec"><h3>'+t('amenities')+'</h3><div class="tiles">'+AM_KEYS.map(k=>'<label class="tile"><input type="checkbox" data-am="'+k+'"'+(S.amenities.includes(k)?' checked':'')+'>'+AMEN[LANG][k]+'</label>').join('')+'</div></div>';}
 function secArea(){return '<div class="sec"><h3>'+t('area')+'</h3><div class="range2"><label>'+t('from')+'<input type="number" inputmode="numeric" id="sq-min" step="10" min="0" value="'+(S.sqmMin||'')+'"></label><span class="dash">—</span><label>'+t('to')+'<input type="number" inputmode="numeric" id="sq-max" step="10" min="0" value="'+(S.sqmMax||'')+'"></label></div></div>';}
@@ -1323,7 +1413,8 @@ function sheetBody(k){
   if(k==='bed')return secBed();
   if(k==='type')return secType();
   if(k==='age')return secAge();
-  if(k==='all')return secDistrict()+secPrice()+secBed()+secType()+secPeriod()+secAmen()+secAge()+secArea()+secMore();
+  if(k==='movein')return secMoveIn();
+  if(k==='all')return secDistrict()+secPrice()+secBed()+secType()+secPeriod()+secAmen()+secAge()+(HAS_MOVEIN?secMoveIn():'')+secArea()+secMore();
   if(k==='menu')return menuBody();
   if(k==='favs')return favsBody();
   if(k==='stats')return statsBody();
@@ -1336,6 +1427,7 @@ function bindSheet(body,k){
   body.querySelectorAll('[data-bed]').forEach(b=>b.onclick=()=>setF({bed:+b.dataset.bed}));
   body.querySelectorAll('[data-type]').forEach(b=>b.onclick=()=>setF({type:b.dataset.type}));
   body.querySelectorAll('[data-age]').forEach(b=>b.onclick=()=>setF({maxAge:+b.dataset.age}));
+  body.querySelectorAll('[data-movein]').forEach(b=>b.onclick=()=>setF({moveIn:b.dataset.movein}));
   body.querySelectorAll('[data-period2]').forEach(b=>b.onclick=()=>setF({period:b.dataset.period2,price:0,priceMin:0}));
   body.querySelectorAll('[data-am]').forEach(c=>c.onchange=()=>setF({amenities:AM_KEYS.filter(a=>body.querySelector('[data-am="'+a+'"]').checked)}));
   body.querySelectorAll('[data-flag]').forEach(c=>c.onchange=()=>{const v=c.checked,fl=c.dataset.flag;setF(fl==='showStale'?{hideStale:!v}:{[fl]:v});});
@@ -1454,6 +1546,7 @@ function writeHash(f){
   // зависит от того, есть ли свежие данные, и не должно «залипать» в ссылке
   if(f.hideStale!==DEFAULT_HIDE_STALE)p.set('stale',f.hideStale?'1':'0');
   if(f.onlyAvail)p.set('avail','1');
+  if(f.moveIn)p.set('movein',f.moveIn);
   if(f.hideSeen)p.set('seen','1');
   if(f.search)p.set('q',f.search);
   if(f.sort)p.set('sort',f.sort);
@@ -1471,6 +1564,7 @@ function applyHash(){
   if(g('am'))S.amenities=g('am').split(',').filter(a=>AM_KEYS.includes(a));
   if(g('stale')==='0')S.hideStale=false; else if(g('stale')==='1')S.hideStale=FRESH_TOTAL>0;
   S.onlyAvail=g('avail')==='1';S.hideSeen=g('seen')==='1';
+  if(/^(now|\d{4}-\d{2})$/.test(g('movein')||''))S.moveIn=g('movein');
   if(g('q')){S.search=g('q');$('f-search').value=S.search;}
   if(g('sort'))S.sort=g('sort');
 }
@@ -1483,11 +1577,23 @@ function resetFilters(){S=JSON.parse(JSON.stringify(DEF));$('f-search').value=''
 // через «~» и упаковываем в base64url.
 function watchPayload(f){
   const parts=[f.district||'',f.price||'',f.bed||'',f.type||'',(f.amenities||[]).join('.'),f.period||'month'];
+  if(f.priceMin)parts.push(f.priceMin);  // 7-е поле — «цена от»; старые ссылки из 6 полей бот читает как раньше
   const b=btoa(String.fromCharCode(...new TextEncoder().encode(parts.join('~'))));
   return b.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 }
 // Текстовый поиск в подписку не переносится (бот сопоставляет поля, а не свободный текст).
-function hasWatchableFilter(f){return !!(f.district||f.price||f.bed||f.type||(f.amenities||[]).length);}
+function hasWatchableFilter(f){return !!(f.district||f.price||f.priceMin||f.bed||f.type||(f.amenities||[]).length);}
+// «Сообщать о похожих»: район + цена ±20% + спальни (от) этого объявления, тот же формат payload.
+function similarHref(d){
+  if(!BOT_USERNAME||d.rented)return '';
+  const night=d.period==='night',step=night?100:1000;
+  const f={district:d.district||'',bed:d.bedrooms||0,type:'',amenities:[],period:night?'night':'month',price:0,priceMin:0};
+  if(d.price!=null&&d.period!=='sale'){f.price=Math.ceil(d.price*1.2/step)*step;f.priceMin=Math.floor(d.price*0.8/step)*step;}
+  if(!hasWatchableFilter(f))return '';
+  let p=watchPayload(f);
+  if(p.length>63){f.priceMin=0;p=watchPayload(f);}   // не влезли в 64 символа — жертвуем нижней границей
+  return p.length<=63?'https://t.me/'+BOT_USERNAME+'?start=f'+p:'';
+}
 function watchHref(f){
   const payload=watchPayload(f);
   const ok=hasWatchableFilter(f)&&payload.length<=63;

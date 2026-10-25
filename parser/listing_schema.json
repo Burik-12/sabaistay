@@ -61,6 +61,8 @@
     "available_from": { "type": ["string", "null"], "format": "date", "description": "Дата доступности (YYYY-MM-DD) если указана." },
     "available_to":   { "type": ["string", "null"], "format": "date" },
     "min_stay_months": { "type": ["integer", "null"], "description": "Минимальный срок аренды в месяцах, если указан." },
+    "max_stay_months": { "type": ["integer", "null"], "description": "Максимальный срок аренды в месяцах, если указан («сроком до 3 мес.», «6–9 мес.»)." },
+    "stay_hint": { "type": ["string", "null"], "enum": ["long", "season", null], "description": "Срок словами без чисел: long — «долгосрок», season — «на сезон»." },
     "language": { "type": "string", "enum": ["ru", "en", "th", "mixed", "other"] },
     "status_hint": {
       "type": "string",

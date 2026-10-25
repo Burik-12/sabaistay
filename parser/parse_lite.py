@@ -495,129 +495,174 @@ def _parse_area(text: str) -> float | None:
     return None
 
 
-# ── дата доступности ────────────────────────────────────────────────────────
-_MONTH_EN = {
-    "jan": 1, "january": 1, "feb": 2, "february": 2, "mar": 3, "march": 3,
-    "apr": 4, "april": 4, "may": 5, "jun": 6, "june": 6,
-    "jul": 7, "july": 7, "aug": 8, "august": 8, "sep": 9, "sept": 9, "september": 9,
-    "oct": 10, "october": 10, "nov": 11, "november": 11, "dec": 12, "december": 12,
-}
-_MONTH_RU = {
-    "янв": 1, "фев": 2, "мар": 3, "апр": 4, "май": 5, "мая": 5,
-    "июн": 6, "июл": 7, "авг": 8, "сен": 9, "окт": 10, "ноя": 11, "дек": 12,
-}
-# "1 March 2026", "March 1", "1 Mar"
-_AVAIL_EN_DMY = re.compile(
-    r"(?:available\s+(?:from\s+)?|from\s+|avail\.?\s+(?:from\s+)?)"
-    r"(\d{1,2})\s*(?:st|nd|rd|th)?\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)"
-    r"(?:\s+(\d{4}))?",
-    re.IGNORECASE,
-)
-_AVAIL_EN_MDY = re.compile(
-    r"(?:available\s+(?:from\s+)?|from\s+|avail\.?\s+(?:from\s+)?)"
-    r"(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)"
-    r"\s+(\d{1,2})(?:st|nd|rd|th)?(?:\s+(\d{4}))?",
-    re.IGNORECASE,
-)
-# "available from January" (только месяц, без дня)
-_AVAIL_EN_M = re.compile(
-    r"(?:available\s+(?:from\s+)?|avail\.?\s+(?:from\s+)?|from\s+)"
-    r"(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)"
-    r"(?:\s+(\d{4}))?(?!\s*\d)",
-    re.IGNORECASE,
-)
-# "с 1 марта", "доступно с 5 апреля", "свободно с марта"
-_AVAIL_RU = re.compile(
-    r"(?:доступн[оа]?\s+с|свободн[оа]?\s+с|сдаётся\s+с|заезд\s+с|от|с)\s+"
-    r"(?:(\d{1,2})\s+)?"
-    r"(янв(?:аря?)?|фев(?:раля?)?|мар(?:та?)?|апр(?:еля?)?|мая|май(?:я)?|июн(?:я)?|июл(?:я)?|авг(?:уста?)?|сен(?:тября?)?|окт(?:ября?)?|ноя(?:бря?)?|дек(?:абря?)?)"
-    r"(?:\s+(\d{4}))?",
-    re.IGNORECASE,
-)
-# ISO / DD.MM.YYYY / DD/MM/YYYY после ключевого слова
+# ── окно доступности: дата заезда и срок аренды ─────────────────────────────
+# Для того, кто ищет жильё на сезон, «с какого числа» и «на сколько» важнее половины
+# остальных полей: дом за 20k, который освобождается только в марте, человеку,
+# прилетающему в декабре, не нужен. Разбираем только явные формулировки — лучше
+# промолчать на карточке, чем показать придуманный срок.
+_MON_EN = (r"(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|"
+           r"sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\b\.?")
+_MONTH_EN = {"jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+             "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12}
+# Русский месяц берём словом целиком и сверяем по основе: голый префикс «мар» иначе
+# находит месяц в «маркетплейсе», а «с 7 АПРЕЛЬЯ» (живая опечатка) не должен теряться.
+_MON_RU = r"((?:янв|фев|мар|апр|ма[йя]|июн|июл|авг|сен|окт|ноя|дек)[а-яё]*)\.?"
+_MONTH_RU_STEMS = (("январ", 1), ("феврал", 2), ("март", 3), ("апрел", 4), ("ма", 5),
+                   ("июн", 6), ("июл", 7), ("август", 8), ("сентябр", 9), ("октябр", 10),
+                   ("ноябр", 11), ("декабр", 12))
+_MONTH_RU_SHORT = {"янв": 1, "фев": 2, "мар": 3, "апр": 4, "июн": 6, "июл": 7,
+                   "авг": 8, "сен": 9, "сент": 9, "окт": 10, "ноя": 11, "нояб": 11, "дек": 12}
+
+
+def _ru_month(word: str) -> int | None:
+    w = word.lower()
+    if w in _MONTH_RU_SHORT:
+        return _MONTH_RU_SHORT[w]
+    if w in ("май", "мая", "мае"):
+        return 5
+    for stem, num in _MONTH_RU_STEMS:
+        if stem != "ма" and w.startswith(stem):
+            return num
+    return None
+
+
+_FROM_EN = r"(?:\bavailable\s+(?:from|after|since|on)?\s*|\bavail\.?\s+(?:from\s+)?|\bfrom\s+|\bstarting\s+)"
+_FROM_RU = (r"(?<![а-яё])(?:(?:доступ\w*|свобод\w*|сда[её]тся|сдается|заезд\w*|заселени\w*|освобожда\w*)\s+)?"
+            r"(?:с|со|от|после)\s+")
+_AVAIL_EN_DMY = re.compile(_FROM_EN + r"(\d{1,2})\s*(?:st|nd|rd|th)?\s+(?:of\s+)?" + _MON_EN + r"(?:\s+(\d{4}))?(?!\d)", re.I)
+_AVAIL_EN_MDY = re.compile(_FROM_EN + _MON_EN + r"\s+(\d{1,2})(?:st|nd|rd|th)?\b(?:,?\s+(\d{4})(?!\d))?", re.I)
+_AVAIL_EN_M = re.compile(_FROM_EN + _MON_EN + r"(?:\s+(\d{4}))?(?!\s*\d)", re.I)
+_AVAIL_RU = re.compile(_FROM_RU + r"(?:(\d{1,2})\s+)?" + _MON_RU + r"(?:\s+(\d{4})(?!\d))?", re.I)
+# 14.04 / 14/04/2026 после «с / from / available»; «1.5 км» и время «с 10.30» отсекаем
 _AVAIL_DATE = re.compile(
-    r"(?:available\s+(?:from\s+)?|from\s+|доступн[оа]?\s+с|свободн[оа]?\s+с|с\s+)"
-    r"(\d{1,2})[./](\d{1,2})(?:[./](\d{4}|\d{2}))?",
-    re.IGNORECASE,
+    r"(?:" + _FROM_EN + r"|" + _FROM_RU + r")"
+    r"(\d{1,2})[./](\d{1,2})(?:[./](\d{4}|\d{2}))?(?![\d.,:])(?!\s*(?:km|км|м\b|m\b|%|ч\b|h\b))",
+    re.I,
 )
-# "available now"
-_AVAIL_NOW = re.compile(r"\bavailable\s+now\b|\bсвободно?\s+сейчас\b|\bдоступно?\s+сейчас\b", re.IGNORECASE)
+_AVAIL_NOW = re.compile(
+    r"\bavailable\s+(?:now|today|immediately|right\s+now)\b|\bready\s+to\s+move\s+in\b|"
+    r"(?<![а-яё])(?:свобод\w*|доступ\w*)\s+(?:с\s+)?(?:сейчас|сегодня)|"
+    r"(?<![а-яё])(?:сейчас|сегодня)\s+(?:свобод\w*|освобод\w*)",
+    re.I,
+)
 
 
-def _parse_available_from(text: str) -> str | None:
-    """Возвращает ISO дату 'YYYY-MM-DD' или 'YYYY-MM' (если день неизвестен), либо 'now', либо None."""
+def _ref_date(posted_at):
+    """Точка отсчёта для дат без года — день публикации (иначе «с 1 марта» из поста
+    2023 года превращается в март текущего года)."""
     import datetime
-    cur_year = datetime.date.today().year
-    _YEAR_MIN, _YEAR_MAX = cur_year - 1, cur_year + 3
+    try:
+        return datetime.date.fromisoformat(str(posted_at)[:10])
+    except (TypeError, ValueError):
+        return datetime.date.today()
 
-    def _valid_year(yr_str: str | None) -> int | None:
-        if not yr_str:
-            return cur_year
-        y = int(yr_str)
-        if y < 100:
-            y += 2000
-        return y if _YEAR_MIN <= y <= _YEAR_MAX else None
 
+def _resolve_date(month: int, day: int | None, yr: str | None, ref) -> str | None:
+    if not 1 <= month <= 12 or (day is not None and not 1 <= day <= 31):
+        return None
+    if yr:
+        year = int(yr)
+        year += 2000 if year < 100 else 0
+        if not ref.year - 1 <= year <= ref.year + 2:
+            return None
+    else:
+        # без года — ближайшее такое число после публикации; пару месяцев назад
+        # («available from 1 march» в посте от 15 марта) — всё ещё этот год
+        year = ref.year
+        if (month, day or 1) < (ref.month, ref.day) and (ref.month - month) % 12 > 2:
+            year += 1
+    return f"{year}-{month:02d}-{day:02d}" if day else f"{year}-{month:02d}"
+
+
+def _parse_available_from(text: str, posted_at=None) -> str | None:
+    """ISO 'YYYY-MM-DD' или 'YYYY-MM' (день неизвестен), 'now' — либо None."""
     if _AVAIL_NOW.search(text):
         return "now"
+    ref = _ref_date(posted_at)
+    found: list[tuple[int, str]] = []   # (позиция, дата) — берём самое раннее упоминание
 
-    # ISO / DD.MM.YYYY
-    m = _AVAIL_DATE.search(text)
-    if m:
-        d, mo, yr = m.group(1), m.group(2), m.group(3)
-        try:
-            day, month = int(d), int(mo)
-            if 1 <= month <= 12 and 1 <= day <= 31:
-                year = _valid_year(yr)
-                if year:
-                    return f"{year}-{month:02d}-{day:02d}"
-        except ValueError:
-            pass
+    for m in _AVAIL_DATE.finditer(text):
+        r = _resolve_date(int(m.group(2)), int(m.group(1)), m.group(3), ref)
+        if r:
+            found.append((m.start(), r)); break
+    for rx, order in ((_AVAIL_EN_DMY, "dm"), (_AVAIL_EN_MDY, "md"), (_AVAIL_EN_M, "m")):
+        m = rx.search(text)
+        if not m:
+            continue
+        if order == "dm":
+            day, mon, yr = int(m.group(1)), m.group(2), m.group(3)
+        elif order == "md":
+            mon, day, yr = m.group(1), int(m.group(2)), m.group(3)
+        else:
+            mon, day, yr = m.group(1), None, m.group(2)
+        r = _resolve_date(_MONTH_EN[mon.lower()[:3]], day, yr, ref)
+        if r:
+            found.append((m.start(), r))
+    for m in _AVAIL_RU.finditer(text):
+        month = _ru_month(m.group(2))
+        if not month:
+            continue
+        r = _resolve_date(month, int(m.group(1)) if m.group(1) else None, m.group(3), ref)
+        if r:
+            found.append((m.start(), r)); break
+    return min(found)[1] if found else None
 
-    # "1 March [2026]"
-    m = _AVAIL_EN_DMY.search(text)
-    if m:
-        day, mon_str, yr = int(m.group(1)), m.group(2).lower()[:3], m.group(3)
-        month = _MONTH_EN.get(mon_str)
-        if month:
-            year = _valid_year(yr)
-            if year:
-                return f"{year}-{month:02d}-{day:02d}"
 
-    # "March 1 [2026]"
-    m = _AVAIL_EN_MDY.search(text)
-    if m:
-        mon_str, day, yr = m.group(1).lower()[:3], int(m.group(2)), m.group(3)
-        month = _MONTH_EN.get(mon_str)
-        if month:
-            year = _valid_year(yr)
-            if year:
-                return f"{year}-{month:02d}-{day:02d}"
+_UNIT_M = r"(?:months?|mths?|mos?\b|мес(?:яц\w*)?\.?|м-ц\w*)"
+_NUM = r"(\d{1,2})(?:\s*-?\s*(?:х|ти|ех|ух|x)(?![а-яёa-z]))?"
+_RNG = _NUM + r"(?:\s*(?:[-–—]|to|до)\s*" + _NUM + r")?"
+_STAY_PATTERNS = (
+    # «Minimum 3 months», «Минимальный срок аренды 3 мес.», «min stay: 6 months»
+    ("min", re.compile(r"(?:\bmin(?:imum|\.)?|(?<![а-яё])миним\w*)\s*(?:(?:stay|rent(?:al)?|term|period|contract|lease)\s*)?"
+                       r"(?:срок\w*\s*)?(?:аренды\s*)?(?:is\s+|of\s+|[:\-–]\s*)?(?:от\s+)?" + _RNG + r"\s*" + _UNIT_M, re.I)),
+    # «сроком на 6-9 месяцев», «Contract for 6 months», «сроком до 2–3 месяцев»
+    ("term", re.compile(r"(?:(?<![а-яё])срок\w*|\bcontract|\blease(?:\s+term)?|\brental\s+term)\s*(?:аренды\s*)?(?:[:\-–]\s*)?"
+                        r"(на|for|of|до|up\s+to)?\s*" + _RNG + r"\s*" + _UNIT_M, re.I)),
+    # «Сдаётся на 7 месяцев», «available for 6 months»
+    ("term", re.compile(r"(?:(?<![а-яё])сда[её]тся|(?<![а-яё])сда[юм]|\bavailable|\bfor\s+rent)\s+(на|for)\s+" + _RNG + r"\s*" + _UNIT_M, re.I)),
+    # «(от 6 месяцев)», «от 3х месяц», «from 3 months», «от 3 до 6 месяцев»
+    ("min", re.compile(r"(?:(?<![а-яё])от|\bfrom|\bat\s+least)\s+" + _RNG + r"\s*" + _UNIT_M, re.I)),
+    # «долгосрочным гостям 6-12 мес» — голый диапазон
+    ("range", re.compile(r"(?<![\d.,])(\d{1,2})\s*[-–—]\s*(\d{1,2})\s*" + _UNIT_M, re.I)),
+)
+# Срок, который на самом деле про оплату/скидку/рассрочку, а не про аренду
+_STAY_NOT_BEFORE = re.compile(r"(?:(?<![а-яё])(?:рассроч\w*|кредит\w*|оплат\w*|скидк\w*|за)|\b(?:installment|pay\w*|discount))\s*\S*\s*$", re.I)
+_STAY_TIER_AFTER = re.compile(r"^[^\S\n]*[-–—:=]?[^\S\n]*(?:\d{1,3}[ .,]\d{3}|\d{4,}|\d+\s*(?:k|к|тыс))", re.I)
+_STAY_LONG = re.compile(r"long[\s-]?term|долгосро\w*|длительн\w*\s+(?:срок|период|аренд)|на\s+долгий\s+срок|долгую\s+аренду", re.I)
+_STAY_SEASON = re.compile(r"(?<![а-яё])на\s+(?:весь\s+)?сезон(?![а-яё])|\bfor\s+(?:the\s+)?(?:whole\s+)?season\b", re.I)
 
-    # "available from January [2026]"
-    m = _AVAIL_EN_M.search(text)
-    if m:
-        mon_str, yr = m.group(1).lower()[:3], m.group(2)
-        month = _MONTH_EN.get(mon_str)
-        if month:
-            year = _valid_year(yr)
-            if year:
-                return f"{year}-{month:02d}"
 
-    # "с 1 марта [2026]"
-    m = _AVAIL_RU.search(text)
-    if m:
-        day_s, mon_str, yr = m.group(1), m.group(2).lower()[:3], m.group(3)
-        month = _MONTH_RU.get(mon_str)
-        if month:
-            year = _valid_year(yr)
-            if year:
-                day = int(day_s) if day_s else None
-                if day:
-                    return f"{year}-{month:02d}-{day:02d}"
-                return f"{year}-{month:02d}"
-
-    return None
+def _parse_stay(text: str) -> tuple[int | None, int | None, str | None]:
+    """(мин. месяцев, макс. месяцев, подсказка 'long'|'season'|None)."""
+    lo = hi = None
+    for kind, rx in _STAY_PATTERNS:
+        for m in rx.finditer(text):
+            if _STAY_NOT_BEFORE.search(text[max(0, m.start() - 24):m.start()]):
+                continue
+            if not m.group(0).endswith(".") and _STAY_TIER_AFTER.match(text[m.end():m.end() + 14]):
+                continue   # «3 месяца — 26 000»: ступень прайса, а не срок
+            groups = [g for g in m.groups() if g and g.strip()]
+            prep = groups[0].lower() if groups and not groups[0].isdigit() else None
+            nums = [int(g) for g in groups if g.isdigit()]
+            if not nums or not all(1 <= n <= 24 for n in nums):
+                continue
+            if len(nums) == 2 and nums[0] >= nums[1]:
+                continue
+            if kind == "range" and len(nums) != 2:
+                continue
+            if prep in ("до", "up to"):
+                lo, hi = None, nums[-1]
+            elif len(nums) == 2:
+                lo, hi = nums
+            elif kind == "term":
+                lo = hi = nums[0]
+            else:
+                lo, hi = nums[0], None
+            break
+        if lo or hi:
+            break
+    hint = "long" if _STAY_LONG.search(text) else ("season" if _STAY_SEASON.search(text) else None)
+    return lo, hi, hint
 
 
 # ── контакт ─────────────────────────────────────────────────────────────────
@@ -701,7 +746,8 @@ def parse_post(post: dict) -> dict:
     area = _parse_area(text)
     lang = _parse_language(text)
     contact = _parse_contact(text)
-    available_from = _parse_available_from(text)
+    available_from = _parse_available_from(text, post.get("posted_at"))
+    min_stay, max_stay, stay_hint = _parse_stay(text)
     listing = _is_listing(text, price, district_canon)
 
     # уверенность: считаем сколько ключевых полей найдено
@@ -727,7 +773,9 @@ def parse_post(post: dict) -> dict:
             "amenities": amenities,
             "available_from": available_from,
             "available_to": None,
-            "min_stay_months": None,
+            "min_stay_months": min_stay,
+            "max_stay_months": max_stay,
+            "stay_hint": stay_hint,
             "language": lang,
             "status_hint": status,
             "confidence": confidence,

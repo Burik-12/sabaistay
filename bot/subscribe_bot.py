@@ -312,7 +312,9 @@ def draft_is_empty(draft: dict) -> bool:
 #
 # Полезная нагрузка Telegram ограничена 64 символами и алфавитом [A-Za-z0-9_-],
 # поэтому поля склеены через «~» и упакованы в base64url:
-#     район ~ цена до ~ спален от ~ тип ~ удобства через точку ~ период
+#     район ~ цена до ~ спален от ~ тип ~ удобства через точку ~ период [~ цена от]
+# Седьмое поле необязательное (кнопка «сообщать о похожих» даёт цену ±20%) —
+# старые ссылки из шести полей читаются как раньше.
 def decode_web_filter(payload: str) -> dict:
     """base64url с витрины → критерии подписки. При любой ошибке — пустой словарь."""
     import base64
@@ -324,14 +326,16 @@ def decode_web_filter(payload: str) -> dict:
     except (binascii.Error, UnicodeDecodeError, ValueError):
         return {}
 
-    parts = (raw.split("~") + [""] * 6)[:6]
-    district, price_max, bed_min, ptype, amenities, period = (p.strip() for p in parts)
+    parts = (raw.split("~") + [""] * 7)[:7]
+    district, price_max, bed_min, ptype, amenities, period, price_min = (p.strip() for p in parts)
 
     crit: dict = {"period": period if period in ("month", "night") else "month"}
     if district:
         crit["district"] = district
     if price_max.isdigit():
         crit["price_max"] = int(price_max)
+    if price_min.isdigit():
+        crit["price_min"] = int(price_min)
     if bed_min.isdigit():
         crit["bedrooms_min"] = int(bed_min)
     if ptype:

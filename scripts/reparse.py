@@ -32,7 +32,8 @@ import parse_lite  # noqa: E402
 TARGET = ROOT / "data" / "sample_listings.json"
 # Поля, расхождения по которым показываем поимённо: они видны на витрине и влияют на фильтры.
 WATCH = ("is_listing", "price_amount", "price_period", "district_canonical",
-         "bedrooms", "property_type", "status_hint", "area_sqm")
+         "bedrooms", "property_type", "status_hint", "area_sqm",
+         "available_from", "min_stay_months", "max_stay_months", "stay_hint")
 
 
 def main() -> None:
